@@ -40,3 +40,50 @@
 .read-the-docs {
   color: #888;
 }
+/* Article Content Styling */
+.article-content h1,
+.article-content h2,
+.article-content h3 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  font-weight: bold;
+}
+
+.article-content h1 { font-size: 2rem; }
+.article-content h2 { font-size: 1.75rem; }
+.article-content h3 { font-size: 1.5rem; }
+
+.article-content p {
+  margin-bottom: 1.5rem;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.article-content ul,
+.article-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 2rem;
+}
+
+.article-content li {
+  margin-bottom: 0.5rem;
+}
+
+.article-content a {
+  color: #4e73df;
+  text-decoration: underline;
+}
+
+.article-content blockquote {
+  border-left: 4px solid #4e73df;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: #6c757d;
+  font-style: italic;
+}

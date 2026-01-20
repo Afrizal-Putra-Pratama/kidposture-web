@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
+import api from "../utils/axios"; // ✅ Import axios instance
 
 function NewScreeningPage() {
   const { childId } = useParams();
@@ -29,7 +30,7 @@ function NewScreeningPage() {
         if (url) URL.revokeObjectURL(url);
       });
     };
-  }, []);
+  }, [previews]);
 
   // Upload file untuk view tertentu
   const handleFileUpload = (e, view) => {
@@ -80,20 +81,14 @@ function NewScreeningPage() {
     setPreviews(prev => ({ ...prev, [view]: null }));
   };
 
-  // Submit multi-view
+  // ✅ Submit multi-view dengan axios
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Silakan login terlebih dahulu.");
-      return;
-    }
-
     // Filter yang sudah diupload
     // eslint-disable-next-line no-unused-vars
-    const uploadedImages = Object.entries(images).filter(([_, file]) => file !== null);
+const uploadedImages = Object.entries(images).filter(([_, file]) => file !== null);
 
 
     if (uploadedImages.length === 0) {
@@ -111,30 +106,29 @@ function NewScreeningPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        `http://kidposture-api.test/api/children/${childId}/screenings`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+      // ✅ Gunakan axios dengan config multipart/form-data
+      const response = await api.post(`/children/${childId}/screenings`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
         }
-      );
+      });
 
-      const body = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(body.message || "Gagal membuat screening");
-      }
+      console.log('✅ Screening berhasil:', response.data);
 
       // Redirect ke hasil
-      if (body.id) {
-        navigate(`/screenings/${body.id}`);
+      if (response.data.id) {
+        navigate(`/screenings/${response.data.id}`);
+      } else {
+        // Fallback jika backend return data screening langsung
+        navigate(`/children/${childId}`);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('❌ Submit error:', err);
+      setError(
+        err.response?.data?.message || 
+        err.message || 
+        "Gagal membuat screening. Pastikan token valid dan koneksi stabil."
+      );
     } finally {
       setLoading(false);
     }
@@ -336,15 +330,15 @@ function NewScreeningPage() {
             {Object.entries(previews).map(([view, url]) => (
               <div key={view} style={{ position: "relative" }}>
                 <div style={{
-  width: "100%",
-  height: 150,
-  backgroundColor: url ? "transparent" : "#e5e7eb",  // ✅ Gunakan backgroundColor
-  backgroundImage: url ? `url(${url})` : "none",     // ✅ Gunakan backgroundImage
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  borderRadius: 8,
-  border: "2px solid " + (url ? "#10b981" : "#d1d5db"),
-}} />
+                  width: "100%",
+                  height: 150,
+                  backgroundColor: url ? "transparent" : "#e5e7eb",
+                  backgroundImage: url ? `url(${url})` : "none",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  borderRadius: 8,
+                  border: "2px solid " + (url ? "#10b981" : "#d1d5db"),
+                }} />
 
                 <p style={{ 
                   textAlign: "center", 
