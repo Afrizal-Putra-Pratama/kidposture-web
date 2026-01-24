@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 function ScreeningDetailPage() {
+  // ⬅️ untuk parent path: /screenings/:id
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State untuk slider
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -15,6 +16,12 @@ function ScreeningDetailPage() {
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Silakan login terlebih dahulu.");
+      setLoading(false);
+      return;
+    }
+
+    if (!id) {
+      setError("ID screening tidak ditemukan di URL.");
       setLoading(false);
       return;
     }
@@ -37,7 +44,8 @@ function ScreeningDetailPage() {
         }
 
         const json = await res.json();
-        setData(json);
+        // backend: { success: true, data: { ... } }
+        setData(json.data ?? json); // fallback kalau format lama
       } catch (err) {
         setError(err.message);
       } finally {
@@ -52,11 +60,24 @@ function ScreeningDetailPage() {
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!data) return <p>Data tidak ditemukan.</p>;
 
-  const { child, score, category, summary, images, created_at, metrics, is_multi_view, total_views } = data;
-  
+  const {
+    child,
+    score,
+    category,
+    summary,
+    images,
+    created_at,
+    metrics,
+    is_multi_view,
+    total_views,
+    manualRecommendations, // rekomendasi dari fisioterapis
+  } = data;
+
   // PISAHKAN main images (FRONT/SIDE/BACK) vs crops
-  const mainImages = images?.filter(img => !img.type.startsWith('CROP_')) || [];
-  const cropImages = images?.filter(img => img.type.startsWith('CROP_')) || [];
+  const mainImages =
+    images?.filter((img) => !img.type.startsWith("CROP_")) || [];
+  const cropImages =
+    images?.filter((img) => img.type.startsWith("CROP_")) || [];
 
   const categoryColor =
     category === "GOOD"
@@ -109,10 +130,17 @@ function ScreeningDetailPage() {
         </div>
         <div style={{ textAlign: "right", fontSize: 14, color: "#666" }}>
           <p style={{ margin: 0 }}>
-            📅 {new Date(created_at).toLocaleDateString()}
+            📅 {created_at ? new Date(created_at).toLocaleDateString() : "-"}
           </p>
           {is_multi_view && (
-            <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "#10b981", fontWeight: 600 }}>
+            <p
+              style={{
+                margin: "4px 0 0 0",
+                fontSize: 13,
+                color: "#10b981",
+                fontWeight: 600,
+              }}
+            >
               ✅ Multi-view ({total_views} foto)
             </p>
           )}
@@ -147,7 +175,7 @@ function ScreeningDetailPage() {
               color: categoryColor,
             }}
           >
-            {score ? score.toFixed(1) : "-"}
+            {score != null ? Number(score).toFixed(1) : "-"}
           </div>
           <p style={{ marginTop: 8, fontSize: 14 }}>
             {is_multi_view ? "Avg Score" : "Score"}
@@ -176,23 +204,25 @@ function ScreeningDetailPage() {
         </div>
       </section>
 
-      {/* 🆕 SLIDER MULTI-VIEW IMAGES */}
+      {/* SLIDER MULTI-VIEW IMAGES */}
       {mainImages.length > 0 && (
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ marginBottom: 12 }}>
-            📸 Foto Analisis Postur 
+            📸 Foto Analisis Postur
             {is_multi_view && ` (${mainImages.length} tampak)`}
           </h3>
 
           {/* Thumbnail Tabs */}
           {mainImages.length > 1 && (
-            <div style={{ 
-              display: "flex", 
-              gap: 8, 
-              marginBottom: 12,
-              overflowX: "auto",
-              paddingBottom: 8,
-            }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginBottom: 12,
+                overflowX: "auto",
+                paddingBottom: 8,
+              }}
+            >
               {mainImages.map((img, index) => (
                 <button
                   key={img.id}
@@ -201,15 +231,14 @@ function ScreeningDetailPage() {
                     flex: "0 0 auto",
                     padding: "8px 16px",
                     borderRadius: 8,
-                    border: selectedImageIndex === index 
-                      ? "2px solid #3b82f6" 
-                      : "1px solid #e5e7eb",
-                    background: selectedImageIndex === index 
-                      ? "#eff6ff" 
-                      : "white",
-                    color: selectedImageIndex === index 
-                      ? "#1d4ed8" 
-                      : "#6b7280",
+                    border:
+                      selectedImageIndex === index
+                        ? "2px solid #3b82f6"
+                        : "1px solid #e5e7eb",
+                    background:
+                      selectedImageIndex === index ? "#eff6ff" : "white",
+                    color:
+                      selectedImageIndex === index ? "#1d4ed8" : "#6b7280",
                     cursor: "pointer",
                     fontSize: 13,
                     fontWeight: 600,
@@ -238,17 +267,19 @@ function ScreeningDetailPage() {
                       boxShadow: "0 4px 16px rgba(16,185,129,0.25)",
                     }}
                   />
-                  <p style={{ 
-                    fontSize: 13, 
-                    color: "#059669", 
-                    marginTop: 10, 
-                    fontWeight: 500,
-                    background: "#d1fae5",
-                    padding: 10,
-                    borderRadius: 8,
-                  }}>
-                    ✅ <strong>{mainImages[selectedImageIndex].type}</strong> — 
-                    Full skeleton + garis bahu/panggul + spine reference
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "#059669",
+                      marginTop: 10,
+                      fontWeight: 500,
+                      background: "#d1fae5",
+                      padding: 10,
+                      borderRadius: 8,
+                    }}
+                  >
+                    ✅ <strong>{mainImages[selectedImageIndex].type}</strong> — full
+                    skeleton + garis bahu/panggul + spine reference
                   </p>
                 </>
               ) : (
@@ -270,129 +301,158 @@ function ScreeningDetailPage() {
                 </>
               )}
 
-              {/* 🆕 RECOMMENDATIONS PER VIEW */}
-              {mainImages[selectedImageIndex].recommendations && 
-               mainImages[selectedImageIndex].recommendations.length > 0 && (
-                <div style={{
-                  marginTop: 16,
-                  padding: 16,
-                  background: "#fefce8",
-                  border: "2px solid #eab308",
-                  borderRadius: 12,
-                }}>
-                  <h4 style={{ 
-                    margin: "0 0 12px 0", 
-                    color: "#854d0e",
-                    fontSize: 16,
-                  }}>
-                    💡 Rekomendasi Latihan untuk {mainImages[selectedImageIndex].type}
-                  </h4>
-                  
-                  {mainImages[selectedImageIndex].recommendations.map((rec, idx) => (
-                    <div 
-                      key={idx}
+              {/* Rekomendasi otomatis per view (AI) */}
+              {mainImages[selectedImageIndex].recommendations &&
+                mainImages[selectedImageIndex].recommendations.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      padding: 16,
+                      background: "#fefce8",
+                      border: "2px solid #eab308",
+                      borderRadius: 12,
+                    }}
+                  >
+                    <h4
                       style={{
-                        padding: 14,
-                        background: "white",
-                        borderRadius: 10,
-                        marginBottom: idx < mainImages[selectedImageIndex].recommendations.length - 1 ? 14 : 0,
-                        border: "1px solid #fde047",
-                        boxShadow: "0 2px 4px rgba(234,179,8,0.1)",
+                        margin: "0 0 12px 0",
+                        color: "#854d0e",
+                        fontSize: 16,
                       }}
                     >
-                      <p style={{ 
-                        margin: "0 0 10px 0", 
-                        fontWeight: 700,
-                        color: "#b45309",
-                        fontSize: 15,
-                        lineHeight: 1.4,
-                      }}>
-                        ⚠️ {rec.issue}
-                      </p>
-                      
-                      <div style={{
-                        padding: 12,
-                        background: "#fef3c7",
-                        borderRadius: 8,
-                        marginBottom: 10,
-                      }}>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: 14,
-                          color: "#374151",
-                          lineHeight: 1.6,
-                        }}>
-                          <strong>🎯 Latihan:</strong><br/>
-                          {rec.exercise}
-                        </p>
-                      </div>
+                      💡 Rekomendasi Latihan (AI)
+                    </h4>
 
-                      <p style={{ 
-                        margin: "0 0 10px 0", 
-                        fontSize: 13,
-                        color: "#6b7280",
-                      }}>
-                        <strong>⏱️ Durasi:</strong> {rec.duration}
-                      </p>
-
-                      {rec.parent_note && (
-                        <div style={{
-                          padding: 10,
-                          background: "#dbeafe",
-                          borderLeft: "3px solid #3b82f6",
-                          borderRadius: 6,
-                          marginTop: 10,
-                        }}>
-                          <p style={{ 
-                            margin: 0,
-                            fontSize: 13,
-                            color: "#1e40af",
-                            lineHeight: 1.5,
-                          }}>
-                            {rec.parent_note}
-                          </p>
-                        </div>
-                      )}
-
-                      {rec.video_url && (
-                        <a 
-                          href={rec.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                    {mainImages[selectedImageIndex].recommendations.map(
+                      (rec, idx) => (
+                        <div
+                          key={idx}
                           style={{
-                            display: "inline-block",
-                            marginTop: 12,
-                            padding: "8px 16px",
-                            background: "#ef4444",
-                            color: "white",
-                            textDecoration: "none",
-                            borderRadius: 8,
-                            fontSize: 13,
-                            fontWeight: 600,
+                            padding: 14,
+                            background: "white",
+                            borderRadius: 10,
+                            marginBottom:
+                              idx <
+                              mainImages[selectedImageIndex].recommendations
+                                .length -
+                                1
+                                ? 14
+                                : 0,
+                            border: "1px solid #fde047",
+                            boxShadow: "0 2px 4px rgba(234,179,8,0.1)",
                           }}
                         >
-                          ▶️ Lihat Video Tutorial
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          <p
+                            style={{
+                              margin: "0 0 10px 0",
+                              fontWeight: 700,
+                              color: "#b45309",
+                              fontSize: 15,
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            ⚠️ {rec.issue}
+                          </p>
+
+                          <div
+                            style={{
+                              padding: 12,
+                              background: "#fef3c7",
+                              borderRadius: 8,
+                              marginBottom: 10,
+                            }}
+                          >
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 14,
+                                color: "#374151",
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              <strong>🎯 Latihan:</strong>
+                              <br />
+                              {rec.exercise}
+                            </p>
+                          </div>
+
+                          <p
+                            style={{
+                              margin: "0 0 10px 0",
+                              fontSize: 13,
+                              color: "#6b7280",
+                            }}
+                          >
+                            <strong>⏱️ Durasi:</strong> {rec.duration}
+                          </p>
+
+                          {rec.parent_note && (
+                            <div
+                              style={{
+                                padding: 10,
+                                background: "#dbeafe",
+                                borderLeft: "3px solid #3b82f6",
+                                borderRadius: 6,
+                                marginTop: 10,
+                              }}
+                            >
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 13,
+                                  color: "#1e40af",
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                {rec.parent_note}
+                              </p>
+                            </div>
+                          )}
+
+                          {rec.video_url && (
+                            <a
+                              href={rec.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-block",
+                                marginTop: 12,
+                                padding: "8px 16px",
+                                background: "#ef4444",
+                                color: "white",
+                                textDecoration: "none",
+                                borderRadius: 8,
+                                fontSize: 13,
+                                fontWeight: 600,
+                              }}
+                            >
+                              ▶️ Lihat Video Tutorial
+                            </a>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
             </div>
           )}
 
           {/* Navigation Arrows (kalau >1 foto) */}
           {mainImages.length > 1 && (
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "center", 
-              gap: 16, 
-              marginTop: 16 
-            }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 16,
+                marginTop: 16,
+              }}
+            >
               <button
-                onClick={() => setSelectedImageIndex(prev => 
-                  prev === 0 ? mainImages.length - 1 : prev - 1
-                )}
+                onClick={() =>
+                  setSelectedImageIndex((prev) =>
+                    prev === 0 ? mainImages.length - 1 : prev - 1
+                  )
+                }
                 style={{
                   padding: "8px 20px",
                   borderRadius: 8,
@@ -404,18 +464,22 @@ function ScreeningDetailPage() {
               >
                 ← Prev
               </button>
-              <span style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                fontSize: 14, 
-                color: "#6b7280" 
-              }}>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: 14,
+                  color: "#6b7280",
+                }}
+              >
                 {selectedImageIndex + 1} / {mainImages.length}
               </span>
               <button
-                onClick={() => setSelectedImageIndex(prev => 
-                  prev === mainImages.length - 1 ? 0 : prev + 1
-                )}
+                onClick={() =>
+                  setSelectedImageIndex((prev) =>
+                    prev === mainImages.length - 1 ? 0 : prev + 1
+                  )
+                }
                 style={{
                   padding: "8px 20px",
                   borderRadius: 8,
@@ -432,43 +496,74 @@ function ScreeningDetailPage() {
         </section>
       )}
 
+      {/* REKOMENDASI DARI FISIOTERAPIS */}
+      <section style={{ marginBottom: 24 }}>
+        <h3 style={{ marginBottom: 8 }}>🧑‍⚕️ Rekomendasi dari Fisioterapis</h3>
+        {manualRecommendations && manualRecommendations.length > 0 ? (
+          <ul style={{ paddingLeft: 18 }}>
+            {manualRecommendations.map((rec) => (
+              <li key={rec.id} style={{ marginBottom: 12 }}>
+                <strong>{rec.title}</strong> <em>({rec.type})</em>
+                <br />
+                {rec.content}
+                <br />
+                <small style={{ color: "#6b7280" }}>
+                  oleh {rec.physio?.name || "Fisioterapis"} pada{" "}
+                  {rec.created_at
+                    ? new Date(rec.created_at).toLocaleDateString("id-ID")
+                    : "-"}
+                </small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ fontSize: 14, color: "#6b7280" }}>
+            Belum ada catatan khusus dari fisioterapis.
+          </p>
+        )}
+      </section>
+
       {/* CROP REGIONS */}
       {cropImages.length > 0 && (
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ marginBottom: 12 }}>🔍 Detail Area Bermasalah</h3>
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12 
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 12,
+            }}
+          >
             {cropImages.map((crop) => {
-              const regionName = crop.type.replace('CROP_', '');
-              const displayName = {
-  SHOULDER: '🩺 Bahu',
-  HIP: '🩺 Panggul',
-  HEAD: '🩺 Kepala',
-  NECK: '🩺 Leher',      // ✅ TAMBAH INI
-  TORSO: '🩺 Punggung'   // ✅ TAMBAH INI
-}[regionName] || regionName;
-
+              const regionName = crop.type.replace("CROP_", "");
+              const displayName =
+                {
+                  SHOULDER: "🩺 Bahu",
+                  HIP: "🩺 Panggul",
+                  HEAD: "🩺 Kepala",
+                  NECK: "🩺 Leher",
+                  TORSO: "🩺 Punggung",
+                }[regionName] || regionName;
 
               return (
-                <div 
-                  key={crop.id} 
+                <div
+                  key={crop.id}
                   style={{
                     background: "#fff7ed",
                     border: "2px solid #fb923c",
                     borderRadius: 10,
                     padding: 12,
-                    boxShadow: "0 2px 8px rgba(251,146,60,0.2)"
+                    boxShadow: "0 2px 8px rgba(251,146,60,0.2)",
                   }}
                 >
-                  <h4 style={{ 
-                    margin: "0 0 8px 0", 
-                    fontSize: 14, 
-                    color: "#ea580c",
-                    fontWeight: 600 
-                  }}>
+                  <h4
+                    style={{
+                      margin: "0 0 8px 0",
+                      fontSize: 14,
+                      color: "#ea580c",
+                      fontWeight: 600,
+                    }}
+                  >
                     {displayName}
                   </h4>
                   <img
@@ -477,16 +572,18 @@ function ScreeningDetailPage() {
                     style={{
                       width: "100%",
                       borderRadius: 8,
-                      border: "1px solid #fb923c"
+                      border: "1px solid #fb923c",
                     }}
                   />
-                  <p style={{ 
-                    fontSize: 11, 
-                    color: "#c2410c", 
-                    marginTop: 8,
-                    marginBottom: 0,
-                    fontWeight: 500 
-                  }}>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "#c2410c",
+                      marginTop: 8,
+                      marginBottom: 0,
+                      fontWeight: 500,
+                    }}
+                  >
                     ⚠️ Deviasi terdeteksi
                   </p>
                 </div>
@@ -498,9 +595,22 @@ function ScreeningDetailPage() {
 
       {/* Metrik Detail */}
       {metrics && Object.keys(metrics).length > 0 && (
-        <section style={{ background: "#f8fafc", padding: 16, borderRadius: 12, marginBottom: 16 }}>
+        <section
+          style={{
+            background: "#f8fafc",
+            padding: 16,
+            borderRadius: 12,
+            marginBottom: 16,
+          }}
+        >
           <h3 style={{ marginBottom: 12 }}>📏 Detail Pengukuran</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 16,
+            }}
+          >
             {metrics.shoulder_tilt_index !== undefined && (
               <div>
                 <strong style={{ fontSize: 14 }}>Kemiringan Bahu</strong>
@@ -508,7 +618,9 @@ function ScreeningDetailPage() {
                   {metrics.shoulder_tilt_index.toFixed(2)}%
                 </div>
                 <small style={{ color: "#666" }}>
-                  {metrics.shoulder_tilt_index < 2 ? "✅ Normal" : "⚠️ Ada deviasi"}
+                  {metrics.shoulder_tilt_index < 2
+                    ? "✅ Normal"
+                    : "⚠️ Ada deviasi"}
                 </small>
               </div>
             )}
@@ -519,7 +631,9 @@ function ScreeningDetailPage() {
                   {metrics.hip_tilt_index.toFixed(2)}%
                 </div>
                 <small style={{ color: "#666" }}>
-                  {metrics.hip_tilt_index < 2 ? "✅ Normal" : "⚠️ Ada deviasi"}
+                  {metrics.hip_tilt_index < 2
+                    ? "✅ Normal"
+                    : "⚠️ Ada deviasi"}
                 </small>
               </div>
             )}
@@ -530,7 +644,9 @@ function ScreeningDetailPage() {
                   {metrics.forward_head_index.toFixed(3)}
                 </div>
                 <small style={{ color: "#666" }}>
-                  {metrics.forward_head_index < 0.2 ? "✅ Normal" : "⚠️ Ada kecenderungan"}
+                  {metrics.forward_head_index < 0.2
+                    ? "✅ Normal"
+                    : "⚠️ Ada kecenderungan"}
                 </small>
               </div>
             )}
@@ -541,7 +657,9 @@ function ScreeningDetailPage() {
                   {metrics.neck_inclination_deg.toFixed(1)}°
                 </div>
                 <small style={{ color: "#666" }}>
-                  {metrics.neck_inclination_deg < 15 ? "✅ Normal" : "⚠️ Menunduk"}
+                  {metrics.neck_inclination_deg < 15
+                    ? "✅ Normal"
+                    : "⚠️ Menunduk"}
                 </small>
               </div>
             )}
@@ -552,7 +670,9 @@ function ScreeningDetailPage() {
                   {metrics.torso_inclination_deg.toFixed(1)}°
                 </div>
                 <small style={{ color: "#666" }}>
-                  {metrics.torso_inclination_deg < 15 ? "✅ Normal" : "⚠️ Membungkuk"}
+                  {metrics.torso_inclination_deg < 15
+                    ? "✅ Normal"
+                    : "⚠️ Membungkuk"}
                 </small>
               </div>
             )}
@@ -561,13 +681,15 @@ function ScreeningDetailPage() {
       )}
 
       {/* Tombol Aksi */}
-      <section style={{ 
-        display: "flex", 
-        gap: 12, 
-        paddingTop: 16,
-        borderTop: "1px solid #e5e7eb",
-        flexWrap: "wrap",
-      }}>
+      <section
+        style={{
+          display: "flex",
+          gap: 12,
+          paddingTop: 16,
+          borderTop: "1px solid #e5e7eb",
+          flexWrap: "wrap",
+        }}
+      >
         <button
           onClick={() => navigate(`/children/${child?.id}/screenings/new`)}
           style={{
@@ -586,7 +708,7 @@ function ScreeningDetailPage() {
           📸 Screening Baru
         </button>
         <button
-          onClick={() => navigate(`/children/${child?.id}`)}
+          onClick={() => navigate(`/children/${child?.id}/screenings`)}
           style={{
             flex: 1,
             minWidth: 200,
@@ -600,7 +722,7 @@ function ScreeningDetailPage() {
             cursor: "pointer",
           }}
         >
-          👶 Lihat Profil Anak
+          📋 Lihat Riwayat Screening
         </button>
       </section>
     </div>

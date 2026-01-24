@@ -3,19 +3,36 @@ import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
 import ScreeningDetailPage from "./pages/ScreeningDetailPage.jsx";
 import NewScreeningPage from "./pages/NewScreeningPage.jsx";
-import EducationPage from './pages/EducationPage';
-import ArticleDetailPage from './pages/ArticleDetailPage';
+import EducationPage from "./pages/EducationPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/LoginPage";
+import NewChildPage from "./pages/NewChildPage";
+import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
+import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
 
-// ✅ Protected Route Component
+// ✅ Protected Route: hanya cek token
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('token');
-  
+  const token = localStorage.getItem("token");
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-  
+
+  return children;
+}
+
+// ✅ Role-based Route: cek role user
+function RoleRoute({ children, allowedRoles }) {
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  const role = user?.role?.toLowerCase();
+
+  if (!user || !allowedRoles.includes(role)) {
+    // kalau bukan role yang diizinkan, lempar ke dashboard parent
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 }
 
@@ -25,81 +42,114 @@ function App() {
       <Routes>
         {/* ✅ Public Routes */}
         <Route path="/login" element={<LoginPage />} />
-        
-        {/* ✅ Protected Routes */}
-        <Route 
-          path="/" 
+
+        {/* ✅ Protected Routes (Parent default) */}
+        <Route
+          path="/"
           element={
             <ProtectedRoute>
               <ParentDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/dashboard" 
+
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <ParentDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Children Management */}
-        <Route 
-          path="/children" 
+        <Route
+          path="/children"
           element={
             <ProtectedRoute>
               <ChildrenPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/children/:childId/screenings" 
+
+        <Route
+          path="/children/new"
+          element={
+            <ProtectedRoute>
+              <NewChildPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/children/:childId/screenings"
           element={
             <ProtectedRoute>
               <ChildScreeningsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/children/:childId/screenings/new" 
+
+        <Route
+          path="/children/:childId/screenings/new"
           element={
             <ProtectedRoute>
               <NewScreeningPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        {/* Screening Detail */}
-        <Route 
-          path="/screenings/:id" 
+
+        {/* Screening Detail (Parent) */}
+        <Route
+          path="/screenings/:id"
           element={
             <ProtectedRoute>
               <ScreeningDetailPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Education */}
-        <Route 
-          path="/education" 
+        <Route
+          path="/education"
           element={
             <ProtectedRoute>
               <EducationPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/education/:slug" 
+
+        <Route
+          path="/education/:slug"
           element={
             <ProtectedRoute>
               <ArticleDetailPage />
             </ProtectedRoute>
-          } 
+          }
+        />
+
+        {/* ✅ Physio Dashboard (hanya role physio) */}
+        <Route
+          path="/physio/dashboard"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioDashboardPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ Physio Screening Detail */}
+        <Route
+          path="/physio/screenings/:screeningId"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioScreeningDetailPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
         />
 
         {/* ✅ 404 Fallback */}
