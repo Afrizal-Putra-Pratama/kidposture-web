@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../utils/axios.js';
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { fetchChildren } from "../services/childService.jsx";
+import { logout, getCurrentUser } from "../services/authService.jsx";
 
 function ParentDashboard() {
   const navigate = useNavigate();
@@ -10,10 +11,9 @@ function ParentDashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // ✅ Load user dari localStorage
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
     }
     loadData();
   }, []);
@@ -21,34 +21,27 @@ function ParentDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/children');
-      console.log('✅ Children data:', response.data);
-      
-      if (response.data.success) {
-        setChildren(response.data.data);
-      } else if (Array.isArray(response.data)) {
-        // Fallback jika API return array langsung
-        setChildren(response.data);
+      const data = await fetchChildren();
+      console.log("✅ Children data:", data);
+
+      if (data.success) {
+        setChildren(data.data);
+      } else if (Array.isArray(data)) {
+        setChildren(data);
+      } else {
+        setChildren([]);
       }
     } catch (err) {
-      console.error('❌ Error loading dashboard:', err);
-      setError('Gagal memuat data dashboard');
+      console.error("❌ Error loading dashboard:", err);
+      setError("Gagal memuat data dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Logout function
   const handleLogout = async () => {
-    try {
-      await api.post('/logout');
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      navigate('/login');
-    }
+    await logout();
+    navigate("/login");
   };
 
   const totalScreenings = children.reduce(
@@ -60,7 +53,7 @@ function ParentDashboard() {
     (child) =>
       child.latest_screening &&
       child.latest_screening.category &&
-      child.latest_screening.category.toLowerCase().includes('attention')
+      child.latest_screening.category.toLowerCase().includes("attention")
   );
 
   if (loading) {
@@ -72,7 +65,7 @@ function ParentDashboard() {
       <div style={styles.page}>
         <div style={styles.container}>
           <div style={styles.errorCard}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
+            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>❌</div>
             <h2>Gagal Memuat Data</h2>
             <p>{error}</p>
             <button onClick={loadData} style={styles.primaryButton}>
@@ -87,18 +80,31 @@ function ParentDashboard() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* ✅ Header with User Info & Logout */}
+        {/* Header dengan info user & logout */}
         <div style={styles.header}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
               <h1 style={styles.title}>
-                👋 Halo, {user?.name || 'Orang Tua'}!
+                👋 Halo, {user?.name || "Orang Tua"}!
               </h1>
               <p style={styles.subtitle}>
-                Ringkasan postur dan perkembangan anak berdasarkan hasil screening
+                Ringkasan postur dan perkembangan anak berdasarkan hasil
+                screening
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                alignItems: "center",
+              }}
+            >
               <Link to="/education" style={styles.btnSecondaryLink}>
                 📚 Edukasi
               </Link>
@@ -134,7 +140,9 @@ function ParentDashboard() {
         {/* Children Section */}
         <div style={styles.childrenSection}>
           <div style={styles.sectionHeader}>
-            <h2 style={styles.sectionTitle}>Anak & Hasil Screening Terakhir</h2>
+            <h2 style={styles.sectionTitle}>
+              Anak & Hasil Screening Terakhir
+            </h2>
             <Link to="/children/new" style={styles.actionLink}>
               + Tambah Anak
             </Link>
@@ -146,7 +154,7 @@ function ParentDashboard() {
               title="Belum ada data anak"
               description="Tambahkan data anak terlebih dahulu untuk mulai screening postur."
               actionLabel="Tambah Anak"
-              onAction={() => navigate('/children/new')}
+              onAction={() => navigate("/children/new")}
             />
           ) : (
             <div style={styles.childrenList}>
@@ -170,14 +178,20 @@ function ParentDashboard() {
   );
 }
 
-// ====================================
-// COMPONENTS
-// ====================================
+// =========================
+// Components
+// =========================
 
 function StatCard({ label, value, icon, color }) {
   return (
     <div style={styles.statCard}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div>
           <div style={styles.statLabel}>{label}</div>
           <div style={styles.statValue}>{value}</div>
@@ -203,8 +217,12 @@ function ChildCard({ child, onScreeningClick, onHistoryClick }) {
         <div>
           <div style={styles.childName}>{child.name}</div>
           <div style={styles.childMeta}>
-            {child.age_years ? `${child.age_years} tahun` : ''}{' '}
-            {child.gender === 'M' ? '👦 Laki-laki' : child.gender === 'F' ? '👧 Perempuan' : ''}
+            {child.age_years ? `${child.age_years} tahun` : ""}{" "}
+            {child.gender === "M"
+              ? "👦 Laki-laki"
+              : child.gender === "F"
+              ? "👧 Perempuan"
+              : ""}
           </div>
           {child.height && child.weight && (
             <div style={styles.childMeta}>
@@ -220,16 +238,14 @@ function ChildCard({ child, onScreeningClick, onHistoryClick }) {
       <div style={styles.childResults}>
         {latest ? (
           <>
-            <div style={styles.resultScore}>
-              Skor {latest.score ?? '-'}
-            </div>
+            <div style={styles.resultScore}>Skor {latest.score ?? "-"}</div>
             {badge && (
               <div style={{ ...styles.badge, ...badge.style }}>
                 {badge.text}
               </div>
             )}
             <div style={styles.resultDate}>
-              📅 {new Date(latest.created_at).toLocaleDateString('id-ID')}
+              📅 {new Date(latest.created_at).toLocaleDateString("id-ID")}
             </div>
             {latest.summary && (
               <div style={styles.resultSummary} title={latest.summary}>
@@ -256,20 +272,20 @@ function ChildCard({ child, onScreeningClick, onHistoryClick }) {
 
 function getBadgeConfig(category) {
   const cat = category.toLowerCase();
-  if (cat.includes('good') || cat.includes('baik')) {
+  if (cat.includes("good") || cat.includes("baik")) {
     return {
-      text: '✅ Baik',
-      style: { backgroundColor: '#e6f8f0', color: '#1cc88a' }
+      text: "✅ Baik",
+      style: { backgroundColor: "#e6f8f0", color: "#1cc88a" },
     };
-  } else if (cat.includes('fair') || cat.includes('cukup')) {
+  } else if (cat.includes("fair") || cat.includes("cukup")) {
     return {
-      text: '⚠️ Cukup',
-      style: { backgroundColor: '#fff3cd', color: '#856404' }
+      text: "⚠️ Cukup",
+      style: { backgroundColor: "#fff3cd", color: "#856404" },
     };
   } else {
     return {
-      text: '🔴 Perlu Perhatian',
-      style: { backgroundColor: '#fdecea', color: '#e74a3b' }
+      text: "🔴 Perlu Perhatian",
+      style: { backgroundColor: "#fdecea", color: "#e74a3b" },
     };
   }
 }
@@ -277,9 +293,23 @@ function getBadgeConfig(category) {
 function EmptyState({ icon, title, description, actionLabel, onAction }) {
   return (
     <div style={styles.emptyState}>
-      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{icon}</div>
-      <h3 style={{ margin: 0, marginBottom: '0.5rem', color: '#2c3e50' }}>{title}</h3>
-      <p style={{ margin: 0, color: '#6c757d', marginBottom: actionLabel ? '1.5rem' : 0 }}>
+      <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>{icon}</div>
+      <h3
+        style={{
+          margin: 0,
+          marginBottom: "0.5rem",
+          color: "#2c3e50",
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          margin: 0,
+          color: "#6c757d",
+          marginBottom: actionLabel ? "1.5rem" : 0,
+        }}
+      >
         {description}
       </p>
       {actionLabel && onAction && (
@@ -295,252 +325,252 @@ function DashboardSkeleton() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
-          <p style={{ color: '#6c757d' }}>Memuat dashboard...</p>
+        <div style={{ textAlign: "center", padding: "3rem" }}>
+          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>⏳</div>
+          <p style={{ color: "#6c757d" }}>Memuat dashboard...</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ====================================
-// STYLES
-// ====================================
+// =========================
+// Styles
+// =========================
 
 const styles = {
   page: {
-    minHeight: '100vh',
-    background: '#f8f9fa',
-    padding: '2rem 0',
+    minHeight: "100vh",
+    background: "#f8f9fa",
+    padding: "2rem 0",
   },
   container: {
     maxWidth: 1200,
-    margin: '0 auto',
-    padding: '0 1rem',
+    margin: "0 auto",
+    padding: "0 1rem",
   },
   header: {
-    marginBottom: '1.5rem',
+    marginBottom: "1.5rem",
   },
   title: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: "2rem",
+    fontWeight: "bold",
+    color: "#2c3e50",
     margin: 0,
-    marginBottom: '0.5rem',
+    marginBottom: "0.5rem",
   },
   subtitle: {
-    color: '#6c757d',
-    marginTop: '0.5rem',
-    fontSize: '0.95rem',
+    color: "#6c757d",
+    marginTop: "0.5rem",
+    fontSize: "0.95rem",
   },
   btnLogout: {
-    padding: '0.6rem 1.2rem',
-    background: '#e74a3b',
-    color: 'white',
-    border: 'none',
+    padding: "0.6rem 1.2rem",
+    background: "#e74a3b",
+    color: "white",
+    border: "none",
     borderRadius: 8,
-    cursor: 'pointer',
+    cursor: "pointer",
     fontWeight: 500,
-    fontSize: '0.9rem',
-    transition: 'all 0.2s',
+    fontSize: "0.9rem",
+    transition: "all 0.2s",
   },
   btnSecondaryLink: {
-    padding: '0.6rem 1.2rem',
-    background: 'white',
-    color: '#4e73df',
-    border: '1px solid #4e73df',
+    padding: "0.6rem 1.2rem",
+    background: "white",
+    color: "#4e73df",
+    border: "1px solid #4e73df",
     borderRadius: 8,
-    textDecoration: 'none',
+    textDecoration: "none",
     fontWeight: 500,
-    fontSize: '0.9rem',
-    display: 'inline-block',
-    transition: 'all 0.2s',
+    fontSize: "0.9rem",
+    display: "inline-block",
+    transition: "all 0.2s",
   },
   statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem',
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "1rem",
+    marginBottom: "2rem",
   },
   statCard: {
-    background: 'white',
+    background: "white",
     borderRadius: 12,
-    padding: '1.25rem 1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-    transition: 'transform 0.2s',
-    cursor: 'default',
+    padding: "1.25rem 1.5rem",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    transition: "transform 0.2s",
+    cursor: "default",
   },
   statLabel: {
-    fontSize: '0.9rem',
-    color: '#6c757d',
-    marginBottom: '0.25rem',
+    fontSize: "0.9rem",
+    color: "#6c757d",
+    marginBottom: "0.25rem",
   },
   statValue: {
-    fontSize: '1.8rem',
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: "1.8rem",
+    fontWeight: "bold",
+    color: "#2c3e50",
   },
   statIcon: {
     width: 44,
     height: 44,
     borderRadius: 999,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.4rem',
-    color: 'white',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.4rem",
+    color: "white",
   },
   childrenSection: {
-    marginTop: '2rem',
+    marginTop: "2rem",
   },
   sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "1rem",
   },
   sectionTitle: {
     margin: 0,
-    fontSize: '1.3rem',
-    color: '#2c3e50',
+    fontSize: "1.3rem",
+    color: "#2c3e50",
   },
   actionLink: {
-    color: '#4e73df',
-    textDecoration: 'none',
+    color: "#4e73df",
+    textDecoration: "none",
     fontWeight: 600,
-    fontSize: '0.95rem',
-    transition: 'color 0.2s',
+    fontSize: "0.95rem",
+    transition: "color 0.2s",
   },
   childrenList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
   },
   childCard: {
-    background: 'white',
+    background: "white",
     borderRadius: 12,
-    padding: '1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-    display: 'grid',
-    gridTemplateColumns: '2fr 1.5fr auto',
-    gap: '1.5rem',
-    alignItems: 'center',
-    transition: 'box-shadow 0.2s',
+    padding: "1.5rem",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+    display: "grid",
+    gridTemplateColumns: "2fr 1.5fr auto",
+    gap: "1.5rem",
+    alignItems: "center",
+    transition: "box-shadow 0.2s",
   },
   childInfo: {
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start',
+    display: "flex",
+    gap: "1rem",
+    alignItems: "flex-start",
   },
   childAvatar: {
     width: 50,
     height: 50,
     borderRadius: 999,
-    background: '#4e73df',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
+    background: "#4e73df",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.5rem",
+    fontWeight: "bold",
     flexShrink: 0,
   },
   childName: {
     fontWeight: 600,
-    fontSize: '1.1rem',
-    color: '#2c3e50',
-    marginBottom: '0.25rem',
+    fontSize: "1.1rem",
+    color: "#2c3e50",
+    marginBottom: "0.25rem",
   },
   childMeta: {
-    fontSize: '0.85rem',
-    color: '#6c757d',
-    marginTop: '0.25rem',
+    fontSize: "0.85rem",
+    color: "#6c757d",
+    marginTop: "0.25rem",
   },
   childResults: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   resultScore: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: '0.5rem',
+    fontSize: "1.5rem",
+    fontWeight: "bold",
+    color: "#2c3e50",
+    marginBottom: "0.5rem",
   },
   badge: {
-    display: 'inline-block',
-    padding: '0.25rem 0.75rem',
+    display: "inline-block",
+    padding: "0.25rem 0.75rem",
     borderRadius: 999,
-    fontSize: '0.8rem',
+    fontSize: "0.8rem",
     fontWeight: 600,
-    marginBottom: '0.5rem',
+    marginBottom: "0.5rem",
   },
   resultDate: {
-    fontSize: '0.8rem',
-    color: '#adb5bd',
-    marginTop: '0.5rem',
+    fontSize: "0.8rem",
+    color: "#adb5bd",
+    marginTop: "0.5rem",
   },
   resultSummary: {
-    fontSize: '0.85rem',
-    color: '#6c757d',
-    marginTop: '0.5rem',
+    fontSize: "0.85rem",
+    color: "#6c757d",
+    marginTop: "0.5rem",
     maxHeight: 40,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   noScreening: {
-    fontSize: '0.9rem',
-    color: '#6c757d',
-    fontStyle: 'italic',
+    fontSize: "0.9rem",
+    color: "#6c757d",
+    fontStyle: "italic",
   },
   childActions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
   },
   btnPrimary: {
-    padding: '0.6rem 1.2rem',
-    background: '#4e73df',
-    color: 'white',
-    border: 'none',
+    padding: "0.6rem 1.2rem",
+    background: "#4e73df",
+    color: "white",
+    border: "none",
     borderRadius: 8,
-    cursor: 'pointer',
+    cursor: "pointer",
     fontWeight: 500,
-    fontSize: '0.9rem',
-    transition: 'all 0.2s',
+    fontSize: "0.9rem",
+    transition: "all 0.2s",
   },
   btnSecondary: {
-    padding: '0.6rem 1.2rem',
-    background: 'white',
-    color: '#4e73df',
-    border: '1px solid #4e73df',
+    padding: "0.6rem 1.2rem",
+    background: "white",
+    color: "#4e73df",
+    border: "1px solid #4e73df",
     borderRadius: 8,
-    cursor: 'pointer',
+    cursor: "pointer",
     fontWeight: 500,
-    fontSize: '0.9rem',
-    transition: 'all 0.2s',
+    fontSize: "0.9rem",
+    transition: "all 0.2s",
   },
   primaryButton: {
-    padding: '0.75rem 1.5rem',
-    background: '#4e73df',
-    color: 'white',
-    border: 'none',
+    padding: "0.75rem 1.5rem",
+    background: "#4e73df",
+    color: "white",
+    border: "none",
     borderRadius: 8,
-    cursor: 'pointer',
+    cursor: "pointer",
     fontWeight: 500,
-    fontSize: '1rem',
+    fontSize: "1rem",
   },
   errorCard: {
-    background: 'white',
+    background: "white",
     borderRadius: 12,
-    padding: '3rem',
-    textAlign: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    padding: "3rem",
+    textAlign: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
   },
   emptyState: {
-    background: 'white',
+    background: "white",
     borderRadius: 12,
-    padding: '3rem 2rem',
-    textAlign: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    padding: "3rem 2rem",
+    textAlign: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
   },
 };
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/axios";
+import { login } from "../services/authService.jsx";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -26,16 +26,12 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post("/login", {
+      const { user } = await login({
         email: formData.email,
         password: formData.password,
       });
 
-      // Simpan token & user ke localStorage
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      const role = response.data.user.role?.toLowerCase();
+      const role = user.role?.toLowerCase();
 
       if (role === "physio") {
         navigate("/physio/dashboard");
@@ -78,7 +74,6 @@ function LoginPage() {
           maxWidth: 400,
         }}
       >
-        {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <h1
             style={{
@@ -95,9 +90,7 @@ function LoginPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Email */}
           <div style={{ marginBottom: 20 }}>
             <label
               style={{
@@ -131,7 +124,6 @@ function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div style={{ marginBottom: 24 }}>
             <label
               style={{
@@ -165,7 +157,6 @@ function LoginPage() {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div
               style={{
@@ -182,7 +173,6 @@ function LoginPage() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -211,7 +201,6 @@ function LoginPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p
           style={{
             textAlign: "center",

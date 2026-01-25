@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/axios";
+import {
+  fetchChildren,
+  updateChild,
+  deleteChild,
+} from "../services/childService.jsx";
+import { useNotification } from "../hooks/useNotification.jsx";
 
 function ChildrenPage() {
   const [children, setChildren] = useState([]);
@@ -16,32 +21,34 @@ function ChildrenPage() {
   });
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
-    loadChildren();
-  }, []);
+    const loadChildren = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchChildren();
+        console.log("✅ Children data:", data);
 
-  const loadChildren = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get("/children");
-      console.log("✅ Children data:", response.data);
-
-      if (response.data.success && Array.isArray(response.data.data)) {
-        setChildren(response.data.data);
-      } else if (Array.isArray(response.data)) {
-        setChildren(response.data);
-      } else {
-        setChildren([]);
+        if (data.success && Array.isArray(data.data)) {
+          setChildren(data.data);
+        } else if (Array.isArray(data)) {
+          setChildren(data);
+        } else {
+          setChildren([]);
+        }
+      } catch (err) {
+        console.error("❌ Error loading children:", err);
+        setError("Gagal mengambil data anak");
+        showNotification("error", "Gagal mengambil data anak");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("❌ Error loading children:", err);
-      setError("Gagal mengambil data anak");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadChildren();
+  }, [showNotification]);
 
   const handleDelete = async (childId, childName) => {
     const confirm = window.confirm(
@@ -50,12 +57,12 @@ function ChildrenPage() {
     if (!confirm) return;
 
     try {
-      await api.delete(`/children/${childId}`);
-      // hapus dari state tanpa reload full
+      await deleteChild(childId);
       setChildren((prev) => prev.filter((c) => c.id !== childId));
+      showNotification("success", `Data ${childName} berhasil dihapus.`);
     } catch (err) {
       console.error("❌ Delete error:", err);
-      alert("Gagal menghapus data anak. Coba lagi.");
+      showNotification("error", "Gagal menghapus data anak. Coba lagi.");
     }
   };
 
@@ -106,26 +113,25 @@ function ChildrenPage() {
         height: editForm.height ? Number(editForm.height) : null,
       };
 
-      const response = await api.put(`/children/${editingChild.id}`, payload);
-      console.log("✅ Updated child:", response.data);
+      const data = await updateChild(editingChild.id, payload);
+      console.log("✅ Updated child:", data);
 
-      if (response.data.success && response.data.data) {
-        const updated = response.data.data;
+      const updated = data.success && data.data ? data.data : data;
+      if (updated && updated.id) {
         setChildren((prev) =>
           prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
         );
-      } else {
-        // fallback: reload semua
-        await loadChildren();
       }
 
+      showNotification("success", "Data anak berhasil diperbarui.");
       closeEditModal();
     } catch (err) {
       console.error("❌ Edit error:", err);
-      setError(
+      const msg =
         err.response?.data?.message ||
-        "Gagal menyimpan perubahan. Pastikan data sudah benar."
-      );
+        "Gagal menyimpan perubahan. Pastikan data sudah benar.";
+      setError(msg);
+      showNotification("error", msg);
     } finally {
       setSaving(false);
     }
@@ -161,7 +167,14 @@ function ChildrenPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
         <h2 style={{ marginBottom: 0 }}>Data Anak</h2>
         <button
           onClick={() => navigate("/children/new")}
@@ -200,22 +213,45 @@ function ChildrenPage() {
             >
               <div
                 style={{ cursor: "pointer" }}
-                onClick={() => navigate(`/children/${child.id}/screenings`)}
+                onClick={() =>
+                  navigate(`/children/${child.id}/screenings`)
+                }
               >
                 <h3 style={{ margin: 0 }}>{child.name}</h3>
-                <p style={{ margin: "4px 0", fontSize: 14, color: "#555" }}>
-                  {child.age_years != null ? `${child.age_years} tahun` : "-"} •{" "}
+                <p
+                  style={{
+                    margin: "4px 0",
+                    fontSize: 14,
+                    color: "#555",
+                  }}
+                >
+                  {child.age_years != null
+                    ? `${child.age_years} tahun`
+                    : "-"}{" "}
+                  •{" "}
                   {child.gender === "M"
                     ? "Laki-laki"
                     : child.gender === "F"
                     ? "Perempuan"
                     : "-"}
                 </p>
-                <p style={{ margin: "4px 0", fontSize: 13, color: "#777" }}>
+                <p
+                  style={{
+                    margin: "4px 0",
+                    fontSize: 13,
+                    color: "#777",
+                  }}
+                >
                   BB {child.weight ?? "-"} kg • TB {child.height ?? "-"} cm
                 </p>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
                 <button
                   onClick={() => openEditModal(child)}
                   style={{
@@ -265,7 +301,6 @@ function ChildrenPage() {
         ))}
       </div>
 
-      {/* Simple Edit Modal */}
       {editingChild && (
         <div
           style={{
@@ -291,8 +326,16 @@ function ChildrenPage() {
             <h3 style={{ marginTop: 0, marginBottom: "0.75rem" }}>
               ✏️ Edit Data Anak
             </h3>
-            <p style={{ fontSize: 14, color: "#6b7280", marginTop: 0, marginBottom: "1rem" }}>
-              Perbarui data {editingChild.name} agar analisis postur tetap akurat.
+            <p
+              style={{
+                fontSize: 14,
+                color: "#6b7280",
+                marginTop: 0,
+                marginBottom: "1rem",
+              }}
+            >
+              Perbarui data {editingChild.name} agar analisis postur tetap
+              akurat.
             </p>
 
             {error && (

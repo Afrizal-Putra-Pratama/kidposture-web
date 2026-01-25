@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/axios";
-
+// import api from "../utils/axios";
+import { fetchPhysioScreenings } from "../services/screeningService";
 function PhysioDashboardPage() {
   const [screenings, setScreenings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,24 +13,27 @@ function PhysioDashboardPage() {
   }, []);
 
   const loadScreenings = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get("/physio/screenings");
-      console.log("✅ Physio screenings:", response.data);
+  setLoading(true);
+  setError(null);
+  try {
+    const data = await fetchPhysioScreenings(); // ⬅️ Pakai service
+    console.log("✅ Physio screenings:", data);
 
-      if (response.data.success && Array.isArray(response.data.data)) {
-        setScreenings(response.data.data);
-      } else {
-        setScreenings([]);
-      }
-    } catch (err) {
-      console.error("❌ Error loading physio screenings:", err);
-      setError("Gagal memuat data screening untuk fisioterapis.");
-    } finally {
-      setLoading(false);
+    if (data.success && Array.isArray(data.data)) {
+      setScreenings(data.data);
+    } else if (Array.isArray(data)) {
+      setScreenings(data);
+    } else {
+      setScreenings([]);
     }
-  };
+  } catch (err) {
+    console.error("❌ Error loading physio screenings:", err);
+    setError("Gagal memuat data screening untuk fisioterapis.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) return <p style={{ padding: 16 }}>Memuat dashboard fisioterapis...</p>;
   if (error) return <p style={{ padding: 16, color: "red" }}>{error}</p>;

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
-import api from "../utils/axios"; // ✅ Import axios instance
+import { createScreening } from "../services/screeningService.jsx";
 
 function NewScreeningPage() {
   const { childId } = useParams();
@@ -26,7 +26,7 @@ function NewScreeningPage() {
   // Cleanup preview URLs
   useEffect(() => {
     return () => {
-      Object.values(previews).forEach(url => {
+      Object.values(previews).forEach((url) => {
         if (url) URL.revokeObjectURL(url);
       });
     };
@@ -37,11 +37,10 @@ function NewScreeningPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImages(prev => ({ ...prev, [view]: file }));
-    
-    // Buat preview
+    setImages((prev) => ({ ...prev, [view]: file }));
+
     const url = URL.createObjectURL(file);
-    setPreviews(prev => ({ ...prev, [view]: url }));
+    setPreviews((prev) => ({ ...prev, [view]: url }));
     setError(null);
   };
 
@@ -55,7 +54,6 @@ function NewScreeningPage() {
       return;
     }
 
-    // Convert base64 → Blob → File
     const byteString = atob(imageSrc.split(",")[1]);
     const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
 
@@ -65,30 +63,34 @@ function NewScreeningPage() {
       ia[i] = byteString.charCodeAt(i);
     }
     const blob = new Blob([ab], { type: mimeString });
-    const file = new File([blob], `${activeView.toLowerCase()}_capture.jpg`, { type: mimeString });
+    const file = new File(
+      [blob],
+      `${activeView.toLowerCase()}_capture.jpg`,
+      { type: mimeString }
+    );
 
-    setImages(prev => ({ ...prev, [activeView]: file }));
-    setPreviews(prev => ({ ...prev, [activeView]: imageSrc }));
+    setImages((prev) => ({ ...prev, [activeView]: file }));
+    setPreviews((prev) => ({ ...prev, [activeView]: imageSrc }));
     setError(null);
   };
 
   // Hapus foto
   const handleRemoveImage = (view) => {
-    setImages(prev => ({ ...prev, [view]: null }));
+    setImages((prev) => ({ ...prev, [view]: null }));
     if (previews[view]) {
       URL.revokeObjectURL(previews[view]);
     }
-    setPreviews(prev => ({ ...prev, [view]: null }));
+    setPreviews((prev) => ({ ...prev, [view]: null }));
   };
 
-  // ✅ Submit multi-view dengan axios
+  // Submit multi-view via service
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    // Filter yang sudah diupload
-    // eslint-disable-next-line no-unused-vars
-const uploadedImages = Object.entries(images).filter(([_, file]) => file !== null);
+    const uploadedImages = Object.entries(images).filter(
+  ([, file]) => file !== null
+);
 
 
     if (uploadedImages.length === 0) {
@@ -97,7 +99,6 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
     }
 
     const formData = new FormData();
-    
     uploadedImages.forEach(([type, file], index) => {
       formData.append(`images[${index}][type]`, type);
       formData.append(`images[${index}][image]`, file);
@@ -106,28 +107,22 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
     try {
       setLoading(true);
 
-      // ✅ Gunakan axios dengan config multipart/form-data
-      const response = await api.post(`/children/${childId}/screenings`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
+      const data = await createScreening(childId, formData);
+      console.log("✅ Screening berhasil:", data);
 
-      console.log('✅ Screening berhasil:', response.data);
-
-      // Redirect ke hasil
-      if (response.data.id) {
-        navigate(`/screenings/${response.data.id}`);
+      if (data.id) {
+        navigate(`/screenings/${data.id}`);
+      } else if (data.data?.id) {
+        navigate(`/screenings/${data.data.id}`);
       } else {
-        // Fallback jika backend return data screening langsung
         navigate(`/children/${childId}`);
       }
     } catch (err) {
-      console.error('❌ Submit error:', err);
+      console.error("❌ Submit error:", err);
       setError(
-        err.response?.data?.message || 
-        err.message || 
-        "Gagal membuat screening. Pastikan token valid dan koneksi stabil."
+        err.response?.data?.message ||
+          err.message ||
+          "Gagal membuat screening. Pastikan token valid dan koneksi stabil."
       );
     } finally {
       setLoading(false);
@@ -138,7 +133,8 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
     facingMode: "environment",
   };
 
-  const uploadedCount = Object.values(images).filter(img => img !== null).length;
+  const uploadedCount = Object.values(images).filter((img) => img !== null)
+    .length;
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: 16 }}>
@@ -160,22 +156,36 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
 
       <h2 style={{ marginBottom: 8 }}>📸 Screening Postur Baru</h2>
       <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>
-        Upload <strong>1-3 foto</strong> (FRONT, SIDE, BACK). Semakin banyak foto, analisis semakin akurat!
+        Upload <strong>1-3 foto</strong> (FRONT, SIDE, BACK). Semakin banyak
+        foto, analisis semakin akurat!
       </p>
 
       {/* Info Badge */}
-      <div style={{
-        padding: 12,
-        background: uploadedCount === 3 ? "#dcfce7" : "#fef3c7",
-        borderRadius: 8,
-        marginBottom: 16,
-        border: `1px solid ${uploadedCount === 3 ? "#16a34a" : "#f59e0b"}`,
-      }}>
-        <p style={{ margin: 0, fontSize: 14, color: uploadedCount === 3 ? "#166534" : "#92400e" }}>
+      <div
+        style={{
+          padding: 12,
+          background: uploadedCount === 3 ? "#dcfce7" : "#fef3c7",
+          borderRadius: 8,
+          marginBottom: 16,
+          border: `1px solid ${
+            uploadedCount === 3 ? "#16a34a" : "#f59e0b"
+          }`,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: 14,
+            color: uploadedCount === 3 ? "#166534" : "#92400e",
+          }}
+        >
           {uploadedCount === 0 && "⚠️ Belum ada foto diupload"}
-          {uploadedCount === 1 && "✅ 1 foto terupload (opsional: tambah SIDE/BACK)"}
-          {uploadedCount === 2 && "✅ 2 foto terupload (opsional: tambah 1 lagi)"}
-          {uploadedCount === 3 && "🎉 Lengkap! 3 foto terupload (analisis maksimal)"}
+          {uploadedCount === 1 &&
+            "✅ 1 foto terupload (opsional: tambah SIDE/BACK)"}
+          {uploadedCount === 2 &&
+            "✅ 2 foto terupload (opsional: tambah 1 lagi)"}
+          {uploadedCount === 3 &&
+            "🎉 Lengkap! 3 foto terupload (analisis maksimal)"}
         </p>
       </div>
 
@@ -190,7 +200,9 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
                 flex: 1,
                 padding: "10px",
                 borderRadius: 8,
-                border: useCamera ? "1px solid #e5e7eb" : "1px solid #2563eb",
+                border: useCamera
+                  ? "1px solid #e5e7eb"
+                  : "1px solid #2563eb",
                 background: useCamera ? "white" : "#eff6ff",
                 color: useCamera ? "#374151" : "#1d4ed8",
                 cursor: "pointer",
@@ -207,7 +219,9 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
                 flex: 1,
                 padding: "10px",
                 borderRadius: 8,
-                border: useCamera ? "1px solid #16a34a" : "1px solid #e5e7eb",
+                border: useCamera
+                  ? "1px solid #16a34a"
+                  : "1px solid #e5e7eb",
                 background: useCamera ? "#dcfce7" : "white",
                 color: useCamera ? "#166534" : "#374151",
                 cursor: "pointer",
@@ -222,7 +236,7 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
 
         {/* View Tabs */}
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {["FRONT", "SIDE", "BACK"].map(view => (
+          {["FRONT", "SIDE", "BACK"].map((view) => (
             <button
               key={view}
               type="button"
@@ -230,12 +244,20 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
               style={{
                 flex: 1,
                 padding: "12px",
-                background: activeView === view 
-                  ? (images[view] ? "#10b981" : "#3b82f6") 
-                  : (images[view] ? "#d1fae5" : "#f3f4f6"),
-                color: activeView === view 
-                  ? "white" 
-                  : (images[view] ? "#065f46" : "#6b7280"),
+                background:
+                  activeView === view
+                    ? images[view]
+                      ? "#10b981"
+                      : "#3b82f6"
+                    : images[view]
+                    ? "#d1fae5"
+                    : "#f3f4f6",
+                color:
+                  activeView === view
+                    ? "white"
+                    : images[view]
+                    ? "#065f46"
+                    : "#6b7280",
                 border: "none",
                 borderRadius: 8,
                 fontWeight: 600,
@@ -250,25 +272,35 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
         </div>
 
         {/* Upload Section */}
-        <div style={{ 
-          background: "#f9fafb", 
-          padding: 16, 
-          borderRadius: 12, 
-          border: "2px dashed #d1d5db",
-          marginBottom: 16 
-        }}>
-          <h4 style={{ marginTop: 0, marginBottom: 12, color: "#374151" }}>
+        <div
+          style={{
+            background: "#f9fafb",
+            padding: 16,
+            borderRadius: 12,
+            border: "2px dashed #d1d5db",
+            marginBottom: 16,
+          }}
+        >
+          <h4
+            style={{
+              marginTop: 0,
+              marginBottom: 12,
+              color: "#374151",
+            }}
+          >
             Upload untuk: <strong>{activeView}</strong>
           </h4>
 
           {useCamera ? (
             <div>
-              <div style={{
-                borderRadius: 8,
-                overflow: "hidden",
-                marginBottom: 12,
-                border: "1px solid #d1d5db",
-              }}>
+              <div
+                style={{
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  marginBottom: 12,
+                  border: "1px solid #d1d5db",
+                }}
+              >
                 <Webcam
                   ref={webcamRef}
                   audio={false}
@@ -301,8 +333,8 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleFileUpload(e, activeView)}
-                style={{ 
-                  display: "block", 
+                style={{
+                  display: "block",
                   marginBottom: 8,
                   width: "100%",
                   padding: 8,
@@ -311,14 +343,27 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
                 }}
               />
               {images[activeView] && (
-                <p style={{ fontSize: 13, color: "#10b981", margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#10b981",
+                    margin: 0,
+                  }}
+                >
                   ✅ {images[activeView].name}
                 </p>
               )}
             </div>
           )}
 
-          <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8, marginBottom: 0 }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: "#6b7280",
+              marginTop: 8,
+              marginBottom: 0,
+            }}
+          >
             💡 Pastikan seluruh tubuh anak terlihat jelas
           </p>
         </div>
@@ -326,27 +371,38 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
         {/* Preview Grid */}
         <div style={{ marginBottom: 16 }}>
           <h4 style={{ marginBottom: 12 }}>Preview Foto:</h4>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 12,
+            }}
+          >
             {Object.entries(previews).map(([view, url]) => (
               <div key={view} style={{ position: "relative" }}>
-                <div style={{
-                  width: "100%",
-                  height: 150,
-                  backgroundColor: url ? "transparent" : "#e5e7eb",
-                  backgroundImage: url ? `url(${url})` : "none",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  borderRadius: 8,
-                  border: "2px solid " + (url ? "#10b981" : "#d1d5db"),
-                }} />
+                <div
+                  style={{
+                    width: "100%",
+                    height: 150,
+                    backgroundColor: url ? "transparent" : "#e5e7eb",
+                    backgroundImage: url ? `url(${url})` : "none",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    borderRadius: 8,
+                    border:
+                      "2px solid " + (url ? "#10b981" : "#d1d5db"),
+                  }}
+                />
 
-                <p style={{ 
-                  textAlign: "center", 
-                  fontSize: 12, 
-                  marginTop: 6,
-                  color: url ? "#10b981" : "#9ca3af",
-                  fontWeight: 600,
-                }}>
+                <p
+                  style={{
+                    textAlign: "center",
+                    fontSize: 12,
+                    marginTop: 6,
+                    color: url ? "#10b981" : "#9ca3af",
+                    fontWeight: 600,
+                  }}
+                >
                   {view}
                 </p>
                 {url && (
@@ -378,14 +434,16 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
 
         {/* Error */}
         {error && (
-          <p style={{ 
-            color: "#dc2626", 
-            background: "#fee2e2", 
-            padding: 12, 
-            borderRadius: 8,
-            fontSize: 14,
-            marginBottom: 16,
-          }}>
+          <p
+            style={{
+              color: "#dc2626",
+              background: "#fee2e2",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 14,
+              marginBottom: 16,
+            }}
+          >
             ⚠️ {error}
           </p>
         )}
@@ -396,23 +454,36 @@ const uploadedImages = Object.entries(images).filter(([_, file]) => file !== nul
           disabled={loading || uploadedCount === 0}
           style={{
             width: "100%",
-            padding: "14px",
+            padding: 14,
             borderRadius: 8,
             border: "none",
-            background: (loading || uploadedCount === 0) ? "#d1d5db" : "#3b82f6",
+            background:
+              loading || uploadedCount === 0 ? "#d1d5db" : "#3b82f6",
             color: "white",
             fontSize: 16,
             fontWeight: 600,
-            cursor: (loading || uploadedCount === 0) ? "not-allowed" : "pointer",
+            cursor:
+              loading || uploadedCount === 0 ? "not-allowed" : "pointer",
           }}
         >
-          {loading ? "🔄 Menganalisis..." : `🚀 Analisis ${uploadedCount} Foto`}
+          {loading
+            ? "🔄 Menganalisis..."
+            : `🚀 Analisis ${uploadedCount} Foto`}
         </button>
 
-        <p style={{ fontSize: 12, color: "#6b7280", textAlign: "center", marginTop: 12 }}>
+        <p
+          style={{
+            fontSize: 12,
+            color: "#6b7280",
+            textAlign: "center",
+            marginTop: 12,
+          }}
+        >
           {uploadedCount === 1 && "1 foto akan dianalisis"}
-          {uploadedCount === 2 && "2 foto akan dianalisis (rata-rata score)"}
-          {uploadedCount === 3 && "3 foto akan dianalisis (rata-rata score maksimal akurat!)"}
+          {uploadedCount === 2 &&
+            "2 foto akan dianalisis (rata-rata score)"}
+          {uploadedCount === 3 &&
+            "3 foto akan dianalisis (rata-rata score maksimal akurat!)"}
         </p>
       </form>
     </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { articleService } from '../services/articleService';
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { articleService } from "../services/articleService";
 
 function ArticleDetailPage() {
   const { slug } = useParams();
@@ -10,39 +10,45 @@ function ArticleDetailPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadArticle();
-  }, [slug]);
-
-  const loadArticle = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await articleService.getArticleBySlug(slug);
-      if (response.success) {
-        setArticle(response.data);
-      } else {
-        setError('Article not found');
+    const loadArticle = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await articleService.getArticleBySlug(slug);
+        if (response.success) {
+          setArticle(response.data);
+        } else {
+          setError("Article not found");
+        }
+      } catch (err) {
+        console.error("Error loading article:", err);
+        setError("Failed to load article");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error loading article:', err);
-      setError('Failed to load article');
-    } finally {
-      setLoading(false);
+    };
+
+    if (slug) {
+      loadArticle();
     }
-  };
+  }, [slug]);
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f8f9fa'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
-          <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>Loading article...</p>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#f8f9fa",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⏳</div>
+          <p style={{ color: "#6c757d", fontSize: "1.1rem" }}>
+            Loading article...
+          </p>
         </div>
       </div>
     );
@@ -50,37 +56,43 @@ function ArticleDetailPage() {
 
   if (error || !article) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f8f9fa'
-      }}>
-        <div style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: '3rem',
-          textAlign: 'center',
-          maxWidth: 400,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
-          <h2 style={{ color: '#2c3e50', marginBottom: '0.5rem' }}>Article Not Found</h2>
-          <p style={{ color: '#6c757d', marginBottom: '1.5rem' }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#f8f9fa",
+        }}
+      >
+        <div
+          style={{
+            background: "white",
+            borderRadius: 12,
+            padding: "3rem",
+            textAlign: "center",
+            maxWidth: 400,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>❌</div>
+          <h2 style={{ color: "#2c3e50", marginBottom: "0.5rem" }}>
+            Article Not Found
+          </h2>
+          <p style={{ color: "#6c757d", marginBottom: "1.5rem" }}>
             The article you're looking for doesn't exist.
           </p>
           <button
-            onClick={() => navigate('/education')}
+            onClick={() => navigate("/education")}
             style={{
-              padding: '0.75rem 1.5rem',
-              background: '#4e73df',
-              color: 'white',
-              border: 'none',
+              padding: "0.75rem 1.5rem",
+              background: "#4e73df",
+              color: "white",
+              border: "none",
               borderRadius: 8,
-              cursor: 'pointer',
+              cursor: "pointer",
               fontWeight: 500,
-              fontSize: '1rem'
+              fontSize: "1rem",
             }}
           >
             Back to Articles
@@ -91,67 +103,83 @@ function ArticleDetailPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '3rem' }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8f9fa",
+        paddingBottom: "3rem",
+      }}
+    >
       {/* Header with Thumbnail */}
-      <div style={{
-        background: article.thumbnail 
-          ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${article.thumbnail})`
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        padding: '3rem 0',
-        color: 'white',
-        marginBottom: '2rem'
-      }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 1rem' }}>
+      <div
+        style={{
+          background: article.thumbnail
+            ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${article.thumbnail})`
+            : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          padding: "3rem 0",
+          color: "white",
+          marginBottom: "2rem",
+        }}
+      >
+        <div
+          style={{ maxWidth: 900, margin: "0 auto", padding: "0 1rem" }}
+        >
           {/* Back Button */}
-          <Link 
+          <Link
             to="/education"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              color: 'white',
-              textDecoration: 'none',
-              marginBottom: '2rem',
-              fontSize: '0.95rem',
-              opacity: 0.9
+              display: "inline-flex",
+              alignItems: "center",
+              color: "white",
+              textDecoration: "none",
+              marginBottom: "2rem",
+              fontSize: "0.95rem",
+              opacity: 0.9,
             }}
           >
             ← Back to Articles
           </Link>
 
           {/* Category Badge */}
-          <div style={{ marginBottom: '1rem' }}>
-            <span style={{
-              background: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(10px)',
-              padding: '0.5rem 1rem',
-              borderRadius: 20,
-              fontSize: '0.9rem',
-              fontWeight: 500
-            }}>
+          <div style={{ marginBottom: "1rem" }}>
+            <span
+              style={{
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(10px)",
+                padding: "0.5rem 1rem",
+                borderRadius: 20,
+                fontSize: "0.9rem",
+                fontWeight: 500,
+              }}
+            >
               {article.category.icon} {article.category.name}
             </span>
           </div>
 
           {/* Title */}
-          <h1 style={{
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            marginBottom: '1rem',
-            lineHeight: 1.2
-          }}>
+          <h1
+            style={{
+              fontSize: "2.5rem",
+              fontWeight: "bold",
+              marginBottom: "1rem",
+              lineHeight: 1.2,
+            }}
+          >
             {article.title}
           </h1>
 
           {/* Meta Info */}
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1.5rem',
-            fontSize: '0.95rem',
-            opacity: 0.9
-          }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1.5rem",
+              fontSize: "0.95rem",
+              opacity: 0.9,
+            }}
+          >
             <span>👤 {article.author.name}</span>
             <span>📅 {article.published_at}</span>
             <span>⏱ {article.read_time} min read</span>
@@ -161,70 +189,95 @@ function ArticleDetailPage() {
       </div>
 
       {/* Article Content */}
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 1rem' }}>
-        <div style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: '2.5rem',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
+      <div
+        style={{ maxWidth: 900, margin: "0 auto", padding: "0 1rem" }}
+      >
+        <div
+          style={{
+            background: "white",
+            borderRadius: 12,
+            padding: "2.5rem",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
           {/* Excerpt */}
           {article.excerpt && (
-            <div style={{
-              background: '#f8f9fa',
-              border: '2px solid #e9ecef',
-              borderRadius: 8,
-              padding: '1.25rem',
-              marginBottom: '2rem',
-              fontStyle: 'italic',
-              color: '#495057',
-              fontSize: '1.1rem',
-              lineHeight: 1.6
-            }}>
+            <div
+              style={{
+                background: "#f8f9fa",
+                border: "2px solid #e9ecef",
+                borderRadius: 8,
+                padding: "1.25rem",
+                marginBottom: "2rem",
+                fontStyle: "italic",
+                color: "#495057",
+                fontSize: "1.1rem",
+                lineHeight: 1.6,
+              }}
+            >
               {article.excerpt}
             </div>
           )}
 
           {/* Article Body */}
-          <div 
+          <div
             style={{
-              fontSize: '1.1rem',
+              fontSize: "1.1rem",
               lineHeight: 1.8,
-              color: '#2c3e50'
+              color: "#2c3e50",
             }}
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
 
           {/* Author Info */}
-          <div style={{
-            marginTop: '3rem',
-            paddingTop: '2rem',
-            borderTop: '2px solid #e9ecef'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem'
-            }}>
-              <div style={{
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                color: 'white',
-                fontWeight: 'bold'
-              }}>
+          <div
+            style={{
+              marginTop: "3rem",
+              paddingTop: "2rem",
+              borderTop: "2px solid #e9ecef",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.5rem",
+                  color: "white",
+                  fontWeight: "bold",
+                }}
+              >
                 {article.author.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <div style={{ fontWeight: 'bold', color: '#2c3e50', marginBottom: '0.25rem' }}>
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    color: "#2c3e50",
+                    marginBottom: "0.25rem",
+                  }}
+                >
                   Written by
                 </div>
-                <div style={{ fontSize: '1.1rem', color: '#4e73df', fontWeight: 600 }}>
+                <div
+                  style={{
+                    fontSize: "1.1rem",
+                    color: "#4e73df",
+                    fontWeight: 600,
+                  }}
+                >
                   {article.author.name}
                 </div>
               </div>
@@ -233,21 +286,21 @@ function ArticleDetailPage() {
         </div>
 
         {/* Back to Articles Button */}
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <div style={{ textAlign: "center", marginTop: "2rem" }}>
           <Link
             to="/education"
             style={{
-              display: 'inline-block',
-              padding: '0.75rem 2rem',
-              background: '#4e73df',
-              color: 'white',
-              textDecoration: 'none',
+              display: "inline-block",
+              padding: "0.75rem 2rem",
+              background: "#4e73df",
+              color: "white",
+              textDecoration: "none",
               borderRadius: 8,
               fontWeight: 500,
-              transition: 'background 0.3s'
+              transition: "background 0.3s",
             }}
-            onMouseEnter={(e) => e.target.style.background = '#2e59d9'}
-            onMouseLeave={(e) => e.target.style.background = '#4e73df'}
+            onMouseEnter={(e) => (e.target.style.background = "#2e59d9")}
+            onMouseLeave={(e) => (e.target.style.background = "#4e73df")}
           >
             ← Back to All Articles
           </Link>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
+import { fetchScreeningDetail } from "../services/screeningService.jsx";
 function ScreeningDetailPage() {
   // ⬅️ untuk parent path: /screenings/:id
   const { id } = useParams();
@@ -13,48 +13,33 @@ function ScreeningDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Silakan login terlebih dahulu.");
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setError("Silakan login terlebih dahulu.");
+    setLoading(false);
+    return;
+  }
+
+  if (!id) {
+    setError("ID screening tidak ditemukan di URL.");
+    setLoading(false);
+    return;
+  }
+
+  const load = async () => {
+    try {
+      const json = await fetchScreeningDetail(id);
+      setData(json.data ?? json); // backend: { success, data } atau langsung object
+    } catch (err) {
+      setError(err.message || "Gagal mengambil data screening");
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    if (!id) {
-      setError("ID screening tidak ditemukan di URL.");
-      setLoading(false);
-      return;
-    }
+  load();
+}, [id]);
 
-    const fetchData = async () => {
-      try {
-        const res = await fetch(
-          `http://kidposture-api.test/api/screenings/${id}`,
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message || "Gagal mengambil data screening");
-        }
-
-        const json = await res.json();
-        // backend: { success: true, data: { ... } }
-        setData(json.data ?? json); // fallback kalau format lama
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id]);
 
   if (loading) return <p>Memuat...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
