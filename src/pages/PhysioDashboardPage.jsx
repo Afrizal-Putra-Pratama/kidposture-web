@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import api from "../utils/axios";
-import { fetchPhysioScreenings } from "../services/screeningService";
+import { fetchPhysioReferrals } from "../services/screeningService";
+
 function PhysioDashboardPage() {
   const [screenings, setScreenings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("requested"); // requested | accepted | completed
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,44 +14,49 @@ function PhysioDashboardPage() {
   }, []);
 
   const loadScreenings = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const data = await fetchPhysioScreenings(); // ⬅️ Pakai service
-    console.log("✅ Physio screenings:", data);
-
-    if (data.success && Array.isArray(data.data)) {
-      setScreenings(data.data);
-    } else if (Array.isArray(data)) {
-      setScreenings(data);
-    } else {
-      setScreenings([]);
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchPhysioReferrals();
+      const list = data?.data ?? data;
+      setScreenings(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("Error loading physio referrals:", err);
+      setError("Gagal memuat data rujukan untuk fisioterapis.");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("❌ Error loading physio screenings:", err);
-    setError("Gagal memuat data screening untuk fisioterapis.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const onlyReferred = screenings.filter(
+    (s) => s.referral_status && s.referral_status !== "none"
+  );
 
-  if (loading) return <p style={{ padding: 16 }}>Memuat dashboard fisioterapis...</p>;
+  const filteredScreenings = onlyReferred.filter(
+    (s) => s.referral_status === activeTab
+  );
+
+  const countByStatus = (status) =>
+    onlyReferred.filter((s) => s.referral_status === status).length;
+
+  if (loading)
+    return <p style={{ padding: 16 }}>Memuat dashboard fisioterapis...</p>;
   if (error) return <p style={{ padding: 16, color: "red" }}>{error}</p>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6", padding: "2rem 0" }}>
+    <div
+      style={{ minHeight: "100vh", background: "#f3f4f6", padding: "2rem 0" }}
+    >
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1rem" }}>
         <header style={{ marginBottom: "1.5rem" }}>
           <h1 style={{ margin: 0, fontSize: "2rem", color: "#111827" }}>
             🧑‍⚕️ Dashboard Fisioterapis
           </h1>
           <p style={{ marginTop: 8, color: "#6b7280" }}>
-            Daftar screening anak yang perlu perhatian dan siap dianalisis.
+            Screening anak yang dirujuk kepada Anda.
           </p>
         </header>
 
-        {/* Stats sederhana */}
         <div
           style={{
             display: "grid",
@@ -60,15 +66,60 @@ function PhysioDashboardPage() {
           }}
         >
           <StatCard
-            label="Total Screening Perlu Perhatian"
-            value={screenings.length}
-            icon="⚠️"
-            color="#f97316"
+            label="Menunggu Konfirmasi"
+            value={countByStatus("requested")}
+            icon="⏳"
+            color="#f59e0b"
+          />
+          <StatCard
+            label="Sedang Ditangani"
+            value={countByStatus("accepted")}
+            icon="🩺"
+            color="#3b82f6"
+          />
+          <StatCard
+            label="Selesai"
+            value={countByStatus("completed")}
+            icon="✅"
+            color="#10b981"
           />
         </div>
 
-        {/* List screening */}
-        {screenings.length === 0 ? (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginBottom: "1rem",
+            borderBottom: "2px solid #e5e7eb",
+            flexWrap: "wrap",
+          }}
+        >
+          {[
+            { key: "requested", label: "Menunggu Konfirmasi" },
+            { key: "accepted", label: "Sedang Ditangani" },
+            { key: "completed", label: "Selesai" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                padding: "10px 16px",
+                border: "none",
+                background: "transparent",
+                borderBottom:
+                  activeTab === tab.key ? "3px solid #3b82f6" : "none",
+                color: activeTab === tab.key ? "#3b82f6" : "#6b7280",
+                fontWeight: activeTab === tab.key ? 600 : 400,
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredScreenings.length === 0 ? (
           <div
             style={{
               background: "white",
@@ -78,12 +129,14 @@ function PhysioDashboardPage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
             }}
           >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📭</div>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
+              📭
+            </div>
             <h3 style={{ margin: 0, color: "#111827", marginBottom: "0.5rem" }}>
-              Belum ada screening yang perlu perhatian
+              Belum ada screening di tab ini
             </h3>
             <p style={{ margin: 0, color: "#6b7280" }}>
-              Screening baru yang butuh analisis akan muncul di sini.
+              Screening rujukan baru akan muncul di tab “Menunggu Konfirmasi”.
             </p>
           </div>
         ) : (
@@ -104,36 +157,56 @@ function PhysioDashboardPage() {
             >
               <thead style={{ background: "#f9fafb" }}>
                 <tr>
-                  <Th> Anak </Th>
-                  <Th> Orang Tua </Th>
-                  <Th> Skor </Th>
-                  <Th> Kategori </Th>
-                  <Th> Tanggal </Th>
-                  <Th> Aksi </Th>
+                  <Th>Anak</Th>
+                  <Th>Orang Tua</Th>
+                  <Th>Skor</Th>
+                  <Th>Kategori</Th>
+                  <Th>Tanggal</Th>
+                  <Th>Aksi</Th>
                 </tr>
               </thead>
               <tbody>
-                {screenings.map((s) => (
+                {filteredScreenings.map((s) => (
                   <tr key={s.id} style={{ borderTop: "1px solid #e5e7eb" }}>
                     <Td>
-                      <div style={{ fontWeight: 600, color: "#111827" }}>{s.child.name}</div>
+                      <div style={{ fontWeight: 600, color: "#111827" }}>
+                        {s.child?.name}
+                      </div>
                       <div style={{ fontSize: 12, color: "#6b7280" }}>
-                        {s.child.age_years != null ? `${s.child.age_years} tahun` : "-"}
+                        {s.child?.age_years != null
+                          ? `${s.child.age_years} tahun`
+                          : "-"}
                       </div>
                     </Td>
                     <Td>
-                      <div style={{ fontSize: 13, color: "#374151" }}>{s.parent.name}</div>
-                      <div style={{ fontSize: 12, color: "#6b7280" }}>{s.parent.email}</div>
+                      <div style={{ fontSize: 13, color: "#374151" }}>
+                        {s.parent?.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>
+                        {s.parent?.email}
+                      </div>
                     </Td>
-                    <Td style={{ fontWeight: 600, color: "#111827" }}>{s.score ?? "-"}</Td>
+                    <Td style={{ fontWeight: 600, color: "#111827" }}>
+                      {s.score ?? "-"}
+                    </Td>
                     <Td>
                       <span
                         style={{
                           display: "inline-block",
                           padding: "2px 10px",
                           borderRadius: 999,
-                          background: "#fee2e2",
-                          color: "#b91c1c",
+                          background:
+                            s.category === "GOOD"
+                              ? "#d1fae5"
+                              : s.category === "FAIR"
+                              ? "#fed7aa"
+                              : "#fee2e2",
+                          color:
+                            s.category === "GOOD"
+                              ? "#065f46"
+                              : s.category === "FAIR"
+                              ? "#9a3412"
+                              : "#b91c1c",
                           fontSize: 12,
                           fontWeight: 600,
                         }}
@@ -146,14 +219,14 @@ function PhysioDashboardPage() {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
                       })}
                     </Td>
                     <Td>
                       <button
                         type="button"
-                        onClick={() => navigate(`/physio/screenings/${s.id}`)}
+                        onClick={() =>
+                          navigate(`/physio/screenings/${s.id}`)
+                        }
                         style={{
                           padding: "6px 10px",
                           borderRadius: 6,
@@ -188,10 +261,20 @@ function StatCard({ label, value, icon, color }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div>
-          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>{label}</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>{value}</div>
+          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+            {label}
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>
+            {value}
+          </div>
         </div>
         <div
           style={{

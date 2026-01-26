@@ -1,15 +1,22 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
 import ScreeningDetailPage from "./pages/ScreeningDetailPage.jsx";
 import NewScreeningPage from "./pages/NewScreeningPage.jsx";
-import EducationPage from "./pages/EducationPage";
-import ArticleDetailPage from "./pages/ArticleDetailPage";
+import EducationPage from "./pages/EducationPage.jsx";
+import ArticleDetailPage from "./pages/ArticleDetailPage.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
-import LoginPage from "./pages/LoginPage";
-import NewChildPage from "./pages/NewChildPage";
+import LoginPage from "./pages/LoginPage.jsx";
+import NewChildPage from "./pages/NewChildPage.jsx";
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
+
+// file lama yang memang sudah ada
 import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
+
+// Direktori fisio (file baru)
+import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
+import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
 
 // ✅ Protected Route: hanya cek token
 function ProtectedRoute({ children }) {
@@ -29,7 +36,6 @@ function RoleRoute({ children, allowedRoles }) {
   const role = user?.role?.toLowerCase();
 
   if (!user || !allowedRoles.includes(role)) {
-    // kalau bukan role yang diizinkan, lempar ke dashboard parent
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -40,10 +46,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ✅ Public Routes */}
+        {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* ✅ Protected Routes (Parent default) */}
+        {/* Protected Routes (Parent default) */}
         <Route
           path="/"
           element={
@@ -101,7 +107,7 @@ function App() {
 
         {/* Screening Detail (Parent) */}
         <Route
-          path="/screenings/:id"
+          path="/screenings/:screeningId"
           element={
             <ProtectedRoute>
               <ScreeningDetailPage />
@@ -128,7 +134,26 @@ function App() {
           }
         />
 
-        {/* ✅ Physio Dashboard (hanya role physio) */}
+        {/* Direktori Fisioterapis (Parent) */}
+        <Route
+          path="/physios"
+          element={
+            <ProtectedRoute>
+              <PhysiotherapistList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/physios/:id"
+          element={
+            <ProtectedRoute>
+              <PhysiotherapistDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Physio Dashboard (hanya role physio) */}
         <Route
           path="/physio/dashboard"
           element={
@@ -140,7 +165,7 @@ function App() {
           }
         />
 
-        {/* ✅ Physio Screening Detail */}
+        {/* Physio Screening Detail */}
         <Route
           path="/physio/screenings/:screeningId"
           element={
@@ -152,7 +177,7 @@ function App() {
           }
         />
 
-        {/* ✅ 404 Fallback */}
+        {/* 404 Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

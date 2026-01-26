@@ -13,7 +13,7 @@ import LoginPage from '../pages/LoginPage.jsx';
 
 // Physio pages
 import PhysioDashboardPage from '../pages/PhysioDashboardPage.jsx';
-import PhysioScreeningDetailPage from '../pages/physio/PhysioScreeningDetailPage.jsx';
+import PhysioScreeningDetailPage from '../pages/physio/PhysiotherapistDetail.jsx';
 
 export const router = createBrowserRouter([
   // Auth

@@ -12,17 +12,18 @@ export async function fetchScreeningDetail(screeningId) {
   return res.data;
 }
 
-// list screening untuk fisio dashboard
-export async function fetchPhysioScreenings() {
-  const res = await api.get("/physio/screenings");
+// list rujukan untuk fisio (dashboard)
+export async function fetchPhysioReferrals() {
+  const res = await api.get("/physio/referrals");
   return res.data;
 }
 
-// tambah screening (kalau FormData)
+// tambah screening
 export async function createScreening(childId, payload) {
   const res = await api.post(`/children/${childId}/screenings`, payload, {
     headers: {
-      "Content-Type": payload instanceof FormData ? "multipart/form-data" : "application/json",
+      "Content-Type":
+        payload instanceof FormData ? "multipart/form-data" : "application/json",
     },
   });
   return res.data;
@@ -30,6 +31,28 @@ export async function createScreening(childId, payload) {
 
 // tambah rekomendasi manual dari fisio
 export async function createManualRecommendation(screeningId, payload) {
-  const res = await api.post(`/screenings/${screeningId}/recommendations`, payload);
+  const res = await api.post(
+    `/screenings/${screeningId}/recommendations`,
+    payload
+  );
   return res.data;
 }
+
+// rujuk screening ke fisioterapis (parent)
+export async function referScreeningToPhysio(screeningId, physiotherapistId) {
+  const res = await api.post(`/screenings/${screeningId}/refer`, {
+    physiotherapist_id: physiotherapistId,
+  });
+  return res.data;
+}
+
+// update status rujukan oleh fisio
+export const updateReferralStatusByPhysio = (screeningId, status) =>
+  api.patch(`/physio/referrals/${screeningId}/status`, { status });
+
+// helper khusus tombol
+export const acceptReferralByPhysio = (screeningId) =>
+  updateReferralStatusByPhysio(screeningId, "accepted");
+
+export const completeReferralByPhysio = (screeningId) =>
+  updateReferralStatusByPhysio(screeningId, "completed");

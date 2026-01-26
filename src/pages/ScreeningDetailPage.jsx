@@ -1,46 +1,93 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchScreeningDetail } from "../services/screeningService.jsx";
+import { fetchScreeningDetail, referScreeningToPhysio } from "../services/screeningService.jsx";
+import physioService from "../services/physioService.jsx";
+
 function ScreeningDetailPage() {
-  // ⬅️ untuk parent path: /screenings/:id
-  const { id } = useParams();
+  const { screeningId } = useParams();
   const navigate = useNavigate();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State untuk slider
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+  // modal rujuk
+  const [isReferModalOpen, setIsReferModalOpen] = useState(false);
+  const [physios, setPhysios] = useState([]);
+  const [loadingPhysios, setLoadingPhysios] = useState(false);
+  const [submittingRefer, setSubmittingRefer] = useState(false);
+  const [referError, setReferError] = useState(null);
+
+  // DEBUG: cek params
+  // console.log("PARAMS =>", useParams());
+  // console.log("screeningId =>", screeningId);
+
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    setError("Silakan login terlebih dahulu.");
-    setLoading(false);
-    return;
-  }
-
-  if (!id) {
-    setError("ID screening tidak ditemukan di URL.");
-    setLoading(false);
-    return;
-  }
-
-  const load = async () => {
-    try {
-      const json = await fetchScreeningDetail(id);
-      setData(json.data ?? json); // backend: { success, data } atau langsung object
-    } catch (err) {
-      setError(err.message || "Gagal mengambil data screening");
-    } finally {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Silakan login terlebih dahulu.");
       setLoading(false);
+      return;
+    }
+
+    // kalau memang belum ada param (kasus ekstrem), tetap coba nanti saat ada
+    if (!screeningId) {
+      setError("ID screening tidak ditemukan di URL.");
+      setLoading(false);
+      return;
+    }
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const json = await fetchScreeningDetail(screeningId);
+        setData(json.data ?? json);
+      } catch (err) {
+        setError(err.message || "Gagal mengambil data screening");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [screeningId]);
+
+  const openReferModal = async () => {
+    setIsReferModalOpen(true);
+    setReferError(null);
+    setLoadingPhysios(true);
+    try {
+      const list = await physioService.getAll();
+      setPhysios(list);
+    } catch (err) {
+      setReferError(err.message || "Gagal memuat daftar fisioterapis");
+    } finally {
+      setLoadingPhysios(false);
     }
   };
 
-  load();
-}, [id]);
+  const handleRefer = async (physioId) => {
+    if (!window.confirm("Kirim screening ini ke fisioterapis yang dipilih?")) return;
+    setSubmittingRefer(true);
+    setReferError(null);
+    try {
+      const res = await referScreeningToPhysio(screeningId, physioId);
+      const updated = res.data ?? res;
+      setData(updated);
+      setIsReferModalOpen(false);
+    } catch (err) {
+      setReferError(
+        err.response?.data?.message || err.message || "Gagal mengirim rujukan"
+      );
+    } finally {
+      setSubmittingRefer(false);
+    }
+  };
 
-
+  // ---- RENDER STATE UMUM ----
   if (loading) return <p>Memuat...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!data) return <p>Data tidak ditemukan.</p>;
@@ -55,14 +102,13 @@ function ScreeningDetailPage() {
     metrics,
     is_multi_view,
     total_views,
-    manualRecommendations, // rekomendasi dari fisioterapis
+    manualRecommendations,
+    referral_status,
+    physiotherapist,
   } = data;
 
-  // PISAHKAN main images (FRONT/SIDE/BACK) vs crops
-  const mainImages =
-    images?.filter((img) => !img.type.startsWith("CROP_")) || [];
-  const cropImages =
-    images?.filter((img) => img.type.startsWith("CROP_")) || [];
+  const mainImages = images?.filter((img) => !img.type.startsWith("CROP_")) || [];
+  const cropImages = images?.filter((img) => img.type.startsWith("CROP_")) || [];
 
   const categoryColor =
     category === "GOOD"
@@ -70,6 +116,11 @@ function ScreeningDetailPage() {
       : category === "FAIR"
       ? "#f59e0b"
       : "#dc2626";
+
+  const canRefer =
+    (category === "FAIR" || category === "ATTENTION") &&
+    referral_status === "none" &&
+    !physiotherapist;
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
@@ -189,7 +240,68 @@ function ScreeningDetailPage() {
         </div>
       </section>
 
-      {/* SLIDER MULTI-VIEW IMAGES */}
+      {/* STATUS RUJUKAN */}
+      <section
+        style={{
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          background: "#eef2ff",
+          border: "1px solid #c7d2fe",
+        }}
+      >
+        <h3 style={{ margin: "0 0 8px 0", fontSize: 16 }}>
+          🧑‍⚕️ Status Konsultasi Fisioterapis
+        </h3>
+
+        {physiotherapist ? (
+          <p style={{ margin: "4px 0", fontSize: 14 }}>
+            Fisioterapis: <strong>{physiotherapist.name}</strong>
+            {physiotherapist.clinic_name && ` · ${physiotherapist.clinic_name}`}
+            {physiotherapist.city && ` · ${physiotherapist.city}`}
+          </p>
+        ) : (
+          <p style={{ margin: "4px 0", fontSize: 14 }}>
+            Belum ada fisioterapis yang dipilih.
+          </p>
+        )}
+
+        <p style={{ margin: "4px 0", fontSize: 13, color: "#4b5563" }}>
+          Status:{" "}
+          <strong>
+            {referral_status === "none" && "Belum ada konsultasi"}
+            {referral_status === "requested" && "Menunggu konfirmasi fisioterapis"}
+            {referral_status === "accepted" && "Sedang dalam penanganan"}
+            {referral_status === "completed" && "Selesai konsultasi"}
+            {referral_status === "cancelled" && "Dibatalkan"}
+          </strong>
+        </p>
+
+        {canRefer && (
+          <button
+            onClick={openReferModal}
+            style={{
+              marginTop: 8,
+              padding: "10px 16px",
+              borderRadius: 8,
+              border: "none",
+              background: "#6366f1",
+              color: "white",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            💬 Konsultasi dengan Fisioterapis
+          </button>
+        )}
+
+        {referError && (
+          <p style={{ marginTop: 8, color: "red", fontSize: 13 }}>{referError}</p>
+        )}
+      </section>
+
+      {/* SLIDER GAMBAR */}
       {mainImages.length > 0 && (
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ marginBottom: 12 }}>
@@ -197,7 +309,6 @@ function ScreeningDetailPage() {
             {is_multi_view && ` (${mainImages.length} tampak)`}
           </h3>
 
-          {/* Thumbnail Tabs */}
           {mainImages.length > 1 && (
             <div
               style={{
@@ -222,8 +333,7 @@ function ScreeningDetailPage() {
                         : "1px solid #e5e7eb",
                     background:
                       selectedImageIndex === index ? "#eff6ff" : "white",
-                    color:
-                      selectedImageIndex === index ? "#1d4ed8" : "#6b7280",
+                    color: selectedImageIndex === index ? "#1d4ed8" : "#6b7280",
                     cursor: "pointer",
                     fontSize: 13,
                     fontWeight: 600,
@@ -235,7 +345,6 @@ function ScreeningDetailPage() {
             </div>
           )}
 
-          {/* Main Image Display */}
           {mainImages[selectedImageIndex] && (
             <div>
               {mainImages[selectedImageIndex].url_processed ? (
@@ -286,7 +395,6 @@ function ScreeningDetailPage() {
                 </>
               )}
 
-              {/* Rekomendasi otomatis per view (AI) */}
               {mainImages[selectedImageIndex].recommendations &&
                 mainImages[selectedImageIndex].recommendations.length > 0 && (
                   <div
@@ -422,7 +530,6 @@ function ScreeningDetailPage() {
             </div>
           )}
 
-          {/* Navigation Arrows (kalau >1 foto) */}
           {mainImages.length > 1 && (
             <div
               style={{
@@ -481,7 +588,7 @@ function ScreeningDetailPage() {
         </section>
       )}
 
-      {/* REKOMENDASI DARI FISIOTERAPIS */}
+      {/* Rekomendasi dari Fisioterapis */}
       <section style={{ marginBottom: 24 }}>
         <h3 style={{ marginBottom: 8 }}>🧑‍⚕️ Rekomendasi dari Fisioterapis</h3>
         {manualRecommendations && manualRecommendations.length > 0 ? (
@@ -508,7 +615,7 @@ function ScreeningDetailPage() {
         )}
       </section>
 
-      {/* CROP REGIONS */}
+      {/* Crop regions */}
       {cropImages.length > 0 && (
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ marginBottom: 12 }}>🔍 Detail Area Bermasalah</h3>
@@ -578,7 +685,7 @@ function ScreeningDetailPage() {
         </section>
       )}
 
-      {/* Metrik Detail */}
+      {/* Metrics */}
       {metrics && Object.keys(metrics).length > 0 && (
         <section
           style={{
@@ -665,7 +772,7 @@ function ScreeningDetailPage() {
         </section>
       )}
 
-      {/* Tombol Aksi */}
+      {/* Tombol aksi */}
       <section
         style={{
           display: "flex",
@@ -710,6 +817,123 @@ function ScreeningDetailPage() {
           📋 Lihat Riwayat Screening
         </button>
       </section>
+
+      {/* MODAL PILIH FISIOTERAPIS */}
+      {isReferModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15,23,42,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 12,
+              padding: 20,
+              maxWidth: 600,
+              width: "90%",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: 18 }}>Pilih Fisioterapis</h3>
+              <button
+                onClick={() => setIsReferModalOpen(false)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  fontSize: 18,
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingPhysios ? (
+              <p>Memuat daftar fisioterapis...</p>
+            ) : physios.length === 0 ? (
+              <p style={{ fontSize: 14, color: "#6b7280" }}>
+                Belum ada fisioterapis yang tersedia.
+              </p>
+            ) : (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {physios.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 10,
+                      padding: 12,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <strong>{p.name}</strong>
+                      <p
+                        style={{
+                          margin: "4px 0",
+                          fontSize: 13,
+                          color: "#4b5563",
+                        }}
+                      >
+                        {p.clinic_name || "-"} · {p.city || "-"}
+                      </p>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: 12,
+                          color: "#6b7280",
+                        }}
+                      >
+                        Spesialisasi: {p.specialty || "-"}{" "}
+                        {p.experience_years != null &&
+                          `· ${p.experience_years} tahun pengalaman`}
+                      </p>
+                    </div>
+                    <button
+                      disabled={submittingRefer}
+                      onClick={() => handleRefer(p.id)}
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "#22c55e",
+                        color: "white",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {submittingRefer ? "Mengirim..." : "Pilih"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
