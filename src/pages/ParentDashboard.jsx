@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchChildren } from "../services/childService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 function ParentDashboard() {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ function ParentDashboard() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* Header dengan info user & logout */}
+        {/* Header dengan info user, notifikasi & logout */}
         <div style={styles.header}>
           <div
             style={{
@@ -105,6 +106,9 @@ function ParentDashboard() {
                 alignItems: "center",
               }}
             >
+              {/* Notifikasi Bell */}
+              <NotificationBell />
+
               <Link to="/education" style={styles.btnSecondaryLink}>
                 📚 Edukasi
               </Link>
