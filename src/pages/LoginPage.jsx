@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService.jsx";
 
 function LoginPage() {
@@ -33,11 +33,13 @@ function LoginPage() {
 
       const role = user.role?.toLowerCase();
 
+      // Redirect sesuai role
       if (role === "physio") {
         navigate("/physio/dashboard");
       } else if (role === "admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin/physiotherapists");
       } else {
+        // parent
         navigate("/dashboard");
       }
     } catch (err) {
@@ -54,88 +56,29 @@ function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-          padding: 40,
-          width: "100%",
-          maxWidth: 400,
-        }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <h1
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#1f2937",
-              marginBottom: 8,
-            }}
-          >
-            🧒 KIDPOSTURE
-          </h1>
-          <p style={{ fontSize: 14, color: "#6b7280" }}>
-            Smart Posture Screening for Children
-          </p>
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>KidPosture</h1>
+          <p style={styles.subtitle}>Smart Posture Screening for Children</p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 20 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#374151",
-                marginBottom: 8,
-              }}
-            >
-              Email
-            </label>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
-              placeholder="admin@example.com"
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                border: "2px solid #e5e7eb",
-                borderRadius: 8,
-                fontSize: 14,
-                outline: "none",
-                transition: "border 0.3s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#667eea")}
-              onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              placeholder="email@example.com"
+              style={styles.input}
             />
           </div>
 
-          <div style={{ marginBottom: 24 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#374151",
-                marginBottom: 8,
-              }}
-            >
-              Password
-            </label>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Password</label>
             <input
               type="password"
               name="password"
@@ -143,33 +86,13 @@ function LoginPage() {
               onChange={handleChange}
               required
               placeholder="••••••••"
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                border: "2px solid #e5e7eb",
-                borderRadius: 8,
-                fontSize: 14,
-                outline: "none",
-                transition: "border 0.3s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#667eea")}
-              onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              style={styles.input}
             />
           </div>
 
           {error && (
-            <div
-              style={{
-                padding: "12px 16px",
-                background: "#fee2e2",
-                border: "1px solid #fca5a5",
-                borderRadius: 8,
-                marginBottom: 20,
-              }}
-            >
-              <p style={{ fontSize: 14, color: "#dc2626", margin: 0 }}>
-                ⚠️ {error}
-              </p>
+            <div style={styles.errorBox}>
+              <p style={styles.errorText}>{error}</p>
             </div>
           )}
 
@@ -177,53 +100,128 @@ function LoginPage() {
             type="submit"
             disabled={loading}
             style={{
-              width: "100%",
-              padding: 14,
-              background: loading
-                ? "#9ca3af"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 600,
+              ...styles.submitButton,
+              opacity: loading ? 0.6 : 1,
               cursor: loading ? "not-allowed" : "pointer",
-              transition: "transform 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) e.target.style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
             }}
           >
-            {loading ? "🔄 Loading..." : "🚀 Login"}
+            {loading ? "Loading..." : "Login"}
           </button>
         </form>
 
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: 13,
-            color: "#6b7280",
-            marginTop: 24,
-          }}
-        >
-          Belum punya akun?{" "}
-          <a
-            href="/register"
-            style={{
-              color: "#667eea",
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            Daftar di sini
-          </a>
-        </p>
+        <div style={styles.footer}>
+          <p style={styles.footerText}>
+            Belum punya akun?{" "}
+            <Link to="/register/physio" style={styles.link}>
+              Daftar sebagai Fisioterapis
+            </Link>
+          </p>
+          <Link to="/" style={styles.linkBack}>
+            ← Kembali ke Beranda
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#fafafa",
+    padding: "1rem",
+  },
+  card: {
+    background: "white",
+    borderRadius: 8,
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    padding: "2.5rem",
+    width: "100%",
+    maxWidth: 400,
+  },
+  header: {
+    textAlign: "center",
+    marginBottom: "2rem",
+  },
+  title: {
+    fontSize: "1.75rem",
+    fontWeight: 700,
+    color: "#111827",
+    marginBottom: "0.5rem",
+  },
+  subtitle: {
+    fontSize: "0.875rem",
+    color: "#6b7280",
+    margin: 0,
+  },
+  inputGroup: {
+    marginBottom: "1.25rem",
+  },
+  label: {
+    display: "block",
+    fontSize: "0.875rem",
+    fontWeight: 500,
+    color: "#374151",
+    marginBottom: "0.5rem",
+  },
+  input: {
+    width: "100%",
+    padding: "0.625rem 0.875rem",
+    border: "1px solid #d1d5db",
+    borderRadius: 6,
+    fontSize: "0.9rem",
+    outline: "none",
+    transition: "all 0.2s",
+  },
+  errorBox: {
+    padding: "0.75rem 1rem",
+    background: "#fef2f2",
+    border: "1px solid #fecaca",
+    borderRadius: 6,
+    marginBottom: "1rem",
+  },
+  errorText: {
+    fontSize: "0.875rem",
+    color: "#dc2626",
+    margin: 0,
+  },
+  submitButton: {
+    width: "100%",
+    padding: "0.75rem",
+    background: "#3b82f6",
+    color: "white",
+    border: "none",
+    borderRadius: 6,
+    fontSize: "1rem",
+    fontWeight: 500,
+    transition: "all 0.2s",
+    marginTop: "0.5rem",
+  },
+  footer: {
+    marginTop: "1.5rem",
+    textAlign: "center",
+  },
+  footerText: {
+    fontSize: "0.875rem",
+    color: "#6b7280",
+    marginBottom: "0.75rem",
+  },
+  link: {
+    color: "#3b82f6",
+    textDecoration: "none",
+    fontWeight: 500,
+  },
+  linkBack: {
+    display: "inline-block",
+    fontSize: "0.875rem",
+    color: "#6b7280",
+    textDecoration: "none",
+    transition: "color 0.2s",
+  },
+};
 
 export default LoginPage;

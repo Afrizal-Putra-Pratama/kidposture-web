@@ -1,3 +1,4 @@
+// src/pages/PhysioDashboardPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchPhysioReferrals } from "../services/screeningService";
@@ -48,15 +49,49 @@ function PhysioDashboardPage() {
       style={{ minHeight: "100vh", background: "#f3f4f6", padding: "2rem 0" }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1rem" }}>
-        <header style={{ marginBottom: "1.5rem" }}>
-          <h1 style={{ margin: 0, fontSize: "2rem", color: "#111827" }}>
-            🧑‍⚕️ Dashboard Fisioterapis
-          </h1>
-          <p style={{ marginTop: 8, color: "#6b7280" }}>
-            Screening anak yang dirujuk kepada Anda.
-          </p>
+        {/* Header + tombol ke profil */}
+        <header
+          style={{
+            marginBottom: "1.5rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <h1 style={{ margin: 0, fontSize: "2rem", color: "#111827" }}>
+              🧑‍⚕️ Dashboard Fisioterapis
+            </h1>
+            <p style={{ marginTop: 8, color: "#6b7280" }}>
+              Screening anak yang dirujuk kepada Anda.
+            </p>
+          </div>
+
+          {/* ✅ Tombol menuju halaman profil fisio */}
+          <button
+            type="button"
+            onClick={() => navigate("/physio/profile")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "1px solid #3b82f6",
+              background: "white",
+              color: "#3b82f6",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            ⚙️ Pengaturan Profil
+          </button>
         </header>
 
+        {/* Stat cards */}
         <div
           style={{
             display: "grid",
@@ -85,6 +120,7 @@ function PhysioDashboardPage() {
           />
         </div>
 
+        {/* Tabs */}
         <div
           style={{
             display: "flex",
@@ -119,6 +155,7 @@ function PhysioDashboardPage() {
           ))}
         </div>
 
+        {/* List / Empty state */}
         {filteredScreenings.length === 0 ? (
           <div
             style={{
@@ -132,7 +169,9 @@ function PhysioDashboardPage() {
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
               📭
             </div>
-            <h3 style={{ margin: 0, color: "#111827", marginBottom: "0.5rem" }}>
+            <h3
+              style={{ margin: 0, color: "#111827", marginBottom: "0.5rem" }}
+            >
               Belum ada screening di tab ini
             </h3>
             <p style={{ margin: 0, color: "#6b7280" }}>

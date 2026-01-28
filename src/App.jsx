@@ -11,12 +11,21 @@ import LoginPage from "./pages/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
 
-// file lama yang memang sudah ada
+// Physio (file lama)
 import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
 
-// Direktori fisio (file baru)
+// Direktori fisio (file lama)
 import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
 import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
+
+// FASE 1 (file baru)
+import RegisterPhysioPage from "./pages/auth/RegisterPhysioPage.jsx";
+import PhysioProfilePage from "./pages/physio/PhysioProfilePage.jsx";
+import PhysiotherapistListPage from "./pages/parent/PhysiotherapistListPage.jsx";
+import AdminPhysioManagementPage from "./pages/admin/AdminPhysioManagementPage.jsx";
+
+// FASE 2 (file baru)
+import LandingPage from "./pages/LandingPage.jsx";
 
 // ✅ Protected Route: hanya cek token
 function ProtectedRoute({ children }) {
@@ -46,19 +55,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing Page (Public) */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register/physio" element={<RegisterPhysioPage />} />
 
         {/* Protected Routes (Parent default) */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <ParentDashboard />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/dashboard"
           element={
@@ -134,14 +138,20 @@ function App() {
           }
         />
 
-        {/* Direktori Fisioterapis (Parent) */}
+        {/* Direktori Fisioterapis (Parent) - gunakan yang baru dengan filter & maps */}
         <Route
-          path="/physios"
+          path="/physiotherapists"
           element={
             <ProtectedRoute>
-              <PhysiotherapistList />
+              <PhysiotherapistListPage />
             </ProtectedRoute>
           }
+        />
+
+        {/* Legacy route /physios redirect ke /physiotherapists */}
+        <Route
+          path="/physios"
+          element={<Navigate to="/physiotherapists" replace />}
         />
 
         <Route
@@ -153,7 +163,7 @@ function App() {
           }
         />
 
-        {/* Physio Dashboard (hanya role physio) */}
+        {/* Physio Routes (role: physio) */}
         <Route
           path="/physio/dashboard"
           element={
@@ -165,7 +175,17 @@ function App() {
           }
         />
 
-        {/* Physio Screening Detail */}
+        <Route
+          path="/physio/profile"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioProfilePage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/physio/screenings/:screeningId"
           element={
@@ -177,8 +197,20 @@ function App() {
           }
         />
 
+        {/* Admin Routes (role: admin) */}
+        <Route
+          path="/admin/physiotherapists"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["admin"]}>
+                <AdminPhysioManagementPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
         {/* 404 Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
