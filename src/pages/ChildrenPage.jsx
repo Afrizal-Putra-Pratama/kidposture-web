@@ -1,11 +1,23 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  Plus,
+  Edit2,
+  Trash2,
+  Camera,
+  User,
+  Calendar,
+  Weight,
+  Ruler,
+  X,
+} from "lucide-react";
 import {
   fetchChildren,
   updateChild,
   deleteChild,
 } from "../services/childService.jsx";
-import { useNotification } from "../hooks/useNotification.jsx";
+import "../styles/children.css";
 
 function ChildrenPage() {
   const [children, setChildren] = useState([]);
@@ -21,48 +33,44 @@ function ChildrenPage() {
   });
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
 
   useEffect(() => {
-    const loadChildren = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchChildren();
-        console.log("✅ Children data:", data);
-
-        if (data.success && Array.isArray(data.data)) {
-          setChildren(data.data);
-        } else if (Array.isArray(data)) {
-          setChildren(data);
-        } else {
-          setChildren([]);
-        }
-      } catch (err) {
-        console.error("❌ Error loading children:", err);
-        setError("Gagal mengambil data anak");
-        showNotification("error", "Gagal mengambil data anak");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadChildren();
-  }, [showNotification]);
+  }, []);
+
+  const loadChildren = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchChildren();
+
+      if (data.success && Array.isArray(data.data)) {
+        setChildren(data.data);
+      } else if (Array.isArray(data)) {
+        setChildren(data);
+      } else {
+        setChildren([]);
+      }
+    } catch (err) {
+      console.error("Error loading children:", err);
+      setError("Gagal mengambil data anak");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (childId, childName) => {
     const confirm = window.confirm(
-      `Yakin ingin menghapus data ${childName}? Semua riwayat screening anak ini juga bisa terpengaruh.`
+      `Yakin ingin menghapus data ${childName}? Semua riwayat screening anak ini juga akan terhapus.`
     );
     if (!confirm) return;
 
     try {
       await deleteChild(childId);
       setChildren((prev) => prev.filter((c) => c.id !== childId));
-      showNotification("success", `Data ${childName} berhasil dihapus.`);
     } catch (err) {
-      console.error("❌ Delete error:", err);
-      showNotification("error", "Gagal menghapus data anak. Coba lagi.");
+      console.error("Delete error:", err);
+      alert("Gagal menghapus data anak. Coba lagi.");
     }
   };
 
@@ -114,405 +122,262 @@ function ChildrenPage() {
       };
 
       const data = await updateChild(editingChild.id, payload);
-      console.log("✅ Updated child:", data);
-
       const updated = data.success && data.data ? data.data : data;
+
       if (updated && updated.id) {
         setChildren((prev) =>
           prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
         );
       }
 
-      showNotification("success", "Data anak berhasil diperbarui.");
       closeEditModal();
     } catch (err) {
-      console.error("❌ Edit error:", err);
+      console.error("Edit error:", err);
       const msg =
         err.response?.data?.message ||
         "Gagal menyimpan perubahan. Pastikan data sudah benar.";
       setError(msg);
-      showNotification("error", msg);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p>Memuat...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (loading) {
+    return (
+      <div className="children-page">
+        <div className="children-container">
+          <div className="children-skeleton">
+            <User size={48} strokeWidth={1.5} />
+            <p>Memuat data anak...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!children.length) {
     return (
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
-        <h2>Data Anak</h2>
-        <p>Belum ada data anak. Silakan tambah anak melalui aplikasi.</p>
-        <button
-          onClick={() => navigate("/children/new")}
-          style={{
-            padding: "0.6rem 1.2rem",
-            background: "#4e73df",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 500,
-            fontSize: "0.9rem",
-            marginTop: "0.5rem",
-          }}
-        >
-          + Tambah Anak
-        </button>
+      <div className="children-page">
+        <div className="children-container">
+          <div className="children-header">
+            <Link to="/dashboard" className="children-back">
+              <ArrowLeft size={18} strokeWidth={2} />
+              Kembali
+            </Link>
+          </div>
+
+          <div className="children-empty">
+            <div className="children-empty__icon">
+              <User size={48} strokeWidth={1.5} />
+            </div>
+            <h3>Belum Ada Data Anak</h3>
+            <p>Tambahkan data anak terlebih dahulu untuk mulai screening postur.</p>
+            <button
+              onClick={() => navigate("/children/new")}
+              className="children-btn children-btn--primary"
+            >
+              <Plus size={18} strokeWidth={2} />
+              Tambah Anak
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <h2 style={{ marginBottom: 0 }}>Data Anak</h2>
-        <button
-          onClick={() => navigate("/children/new")}
-          style={{
-            padding: "0.6rem 1.2rem",
-            background: "#4e73df",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 500,
-            fontSize: "0.9rem",
-          }}
-        >
-          + Tambah Anak
-        </button>
-      </div>
+    <div className="children-page">
+      <div className="children-container">
+        <div className="children-header">
+          <Link to="/dashboard" className="children-back">
+            <ArrowLeft size={18} strokeWidth={2} />
+            Kembali
+          </Link>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {children.map((child) => (
-          <div
-            key={child.id}
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 8,
-              }}
+          <div className="children-header__main">
+            <div className="children-header__title">
+              <h1>Data Anak</h1>
+              <p>Kelola data anak untuk analisis postur yang lebih akurat</p>
+            </div>
+
+            <button
+              onClick={() => navigate("/children/new")}
+              className="children-btn children-btn--primary"
             >
-              <div
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  navigate(`/children/${child.id}/screenings`)
-                }
-              >
-                <h3 style={{ margin: 0 }}>{child.name}</h3>
-                <p
-                  style={{
-                    margin: "4px 0",
-                    fontSize: 14,
-                    color: "#555",
-                  }}
-                >
-                  {child.age_years != null
-                    ? `${child.age_years} tahun`
-                    : "-"}{" "}
-                  •{" "}
-                  {child.gender === "M"
-                    ? "Laki-laki"
-                    : child.gender === "F"
-                    ? "Perempuan"
-                    : "-"}
-                </p>
-                <p
-                  style={{
-                    margin: "4px 0",
-                    fontSize: 13,
-                    color: "#777",
-                  }}
-                >
-                  BB {child.weight ?? "-"} kg • TB {child.height ?? "-"} cm
-                </p>
+              <Plus size={18} strokeWidth={2} />
+              Tambah Anak
+            </button>
+          </div>
+        </div>
+
+        <div className="children-list">
+          {children.map((child) => (
+            <div key={child.id} className="child-card">
+              <div className="child-card__avatar">
+                {child.name.charAt(0).toUpperCase()}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
+
+              <div className="child-card__info">
+                <h3 className="child-card__name">{child.name}</h3>
+                <div className="child-card__meta">
+                  <span>
+                    <Calendar size={14} strokeWidth={1.5} />
+                    {child.age_years != null ? `${child.age_years} tahun` : "-"}
+                  </span>
+                  <span>
+                    {child.gender === "M"
+                      ? "Laki-laki"
+                      : child.gender === "F"
+                      ? "Perempuan"
+                      : "-"}
+                  </span>
+                </div>
+                <div className="child-card__meta">
+                  <span>
+                    <Weight size={14} strokeWidth={1.5} />
+                    {child.weight ?? "-"} kg
+                  </span>
+                  <span>
+                    <Ruler size={14} strokeWidth={1.5} />
+                    {child.height ?? "-"} cm
+                  </span>
+                </div>
+              </div>
+
+              <div className="child-card__actions">
                 <button
                   onClick={() => openEditModal(child)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #e5e7eb",
-                    background: "white",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
+                  className="children-btn children-btn--secondary children-btn--sm"
+                  title="Edit Data"
                 >
-                  ✏️ Edit
+                  <Edit2 size={14} strokeWidth={2} />
+                  Edit
                 </button>
                 <button
                   onClick={() => handleDelete(child.id, child.name)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #fecaca",
-                    background: "#fee2e2",
-                    color: "#b91c1c",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
+                  className="children-btn children-btn--danger children-btn--sm"
+                  title="Hapus Data"
                 >
-                  🗑 Hapus
+                  <Trash2 size={14} strokeWidth={2} />
+                  Hapus
                 </button>
                 <button
-                  onClick={() =>
-                    navigate(`/children/${child.id}/screenings/new`)
-                  }
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: "#3b82f6",
-                    color: "white",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
+                  onClick={() => navigate(`/children/${child.id}/screenings/new`)}
+                  className="children-btn children-btn--primary children-btn--sm"
+                  title="Screening Baru"
                 >
-                  📸 Screening Baru
+                  <Camera size={14} strokeWidth={2} />
+                  Screening
                 </button>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {editingChild && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 50,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              borderRadius: 12,
-              padding: "1.5rem",
-              width: "100%",
-              maxWidth: 500,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: "0.75rem" }}>
-              ✏️ Edit Data Anak
-            </h3>
-            <p
-              style={{
-                fontSize: 14,
-                color: "#6b7280",
-                marginTop: 0,
-                marginBottom: "1rem",
-              }}
-            >
-              Perbarui data {editingChild.name} agar analisis postur tetap
-              akurat.
-            </p>
-
-            {error && (
-              <div
-                style={{
-                  background: "#fee2e2",
-                  borderRadius: 8,
-                  padding: "0.75rem 1rem",
-                  marginBottom: "1rem",
-                  color: "#b91c1c",
-                  fontSize: 14,
-                }}
-              >
-                ⚠️ {error}
-              </div>
-            )}
-
-            <form onSubmit={handleEditSave}>
-              <SimpleInput
-                label="Nama Anak"
-                name="name"
-                value={editForm.name}
-                onChange={handleEditChange}
-                required
-              />
-              <SimpleInput
-                label="Tanggal Lahir"
-                name="birth_date"
-                type="date"
-                value={editForm.birth_date}
-                onChange={handleEditChange}
-                required
-              />
-
-              <div style={{ marginBottom: "0.75rem" }}>
-                <label
-                  htmlFor="gender"
-                  style={{
-                    display: "block",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#374151",
-                    marginBottom: 6,
-                  }}
-                >
-                  Jenis Kelamin
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={editForm.gender}
-                  onChange={handleEditChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    border: "1px solid #d1d5db",
-                    fontSize: 14,
-                    outline: "none",
-                    background: "white",
-                  }}
-                >
-                  <option value="">Pilih Jenis Kelamin</option>
-                  <option value="M">Laki-laki</option>
-                  <option value="F">Perempuan</option>
-                </select>
-              </div>
-
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-                <SimpleInput
-                  label="Berat Badan (kg)"
-                  name="weight"
-                  type="number"
-                  min="1"
-                  max="200"
-                  step="0.1"
-                  value={editForm.weight}
-                  onChange={handleEditChange}
-                />
-                <SimpleInput
-                  label="Tinggi Badan (cm)"
-                  name="height"
-                  type="number"
-                  min="30"
-                  max="220"
-                  step="0.1"
-                  value={editForm.height}
-                  onChange={handleEditChange}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "0.5rem",
-                  marginTop: "1.25rem",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  style={{
-                    padding: "0.55rem 1.2rem",
-                    borderRadius: 8,
-                    border: "1px solid #e5e7eb",
-                    background: "white",
-                    cursor: "pointer",
-                    fontSize: 14,
-                  }}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: "0.55rem 1.2rem",
-                    borderRadius: 8,
-                    border: "none",
-                    background: saving ? "#9ca3af" : "#3b82f6",
-                    color: "white",
-                    cursor: saving ? "not-allowed" : "pointer",
-                    fontSize: 14,
-                    fontWeight: 600,
-                  }}
-                >
-                  {saving ? "Menyimpan..." : "Simpan Perubahan"}
-                </button>
-              </div>
-            </form>
-          </div>
+          ))}
         </div>
-      )}
-    </div>
-  );
-}
 
-function SimpleInput({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  ...rest
-}) {
-  return (
-    <div style={{ marginBottom: "0.75rem", flex: 1 }}>
-      <label
-        htmlFor={name}
-        style={{
-          display: "block",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "#374151",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        style={{
-          width: "100%",
-          padding: "10px 12px",
-          borderRadius: 8,
-          border: "1px solid #d1d5db",
-          fontSize: 14,
-          outline: "none",
-        }}
-        {...rest}
-      />
+        {/* Edit Modal */}
+        {editingChild && (
+          <div className="modal-overlay" onClick={closeEditModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Edit Data Anak</h3>
+                <button onClick={closeEditModal} className="modal-close">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {error && <div className="modal-error">{error}</div>}
+
+              <form onSubmit={handleEditSave}>
+                <div className="form-group">
+                  <label htmlFor="edit-name">Nama Anak</label>
+                  <input
+                    id="edit-name"
+                    name="name"
+                    type="text"
+                    value={editForm.name}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-birth">Tanggal Lahir</label>
+                  <input
+                    id="edit-birth"
+                    name="birth_date"
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-gender">Jenis Kelamin</label>
+                  <select
+                    id="edit-gender"
+                    name="gender"
+                    value={editForm.gender}
+                    onChange={handleEditChange}
+                    required
+                  >
+                    <option value="">Pilih Jenis Kelamin</option>
+                    <option value="M">Laki-laki</option>
+                    <option value="F">Perempuan</option>
+                  </select>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="edit-weight">Berat Badan (kg)</label>
+                    <input
+                      id="edit-weight"
+                      name="weight"
+                      type="number"
+                      min="1"
+                      max="200"
+                      step="0.1"
+                      value={editForm.weight}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-height">Tinggi Badan (cm)</label>
+                    <input
+                      id="edit-height"
+                      name="height"
+                      type="number"
+                      min="30"
+                      max="220"
+                      step="0.1"
+                      value={editForm.height}
+                      onChange={handleEditChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="children-btn children-btn--secondary"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="children-btn children-btn--primary"
+                  >
+                    {saving ? "Menyimpan..." : "Simpan"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

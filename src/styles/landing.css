@@ -361,7 +361,7 @@
 
 .hero__btn--white {
   background: var(--white);
-  color: var(--accent-dark);
+  color: var(--primary);
   border-color: transparent;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }

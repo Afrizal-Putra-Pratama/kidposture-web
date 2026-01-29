@@ -1,22 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Activity, Brain, Users, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { login } from "../services/authService.jsx";
+import "../styles/auth.css";
 
 function LoginPage() {
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderIntervalRef = useRef(null);
+
+  const slides = [
+    {
+      icon: Activity,
+      title: "Deteksi Postur AI",
+      text: "Analisis postur anak dengan kecerdasan buatan dalam hitungan detik. Dapatkan laporan lengkap hasil screening.",
+    },
+    {
+      icon: Brain,
+      title: "Rekomendasi Personal",
+      text: "Sistem AI memberikan saran berdasarkan hasil screening untuk menjaga kesehatan postur anak Anda.",
+    },
+    {
+      icon: Users,
+      title: "Konsultasi Fisioterapis",
+      text: "Hubungi fisioterapis anak terverifikasi untuk pemeriksaan dan program latihan yang lebih mendalam.",
+    },
+  ];
+
+  useEffect(() => {
+    if (sliderIntervalRef.current) clearInterval(sliderIntervalRef.current);
+
+    sliderIntervalRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+
+    return () => {
+      if (sliderIntervalRef.current) clearInterval(sliderIntervalRef.current);
+    };
+  }, [slides.length]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null);
   };
 
@@ -33,13 +60,11 @@ function LoginPage() {
 
       const role = user.role?.toLowerCase();
 
-      // Redirect sesuai role
       if (role === "physio") {
         navigate("/physio/dashboard");
       } else if (role === "admin") {
         navigate("/admin/physiotherapists");
       } else {
-        // parent
         navigate("/dashboard");
       }
     } catch (err) {
@@ -55,173 +80,116 @@ function LoginPage() {
     }
   };
 
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>KidPosture</h1>
-          <p style={styles.subtitle}>Smart Posture Screening for Children</p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="email@example.com"
-              style={styles.input}
-            />
+    <div className="auth-page">
+      {/* Form kiri */}
+      <div className="auth-form-container">
+        <div className="auth-form">
+          <div className="auth-logo" onClick={() => navigate("/")}>
+            <span className="auth-logo__dot" />
+            <span>Posturely</span>
           </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              style={styles.input}
-            />
+          <div className="auth-header">
+            <h1>Selamat Datang Kembali</h1>
+            <p>Masuk untuk melanjutkan screening postur anak Anda.</p>
           </div>
 
-          {error && (
-            <div style={styles.errorBox}>
-              <p style={styles.errorText}>{error}</p>
+          <form onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="email@example.com"
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...styles.submitButton,
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? "Loading..." : "Login"}
-          </button>
-        </form>
+            <div className="auth-field">
+              <label>Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="••••••••"
+              />
+            </div>
 
-        <div style={styles.footer}>
-          <p style={styles.footerText}>
-            Belum punya akun?{" "}
-            <Link to="/register/physio" style={styles.link}>
-              Daftar sebagai Fisioterapis
+            {error && (
+              <div className="auth-error">
+                <p>{error}</p>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="auth-btn auth-btn--primary">
+              {loading ? "Memproses..." : "Masuk"}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>
+              Belum punya akun?{" "}
+              <Link to="/register/parent" className="auth-link">
+                Daftar sebagai Orang Tua
+              </Link>
+            </p>
+            <p>
+              Fisioterapis?{" "}
+              <Link to="/register/physio" className="auth-link">
+                Daftar di sini
+              </Link>
+            </p>
+            <Link to="/" className="auth-back">
+              ← Kembali ke Beranda
             </Link>
-          </p>
-          <Link to="/" style={styles.linkBack}>
-            ← Kembali ke Beranda
-          </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Slider kanan (desktop only) */}
+      <div className="auth-slider">
+        <div className="auth-slider__card">
+          <div className="auth-slider__icon">
+            {slides[currentSlide].icon &&
+              (() => {
+                const Icon = slides[currentSlide].icon;
+                return <Icon size={48} strokeWidth={1.5} />;
+              })()}
+          </div>
+          <h3>{slides[currentSlide].title}</h3>
+          <p>{slides[currentSlide].text}</p>
+
+          <div className="auth-slider__controls">
+            <button type="button" onClick={prevSlide} className="auth-slider__btn">
+              <ChevronLeft size={20} strokeWidth={2} />
+            </button>
+            <button type="button" onClick={nextSlide} className="auth-slider__btn">
+              <ChevronRight size={20} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div className="auth-slider__dots">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setCurrentSlide(idx)}
+                className={`auth-slider__dot ${currentSlide === idx ? "auth-slider__dot--active" : ""}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#fafafa",
-    padding: "1rem",
-  },
-  card: {
-    background: "white",
-    borderRadius: 8,
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-    padding: "2.5rem",
-    width: "100%",
-    maxWidth: 400,
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: "2rem",
-  },
-  title: {
-    fontSize: "1.75rem",
-    fontWeight: 700,
-    color: "#111827",
-    marginBottom: "0.5rem",
-  },
-  subtitle: {
-    fontSize: "0.875rem",
-    color: "#6b7280",
-    margin: 0,
-  },
-  inputGroup: {
-    marginBottom: "1.25rem",
-  },
-  label: {
-    display: "block",
-    fontSize: "0.875rem",
-    fontWeight: 500,
-    color: "#374151",
-    marginBottom: "0.5rem",
-  },
-  input: {
-    width: "100%",
-    padding: "0.625rem 0.875rem",
-    border: "1px solid #d1d5db",
-    borderRadius: 6,
-    fontSize: "0.9rem",
-    outline: "none",
-    transition: "all 0.2s",
-  },
-  errorBox: {
-    padding: "0.75rem 1rem",
-    background: "#fef2f2",
-    border: "1px solid #fecaca",
-    borderRadius: 6,
-    marginBottom: "1rem",
-  },
-  errorText: {
-    fontSize: "0.875rem",
-    color: "#dc2626",
-    margin: 0,
-  },
-  submitButton: {
-    width: "100%",
-    padding: "0.75rem",
-    background: "#3b82f6",
-    color: "white",
-    border: "none",
-    borderRadius: 6,
-    fontSize: "1rem",
-    fontWeight: 500,
-    transition: "all 0.2s",
-    marginTop: "0.5rem",
-  },
-  footer: {
-    marginTop: "1.5rem",
-    textAlign: "center",
-  },
-  footerText: {
-    fontSize: "0.875rem",
-    color: "#6b7280",
-    marginBottom: "0.75rem",
-  },
-  link: {
-    color: "#3b82f6",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
-  linkBack: {
-    display: "inline-block",
-    fontSize: "0.875rem",
-    color: "#6b7280",
-    textDecoration: "none",
-    transition: "color 0.2s",
-  },
-};
 
 export default LoginPage;

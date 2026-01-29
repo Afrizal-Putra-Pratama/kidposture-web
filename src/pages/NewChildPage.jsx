@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { createChild } from "../services/childService.jsx";
-import { useNotification } from "../hooks/useNotification.jsx";
+import "../styles/children.css";
 
 function NewChildPage() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
 
   const [form, setForm] = useState({
     name: "",
@@ -18,6 +18,16 @@ function NewChildPage() {
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [maxDate, setMaxDate] = useState("");
+
+  useEffect(() => {
+    // Set max date to today
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    setMaxDate(`${year}-${month}-${day}`);
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -43,14 +53,10 @@ function NewChildPage() {
         height: form.height ? Number(form.height) : null,
       };
 
-      const response = await createChild(payload);
-      console.log("✅ Child created:", response);
-
-      showNotification("success", "Data anak berhasil disimpan.");
-
-      navigate("/children");
+      await createChild(payload);
+      navigate("/dashboard");
     } catch (err) {
-      console.error("❌ Create child error:", err);
+      console.error("Create child error:", err);
 
       let msg = "Gagal menyimpan data anak. Coba lagi.";
       if (err.response?.status === 422 && err.response.data?.errors) {
@@ -59,261 +65,151 @@ function NewChildPage() {
         msg = err.response.data.message;
       }
       setError(msg);
-      showNotification("error", msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8f9fa",
-        padding: "2rem 0",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 600,
-          margin: "0 auto",
-          padding: "0 1rem",
-        }}
-      >
-        {/* Header */}
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            padding: "6px 12px",
-            borderRadius: 6,
-            border: "1px solid #e5e7eb",
-            background: "white",
-            cursor: "pointer",
-            fontSize: 13,
-            marginBottom: 16,
-          }}
-        >
-          ← Kembali
-        </button>
+    <div className="children-page">
+      <div className="children-container children-container--narrow">
+        <div className="children-header">
+          <Link to="/dashboard" className="children-back">
+            <ArrowLeft size={18} strokeWidth={2} />
+            Kembali
+          </Link>
+        </div>
 
-        <div
-          style={{
-            background: "white",
-            borderRadius: 12,
-            padding: "1.75rem 1.5rem 2rem",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          }}
-        >
-          <h2 style={{ margin: 0, marginBottom: "0.5rem", color: "#1f2937" }}>
-            👶 Tambah Data Anak
-          </h2>
-          <p
-            style={{
-              margin: 0,
-              marginBottom: "1.5rem",
-              color: "#6b7280",
-              fontSize: 14,
-            }}
-          >
+        <div className="children-form-card">
+          <h1>Tambah Data Anak</h1>
+          <p className="children-form-card__subtitle">
             Lengkapi data dasar anak untuk analisis postur yang lebih akurat.
           </p>
 
-          {/* Error Global */}
-          {error && (
-            <div
-              style={{
-                background: "#fee2e2",
-                borderRadius: 8,
-                padding: "0.75rem 1rem",
-                marginBottom: "1rem",
-                color: "#b91c1c",
-                fontSize: 14,
-              }}
-            >
-              ⚠️ {error}
-            </div>
-          )}
+          {error && <div className="form-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             {/* Nama */}
-            <FormGroup
-              label="Nama Anak"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Misal: Aisyah"
-              error={fieldErrors.name?.[0]}
-              required
-            />
-
-            {/* Tanggal Lahir */}
-            <FormGroup
-              label="Tanggal Lahir"
-              name="birth_date"
-              type="date"
-              value={form.birth_date}
-              onChange={handleChange}
-              error={fieldErrors.birth_date?.[0]}
-              required
-            />
-
-            {/* Gender */}
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                htmlFor="gender"
-                style={{
-                  display: "block",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#374151",
-                  marginBottom: 6,
-                }}
-              >
-                Jenis Kelamin
+            <div className="form-group">
+              <label htmlFor="name">
+                Nama Anak <span className="required">*</span>
               </label>
-              <select
-                id="gender"
-                name="gender"
-                value={form.gender}
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={form.name}
                 onChange={handleChange}
+                placeholder="Misal: Aisyah"
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border: fieldErrors.gender
-                    ? "2px solid #f87171"
-                    : "1px solid #d1d5db",
-                  fontSize: 14,
-                  outline: "none",
-                  background: "white",
-                }}
-              >
-                <option value="">Pilih Jenis Kelamin</option>
-                <option value="M">Laki-laki</option>
-                <option value="F">Perempuan</option>
-              </select>
-              {fieldErrors.gender?.[0] && (
-                <div
-                  style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}
-                >
-                  {fieldErrors.gender[0]}
-                </div>
+                className={fieldErrors.name ? "input-error" : ""}
+              />
+              {fieldErrors.name && (
+                <div className="field-error">{fieldErrors.name[0]}</div>
               )}
             </div>
 
-            {/* Berat & Tinggi */}
-            <div style={{ display: "flex", gap: "1rem" }}>
-              <FormGroup
-                label="Berat Badan (kg)"
-                name="weight"
-                type="number"
-                min="1"
-                max="200"
-                step="0.1"
-                value={form.weight}
-                onChange={handleChange}
-                placeholder="Misal: 20"
-                error={fieldErrors.weight?.[0]}
-              />
-              <FormGroup
-                label="Tinggi Badan (cm)"
-                name="height"
-                type="number"
-                min="30"
-                max="220"
-                step="0.1"
-                value={form.height}
-                onChange={handleChange}
-                placeholder="Misal: 115"
-                error={fieldErrors.height?.[0]}
-              />
+            {/* Tanggal Lahir & Jenis Kelamin */}
+            <div className="form-row form-row--mobile-stack">
+              <div className="form-group">
+                <label htmlFor="birth_date">
+                  Tanggal Lahir <span className="required">*</span>
+                </label>
+                <input
+                  id="birth_date"
+                  name="birth_date"
+                  type="date"
+                  value={form.birth_date}
+                  onChange={handleChange}
+                  max={maxDate}
+                  required
+                  className={fieldErrors.birth_date ? "input-error" : ""}
+                />
+                {fieldErrors.birth_date && (
+                  <div className="field-error">{fieldErrors.birth_date[0]}</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="gender">
+                  Jenis Kelamin <span className="required">*</span>
+                </label>
+                <div className="select-wrapper">
+                  <select
+                    id="gender"
+                    name="gender"
+                    value={form.gender}
+                    onChange={handleChange}
+                    required
+                    className={fieldErrors.gender ? "input-error" : ""}
+                  >
+                    <option value="">Pilih</option>
+                    <option value="M">Laki-laki</option>
+                    <option value="F">Perempuan</option>
+                  </select>
+                  <ChevronDown size={16} className="select-icon" />
+                </div>
+                {fieldErrors.gender && (
+                  <div className="field-error">{fieldErrors.gender[0]}</div>
+                )}
+              </div>
             </div>
 
-            <p
-              style={{
-                fontSize: 12,
-                color: "#6b7280",
-                marginTop: 8,
-                marginBottom: 16,
-              }}
-            >
-              Data BB dan TB opsional, tapi sangat membantu akurasi analisis
-              postur.
+            {/* Berat & Tinggi */}
+            <div className="form-row form-row--mobile-stack">
+              <div className="form-group">
+                <label htmlFor="weight">Berat Badan (kg)</label>
+                <input
+                  id="weight"
+                  name="weight"
+                  type="number"
+                  min="1"
+                  max="200"
+                  step="0.1"
+                  value={form.weight}
+                  onChange={handleChange}
+                  placeholder="20"
+                  className={fieldErrors.weight ? "input-error" : ""}
+                />
+                {fieldErrors.weight && (
+                  <div className="field-error">{fieldErrors.weight[0]}</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="height">Tinggi Badan (cm)</label>
+                <input
+                  id="height"
+                  name="height"
+                  type="number"
+                  min="30"
+                  max="220"
+                  step="0.1"
+                  value={form.height}
+                  onChange={handleChange}
+                  placeholder="115"
+                  className={fieldErrors.height ? "input-error" : ""}
+                />
+                {fieldErrors.height && (
+                  <div className="field-error">{fieldErrors.height[0]}</div>
+                )}
+              </div>
+            </div>
+
+            <p className="form-help">
+              Data BB dan TB opsional, tapi sangat membantu akurasi analisis postur.
             </p>
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: "100%",
-                padding: "0.85rem",
-                borderRadius: 8,
-                border: "none",
-                background: loading ? "#9ca3af" : "#3b82f6",
-                color: "white",
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
+              className="children-btn children-btn--primary children-btn--full"
             >
-              {loading ? "🔄 Menyimpan..." : "💾 Simpan Data Anak"}
+              {loading ? "Menyimpan..." : "Simpan Data Anak"}
             </button>
           </form>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FormGroup({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-  error,
-  required = false,
-  ...rest
-}) {
-  return (
-    <div style={{ marginBottom: "1rem", flex: 1 }}>
-      <label
-        htmlFor={name}
-        style={{
-          display: "block",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "#374151",
-          marginBottom: 6,
-        }}
-      >
-        {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        required={required}
-        style={{
-          width: "100%",
-          padding: "10px 12px",
-          borderRadius: 8,
-          border: error ? "2px solid #f87171" : "1px solid #d1d5db",
-          fontSize: 14,
-          outline: "none",
-        }}
-        {...rest}
-      />
-      {error && (
-        <div style={{ color: "#b91c1c", fontSize: 12, marginTop: 4 }}>
-          {error}
-        </div>
-      )}
     </div>
   );
 }

@@ -1,7 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  Upload,
+  Camera,
+  Check,
+  X,
+  AlertCircle,
+  Image as ImageIcon,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import Webcam from "react-webcam";
 import { createScreening } from "../services/screeningService.jsx";
+import "../styles/screening.css";
 
 function NewScreeningPage() {
   const { childId } = useParams();
@@ -23,7 +35,6 @@ function NewScreeningPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cleanup preview URLs
   useEffect(() => {
     return () => {
       Object.values(previews).forEach((url) => {
@@ -32,7 +43,22 @@ function NewScreeningPage() {
     };
   }, [previews]);
 
-  // Upload file untuk view tertentu
+  // Smart auto-navigate: selalu ke view pertama yang kosong
+  useEffect(() => {
+    if (loading) return;
+
+    const firstEmptyView = ["FRONT", "SIDE", "BACK"].find(
+      (view) => images[view] === null
+    );
+
+    if (images[activeView] !== null && firstEmptyView && activeView !== firstEmptyView) {
+      const timeout = setTimeout(() => {
+        setActiveView(firstEmptyView);
+      }, 350);
+      return () => clearTimeout(timeout);
+    }
+  }, [images, activeView, loading]);
+
   const handleFileUpload = (e, view) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -44,7 +70,6 @@ function NewScreeningPage() {
     setError(null);
   };
 
-  // Capture dari webcam
   const handleCaptureFromCamera = () => {
     if (!webcamRef.current) return;
 
@@ -63,18 +88,15 @@ function NewScreeningPage() {
       ia[i] = byteString.charCodeAt(i);
     }
     const blob = new Blob([ab], { type: mimeString });
-    const file = new File(
-      [blob],
-      `${activeView.toLowerCase()}_capture.jpg`,
-      { type: mimeString }
-    );
+    const file = new File([blob], `${activeView.toLowerCase()}_capture.jpg`, {
+      type: mimeString,
+    });
 
     setImages((prev) => ({ ...prev, [activeView]: file }));
     setPreviews((prev) => ({ ...prev, [activeView]: imageSrc }));
     setError(null);
   };
 
-  // Hapus foto
   const handleRemoveImage = (view) => {
     setImages((prev) => ({ ...prev, [view]: null }));
     if (previews[view]) {
@@ -83,18 +105,16 @@ function NewScreeningPage() {
     setPreviews((prev) => ({ ...prev, [view]: null }));
   };
 
-  // Submit multi-view via service
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
     const uploadedImages = Object.entries(images).filter(
-  ([, file]) => file !== null
-);
-
+      ([, file]) => file !== null
+    );
 
     if (uploadedImages.length === 0) {
-      setError("Upload minimal 1 foto (FRONT, SIDE, atau BACK)");
+      setError("Upload minimal 1 foto (Depan, Samping, atau Belakang)");
       return;
     }
 
@@ -108,7 +128,6 @@ function NewScreeningPage() {
       setLoading(true);
 
       const data = await createScreening(childId, formData);
-      console.log("✅ Screening berhasil:", data);
 
       if (data.id) {
         navigate(`/screenings/${data.id}`);
@@ -118,7 +137,7 @@ function NewScreeningPage() {
         navigate(`/children/${childId}`);
       }
     } catch (err) {
-      console.error("❌ Submit error:", err);
+      console.error("Submit error:", err);
       setError(
         err.response?.data?.message ||
           err.message ||
@@ -133,361 +152,241 @@ function NewScreeningPage() {
     facingMode: "environment",
   };
 
-  const uploadedCount = Object.values(images).filter((img) => img !== null)
-    .length;
+  const uploadedCount = Object.values(images).filter((img) => img !== null).length;
+
+  const viewLabels = {
+    FRONT: "Depan",
+    SIDE: "Samping",
+    BACK: "Belakang",
+  };
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: 16 }}>
-      {/* Header */}
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          padding: "6px 12px",
-          borderRadius: 6,
-          border: "1px solid #e5e7eb",
-          background: "white",
-          cursor: "pointer",
-          fontSize: 13,
-          marginBottom: 16,
-        }}
-      >
-        ← Kembali
-      </button>
+    <div className="screening-page">
+      <div className="screening-wrapper">
+        {/* Left Side: Form Input (50%) */}
+        <div className="screening-left">
+          <div className="screening-left__content">
+            {/* Header */}
+            <div className="screening-header">
+              <Link to={`/children/${childId}/screenings`} className="screening-back">
+                <ArrowLeft size={16} strokeWidth={2} />
+                Kembali
+              </Link>
 
-      <h2 style={{ marginBottom: 8 }}>📸 Screening Postur Baru</h2>
-      <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>
-        Upload <strong>1-3 foto</strong> (FRONT, SIDE, BACK). Semakin banyak
-        foto, analisis semakin akurat!
-      </p>
-
-      {/* Info Badge */}
-      <div
-        style={{
-          padding: 12,
-          background: uploadedCount === 3 ? "#dcfce7" : "#fef3c7",
-          borderRadius: 8,
-          marginBottom: 16,
-          border: `1px solid ${
-            uploadedCount === 3 ? "#16a34a" : "#f59e0b"
-          }`,
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontSize: 14,
-            color: uploadedCount === 3 ? "#166534" : "#92400e",
-          }}
-        >
-          {uploadedCount === 0 && "⚠️ Belum ada foto diupload"}
-          {uploadedCount === 1 &&
-            "✅ 1 foto terupload (opsional: tambah SIDE/BACK)"}
-          {uploadedCount === 2 &&
-            "✅ 2 foto terupload (opsional: tambah 1 lagi)"}
-          {uploadedCount === 3 &&
-            "🎉 Lengkap! 3 foto terupload (analisis maksimal)"}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        {/* Toggle Camera / Upload */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              type="button"
-              onClick={() => setUseCamera(false)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 8,
-                border: useCamera
-                  ? "1px solid #e5e7eb"
-                  : "1px solid #2563eb",
-                background: useCamera ? "white" : "#eff6ff",
-                color: useCamera ? "#374151" : "#1d4ed8",
-                cursor: "pointer",
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              📁 Upload File
-            </button>
-            <button
-              type="button"
-              onClick={() => setUseCamera(true)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 8,
-                border: useCamera
-                  ? "1px solid #16a34a"
-                  : "1px solid #e5e7eb",
-                background: useCamera ? "#dcfce7" : "white",
-                color: useCamera ? "#166534" : "#374151",
-                cursor: "pointer",
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              📷 Gunakan Kamera
-            </button>
-          </div>
-        </div>
-
-        {/* View Tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {["FRONT", "SIDE", "BACK"].map((view) => (
-            <button
-              key={view}
-              type="button"
-              onClick={() => setActiveView(view)}
-              style={{
-                flex: 1,
-                padding: "12px",
-                background:
-                  activeView === view
-                    ? images[view]
-                      ? "#10b981"
-                      : "#3b82f6"
-                    : images[view]
-                    ? "#d1fae5"
-                    : "#f3f4f6",
-                color:
-                  activeView === view
-                    ? "white"
-                    : images[view]
-                    ? "#065f46"
-                    : "#6b7280",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: 14,
-              }}
-            >
-              {view}
-              {images[view] && " ✅"}
-            </button>
-          ))}
-        </div>
-
-        {/* Upload Section */}
-        <div
-          style={{
-            background: "#f9fafb",
-            padding: 16,
-            borderRadius: 12,
-            border: "2px dashed #d1d5db",
-            marginBottom: 16,
-          }}
-        >
-          <h4
-            style={{
-              marginTop: 0,
-              marginBottom: 12,
-              color: "#374151",
-            }}
-          >
-            Upload untuk: <strong>{activeView}</strong>
-          </h4>
-
-          {useCamera ? (
-            <div>
-              <div
-                style={{
-                  borderRadius: 8,
-                  overflow: "hidden",
-                  marginBottom: 12,
-                  border: "1px solid #d1d5db",
-                }}
-              >
-                <Webcam
-                  ref={webcamRef}
-                  audio={false}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={videoConstraints}
-                  style={{ width: "100%", display: "block" }}
-                />
+              <div className="screening-header__title">
+                <h1>Screening Postur Baru</h1>
+                <p>Upload 1-3 foto untuk analisis postur yang lebih akurat</p>
               </div>
+            </div>
+
+            {/* Mode Toggle */}
+            <div className="screening-mode">
               <button
                 type="button"
-                onClick={handleCaptureFromCamera}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#10b981",
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                onClick={() => setUseCamera(false)}
+                className={`screening-mode__btn ${!useCamera ? "screening-mode__btn--active" : ""}`}
               >
-                📸 Capture {activeView}
+                <Upload size={16} strokeWidth={2} />
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseCamera(true)}
+                className={`screening-mode__btn ${useCamera ? "screening-mode__btn--active" : ""}`}
+              >
+                <Camera size={16} strokeWidth={2} />
+                Gunakan Kamera
               </button>
             </div>
-          ) : (
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileUpload(e, activeView)}
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  width: "100%",
-                  padding: 8,
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                }}
-              />
-              {images[activeView] && (
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "#10b981",
-                    margin: 0,
-                  }}
-                >
-                  ✅ {images[activeView].name}
-                </p>
-              )}
-            </div>
-          )}
 
-          <p
-            style={{
-              fontSize: 12,
-              color: "#6b7280",
-              marginTop: 8,
-              marginBottom: 0,
-            }}
-          >
-            💡 Pastikan seluruh tubuh anak terlihat jelas
-          </p>
-        </div>
-
-        {/* Preview Grid */}
-        <div style={{ marginBottom: 16 }}>
-          <h4 style={{ marginBottom: 12 }}>Preview Foto:</h4>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 12,
-            }}
-          >
-            {Object.entries(previews).map(([view, url]) => (
-              <div key={view} style={{ position: "relative" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    height: 150,
-                    backgroundColor: url ? "transparent" : "#e5e7eb",
-                    backgroundImage: url ? `url(${url})` : "none",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    borderRadius: 8,
-                    border:
-                      "2px solid " + (url ? "#10b981" : "#d1d5db"),
-                  }}
-                />
-
-                <p
-                  style={{
-                    textAlign: "center",
-                    fontSize: 12,
-                    marginTop: 6,
-                    color: url ? "#10b981" : "#9ca3af",
-                    fontWeight: 600,
-                  }}
-                >
-                  {view}
-                </p>
-                {url && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(view)}
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      border: "none",
-                      background: "#ef4444",
-                      color: "white",
-                      fontSize: 12,
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    ×
-                  </button>
+            {/* Status Badge */}
+            <div className={`screening-status screening-status--${getStatusType(uploadedCount)}`}>
+              <div className="screening-status__icon">
+                {uploadedCount === 3 ? (
+                  <Check size={16} strokeWidth={2} />
+                ) : (
+                  <AlertCircle size={16} strokeWidth={2} />
                 )}
               </div>
-            ))}
+              <div className="screening-status__text">
+                <strong>{getStatusTitle(uploadedCount)}</strong>
+                <p>{getStatusDesc(uploadedCount)}</p>
+              </div>
+            </div>
+
+            {/* View Tabs */}
+            <div className="screening-tabs">
+              {["FRONT", "SIDE", "BACK"].map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setActiveView(view)}
+                  className={`screening-tab ${
+                    activeView === view ? "screening-tab--active" : ""
+                  } ${images[view] ? "screening-tab--uploaded" : ""}`}
+                >
+                  {viewLabels[view]}
+                  {images[view] && <Check size={14} strokeWidth={2} />}
+                </button>
+              ))}
+            </div>
+
+            {/* Upload Area */}
+            <div className="screening-upload">
+              <div className="screening-upload__header">
+                <h3>Upload untuk: {viewLabels[activeView]}</h3>
+                <p>Pastikan seluruh tubuh anak terlihat jelas</p>
+              </div>
+
+              {useCamera ? (
+                <div className="screening-camera">
+                  <div className="screening-camera__preview">
+                    <Webcam
+                      ref={webcamRef}
+                      audio={false}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={videoConstraints}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCaptureFromCamera}
+                    className="screening-btn screening-btn--primary screening-btn--full"
+                  >
+                    <Camera size={16} strokeWidth={2} />
+                    Capture {viewLabels[activeView]}
+                  </button>
+                </div>
+              ) : (
+                <div className="screening-file">
+                  <label htmlFor={`file-${activeView}`} className="screening-file__label">
+                    <div className="screening-file__icon">
+                      <Upload size={24} strokeWidth={1.5} />
+                    </div>
+                    <p className="screening-file__text">Klik untuk upload foto</p>
+                    <span className="screening-file__format">JPG, PNG (Max 5MB)</span>
+                  </label>
+                  <input
+                    id={`file-${activeView}`}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, activeView)}
+                    className="screening-file__input"
+                  />
+                  {images[activeView] && (
+                    <div className="screening-file__success">
+                      <Check size={14} strokeWidth={2} />
+                      {images[activeView].name}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Error */}
-        {error && (
-          <p
-            style={{
-              color: "#dc2626",
-              background: "#fee2e2",
-              padding: 12,
-              borderRadius: 8,
-              fontSize: 14,
-              marginBottom: 16,
-            }}
-          >
-            ⚠️ {error}
-          </p>
-        )}
+        {/* Right Side: Preview & Submit (50%) */}
+        <div className="screening-right">
+          <div className="screening-right__content">
+            <h2 className="screening-right__title">Hasil Foto</h2>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading || uploadedCount === 0}
-          style={{
-            width: "100%",
-            padding: 14,
-            borderRadius: 8,
-            border: "none",
-            background:
-              loading || uploadedCount === 0 ? "#d1d5db" : "#3b82f6",
-            color: "white",
-            fontSize: 16,
-            fontWeight: 600,
-            cursor:
-              loading || uploadedCount === 0 ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading
-            ? "🔄 Menganalisis..."
-            : `🚀 Analisis ${uploadedCount} Foto`}
-        </button>
+            {/* Preview Row: 3 kolom, foto portrait pendek */}
+            <div className="screening-preview-row">
+              {Object.entries(previews).map(([view, url]) => (
+                <div key={view} className="screening-preview-cell">
+                  <div className="screening-preview-cell__label">
+                    <span>{viewLabels[view]}</span>
+                    {url && <Check size={12} strokeWidth={2} />}
+                  </div>
+                  <div
+                    className={`screening-preview-cell__box ${
+                      url ? "screening-preview-cell__box--uploaded" : ""
+                    } ${loading ? "screening-preview-cell__box--scanning" : ""}`}
+                    style={{
+                      backgroundImage: url ? `url(${url})` : "none",
+                    }}
+                  >
+                    {!url && (
+                      <div className="screening-preview-cell__placeholder">
+                        <ImageIcon size={28} strokeWidth={1.5} />
+                        <p>Belum ada foto</p>
+                      </div>
+                    )}
+                    {loading && url && (
+                      <div className="screening-scan-overlay">
+                        <div className="screening-scan-line"></div>
+                        <div className="screening-scan-text">
+                          <Sparkles size={18} strokeWidth={2} />
+                          <span>Menganalisis...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {url && !loading && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(view)}
+                      className="screening-preview-cell__remove"
+                    >
+                      <Trash2 size={12} strokeWidth={2} />
+                      Hapus
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
 
-        <p
-          style={{
-            fontSize: 12,
-            color: "#6b7280",
-            textAlign: "center",
-            marginTop: 12,
-          }}
-        >
-          {uploadedCount === 1 && "1 foto akan dianalisis"}
-          {uploadedCount === 2 &&
-            "2 foto akan dianalisis (rata-rata score)"}
-          {uploadedCount === 3 &&
-            "3 foto akan dianalisis (rata-rata score maksimal akurat!)"}
-        </p>
-      </form>
+            {/* Error */}
+            {error && (
+              <div className="screening-error">
+                <AlertCircle size={16} strokeWidth={2} />
+                {error}
+              </div>
+            )}
+
+            {/* Submit */}
+            <form onSubmit={handleSubmit}>
+              <button
+                type="submit"
+                disabled={loading || uploadedCount === 0}
+                className="screening-btn screening-btn--primary screening-btn--full screening-btn--large"
+              >
+                <Sparkles size={16} strokeWidth={2} />
+                {loading ? "Menganalisis..." : `Analisis ${uploadedCount} Foto`}
+              </button>
+
+              <p className="screening-submit__note">
+                {uploadedCount === 1 && "1 foto akan dianalisis"}
+                {uploadedCount === 2 && "2 foto akan dianalisis untuk hasil lebih akurat"}
+                {uploadedCount === 3 && "3 foto akan dianalisis untuk hasil maksimal"}
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
+}
+
+// Helper functions
+function getStatusType(count) {
+  if (count === 0) return "warning";
+  if (count === 3) return "success";
+  return "info";
+}
+
+function getStatusTitle(count) {
+  if (count === 0) return "Belum ada foto diupload";
+  if (count === 1) return "1 foto terupload";
+  if (count === 2) return "2 foto terupload";
+  return "Lengkap! 3 foto terupload";
+}
+
+function getStatusDesc(count) {
+  if (count === 0) return "Upload minimal 1 foto untuk memulai analisis";
+  if (count === 1) return "Opsional: Tambah Samping atau Belakang untuk akurasi lebih baik";
+  if (count === 2) return "Opsional: Tambah 1 foto lagi untuk hasil maksimal";
+  return "Analisis akan menghasilkan akurasi maksimal";
 }
 
 export default NewScreeningPage;

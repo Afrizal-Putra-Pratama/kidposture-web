@@ -10,7 +10,7 @@ import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
-
+import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 // Physio (file lama)
 import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
 
@@ -26,6 +26,9 @@ import AdminPhysioManagementPage from "./pages/admin/AdminPhysioManagementPage.j
 
 // FASE 2 (file baru)
 import LandingPage from "./pages/LandingPage.jsx";
+
+// ✅ TAMBAHAN: Register Parent Page
+import RegisterParentPage from "./pages/RegisterParentPage.jsx";
 
 // ✅ Protected Route: hanya cek token
 function ProtectedRoute({ children }) {
@@ -61,6 +64,9 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
+        
+        {/* ✅ TAMBAHAN: Route Daftar Orang Tua */}
+        <Route path="/register/parent" element={<RegisterParentPage />} />
 
         {/* Protected Routes (Parent default) */}
         <Route
@@ -135,6 +141,14 @@ function App() {
             <ProtectedRoute>
               <ArticleDetailPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ParentProfilePage />
+          </ProtectedRoute>
           }
         />
 
