@@ -19,6 +19,7 @@
   --white: #ffffff;
 }
 
+/* PAGE WRAPPER */
 .screenings-page {
   min-height: 100vh;
   background: var(--gray-50);
@@ -31,6 +32,7 @@
   padding: 0 1.5rem;
 }
 
+/* HEADER */
 .screenings-header {
   display: flex;
   justify-content: space-between;
@@ -88,71 +90,82 @@
   box-shadow: 0 6px 16px rgba(14, 165, 233, 0.3);
 }
 
+/* === DUA CARD TERATAS ====================================== */
+
 .screenings-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+  align-items: stretch;
 }
 
+/* Card umum */
 .stat-card {
   background: var(--white);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-radius: 18px;
+  padding: 1.6rem 1.8rem;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
   border: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-card--compact {
-  padding: 1rem;
+  /* ikut default padding */
 }
 
 .stat-card--highlight {
-  border-left: 4px solid var(--accent);
+  border-left: 5px solid var(--accent);
 }
 
+/* Header dalam card */
 .stat-card__header {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
   color: var(--gray-700);
 }
 
 .stat-card__header h3 {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
+/* Card kiri: Status Terbaru */
 .stat-card__content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.7rem;
 }
 
 .stat-card__score {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .score-value {
-  font-size: 2rem;
+  font-size: 2.6rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .score-max {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--gray-400);
 }
 
 .stat-badge {
-  display: inline-block;
-  padding: 0.25rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.8rem;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
   width: fit-content;
 }
@@ -174,65 +187,71 @@
 
 .stat-card__summary {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--gray-700);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .stat-card__date {
-  display: flex;
+  margin-top: auto;
+  display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.75rem;
+  gap: 0.35rem;
+  font-size: 0.78rem;
   color: var(--gray-500);
 }
 
+/* Card kanan: Hasil Analisis Postur */
 .metrics-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.55rem;
 }
 
+/* Satu baris metric */
 .metric-colorful {
-  padding-bottom: 0.6rem;
+  padding: 0.4rem 0;
   border-bottom: 1px solid var(--gray-200);
 }
 
 .metric-colorful:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .metric-colorful__row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto;
   align-items: center;
-  gap: 0.5rem;
+  column-gap: 0.75rem;
 }
 
 .metric-label-compact {
-  font-size: 0.8rem;
-  color: var(--gray-600);
+  font-size: 0.85rem;
+  color: var(--gray-700);
   font-weight: 500;
 }
 
 .metric-colorful__value-group {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: flex-end;
+  gap: 0.45rem;
 }
 
 .metric-value-colored {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
 .metric-status-badge {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
+  white-space: nowrap;
 }
+
+/* === CHART ================================================= */
 
 .screenings-chart {
   background: var(--white);
@@ -248,6 +267,8 @@
   font-size: 1rem;
   color: var(--gray-900);
 }
+
+/* === RIWAYAT + FILTER + TABEL ============================== */
 
 .screenings-section {
   background: var(--white);
@@ -288,6 +309,7 @@
   white-space: nowrap;
 }
 
+/* Filter bar */
 .filter-toggle-btn {
   display: inline-flex;
   align-items: center;
@@ -400,6 +422,7 @@
   transform: translateY(-1px);
 }
 
+/* Table */
 .screenings-table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -506,6 +529,7 @@
   text-decoration: underline;
 }
 
+/* Pagination */
 .pagination {
   margin-top: 1rem;
   display: flex;
@@ -542,6 +566,7 @@
   color: var(--gray-600);
 }
 
+/* EMPTY / ERROR STATE */
 .screenings-empty {
   text-align: center;
   padding: 2.5rem 2rem;
@@ -612,13 +637,30 @@
   color: var(--gray-500);
 }
 
-@media (max-width: 768px) {
+/* === RESPONSIVE ============================================ */
+
+@media (max-width: 960px) {
   .screenings-container {
     padding: 0 1rem;
   }
 
+  .screenings-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 1.4rem 1.4rem;
+  }
+
+  .score-value {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
   .screenings-header {
     margin-bottom: 1rem;
+    flex-direction: column;
   }
 
   .screenings-header h1 {
@@ -627,14 +669,6 @@
 
   .screenings-btn {
     width: 100%;
-  }
-
-  .screenings-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-card {
-    padding: 1rem;
   }
 
   .screenings-section__header {
@@ -685,10 +719,24 @@
     text-align: center;
     order: -1;
   }
+}
+
+@media (max-width: 600px) {
+  .screenings-stats {
+    gap: 1rem;
+  }
 
   .metric-colorful__row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.3rem;
+    grid-template-columns: 1fr;
+    row-gap: 0.25rem;
+  }
+
+  .metric-colorful__value-group {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .metric-status-badge {
+    margin-top: 0.05rem;
   }
 }
