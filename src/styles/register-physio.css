@@ -1,0 +1,230 @@
+:root {
+  --rp-bg: #fafafa;
+  --rp-card-bg: #ffffff;
+  --rp-border: #e5e7eb;
+  --rp-text: #111827;
+  --rp-muted: #6b7280;
+  --rp-primary: #3b82f6;
+  --rp-primary-dark: #2563eb;
+  --rp-danger: #dc2626;
+}
+
+/* Page */
+.rp-page {
+  min-height: 100vh;
+  background: var(--rp-bg);
+  padding: 2rem 1rem;
+}
+
+.rp-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Card */
+.rp-card {
+  background: var(--rp-card-bg);
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.rp-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--rp-text);
+}
+
+.rp-subtitle {
+  margin: 0.5rem 0 1.5rem;
+  color: var(--rp-muted);
+  font-size: 0.95rem;
+}
+
+/* Error */
+.rp-error-box {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: var(--rp-danger);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Form */
+.rp-form {
+  margin-top: 1.5rem;
+}
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.rp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rp-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.rp-input {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: #ffffff;
+}
+
+.rp-input:focus {
+  border-color: var(--rp-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* File input */
+.rp-file-wrapper {
+  position: relative;
+}
+
+.rp-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rp-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  font-size: 0.9rem;
+  color: var(--rp-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f9fafb;
+}
+
+.rp-file-label:hover {
+  border-color: var(--rp-primary);
+  background: #eff6ff;
+  color: var(--rp-primary-dark);
+}
+
+/* Submit */
+.rp-submit {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--rp-primary);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.rp-submit:hover:not(:disabled) {
+  background: var(--rp-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.rp-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rp-submit--loading {
+  cursor: wait;
+}
+
+/* Footer */
+.rp-footer-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--rp-muted);
+}
+
+.rp-link {
+  color: var(--rp-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.rp-link:hover {
+  text-decoration: underline;
+}
+
+/* Success state */
+.rp-success-card {
+  background: var(--rp-card-bg);
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.rp-success-title {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--rp-text);
+}
+
+.rp-success-text {
+  margin: 0 0 1.5rem;
+  color: var(--rp-muted);
+  font-size: 0.95rem;
+}
+
+.rp-link-button {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: var(--rp-primary);
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.rp-link-button:hover {
+  background: var(--rp-primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rp-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .rp-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .rp-grid {
+    grid-template-columns: 1fr; /* kolom tunggal di mobile */
+  }
+}

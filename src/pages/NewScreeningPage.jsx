@@ -5,15 +5,23 @@ import {
   Upload,
   Camera,
   Check,
-  X,
   AlertCircle,
   Image as ImageIcon,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import Webcam from "react-webcam";
 import { createScreening } from "../services/screeningService.jsx";
 import "../styles/screening.css";
+
+const VIEW_LABELS = {
+  FRONT: "Depan",
+  SIDE: "Samping",
+  BACK: "Belakang",
+};
+
+const ORDER = ["FRONT", "SIDE", "BACK"];
 
 function NewScreeningPage() {
   const { childId } = useParams();
@@ -34,30 +42,39 @@ function NewScreeningPage() {
   const [useCamera, setUseCamera] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modalImage, setModalImage] = useState(null);
+  const [mainMobileView, setMainMobileView] = useState("FRONT");
 
   useEffect(() => {
     return () => {
       Object.values(previews).forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
+        if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
       });
     };
   }, [previews]);
 
-  // Smart auto-navigate: selalu ke view pertama yang kosong
   useEffect(() => {
     if (loading) return;
 
-    const firstEmptyView = ["FRONT", "SIDE", "BACK"].find(
-      (view) => images[view] === null
-    );
+    const firstEmptyView = ORDER.find((view) => images[view] === null);
 
-    if (images[activeView] !== null && firstEmptyView && activeView !== firstEmptyView) {
+    if (
+      images[activeView] !== null &&
+      firstEmptyView &&
+      activeView !== firstEmptyView
+    ) {
       const timeout = setTimeout(() => {
         setActiveView(firstEmptyView);
       }, 350);
       return () => clearTimeout(timeout);
     }
   }, [images, activeView, loading]);
+
+  const ensureMainMobileView = () => {
+    if (previews[mainMobileView]) return;
+    const firstWithImage = ORDER.find((v) => previews[v]);
+    setMainMobileView(firstWithImage || "FRONT");
+  };
 
   const handleFileUpload = (e, view) => {
     const file = e.target.files?.[0];
@@ -68,6 +85,7 @@ function NewScreeningPage() {
     const url = URL.createObjectURL(file);
     setPreviews((prev) => ({ ...prev, [view]: url }));
     setError(null);
+    setMainMobileView(view);
   };
 
   const handleCaptureFromCamera = () => {
@@ -95,14 +113,18 @@ function NewScreeningPage() {
     setImages((prev) => ({ ...prev, [activeView]: file }));
     setPreviews((prev) => ({ ...prev, [activeView]: imageSrc }));
     setError(null);
+    setMainMobileView(activeView);
   };
 
   const handleRemoveImage = (view) => {
     setImages((prev) => ({ ...prev, [view]: null }));
-    if (previews[view]) {
+    if (previews[view] && previews[view].startsWith("blob:")) {
       URL.revokeObjectURL(previews[view]);
     }
     setPreviews((prev) => ({ ...prev, [view]: null }));
+    if (mainMobileView === view) {
+      ensureMainMobileView();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -126,7 +148,6 @@ function NewScreeningPage() {
 
     try {
       setLoading(true);
-
       const data = await createScreening(childId, formData);
 
       if (data.id) {
@@ -141,7 +162,7 @@ function NewScreeningPage() {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Gagal membuat screening. Pastikan token valid dan koneksi stabil."
+          "Gagal membuat screening. Pastikan koneksi stabil."
       );
     } finally {
       setLoading(false);
@@ -152,23 +173,21 @@ function NewScreeningPage() {
     facingMode: "environment",
   };
 
-  const uploadedCount = Object.values(images).filter((img) => img !== null).length;
-
-  const viewLabels = {
-    FRONT: "Depan",
-    SIDE: "Samping",
-    BACK: "Belakang",
-  };
+  const uploadedCount = Object.values(images).filter(
+    (img) => img !== null
+  ).length;
 
   return (
     <div className="screening-page">
       <div className="screening-wrapper">
-        {/* Left Side: Form Input (50%) */}
+        {/* LEFT */}
         <div className="screening-left">
           <div className="screening-left__content">
-            {/* Header */}
             <div className="screening-header">
-              <Link to={`/children/${childId}/screenings`} className="screening-back">
+              <Link
+                to={`/children/${childId}/screenings`}
+                className="screening-back"
+              >
                 <ArrowLeft size={16} strokeWidth={2} />
                 Kembali
               </Link>
@@ -179,12 +198,14 @@ function NewScreeningPage() {
               </div>
             </div>
 
-            {/* Mode Toggle */}
+            {/* Mode */}
             <div className="screening-mode">
               <button
                 type="button"
                 onClick={() => setUseCamera(false)}
-                className={`screening-mode__btn ${!useCamera ? "screening-mode__btn--active" : ""}`}
+                className={`screening-mode__btn ${
+                  !useCamera ? "screening-mode__btn--active" : ""
+                }`}
               >
                 <Upload size={16} strokeWidth={2} />
                 Upload File
@@ -192,31 +213,18 @@ function NewScreeningPage() {
               <button
                 type="button"
                 onClick={() => setUseCamera(true)}
-                className={`screening-mode__btn ${useCamera ? "screening-mode__btn--active" : ""}`}
+                className={`screening-mode__btn ${
+                  useCamera ? "screening-mode__btn--active" : ""
+                }`}
               >
                 <Camera size={16} strokeWidth={2} />
                 Gunakan Kamera
               </button>
             </div>
 
-            {/* Status Badge */}
-            <div className={`screening-status screening-status--${getStatusType(uploadedCount)}`}>
-              <div className="screening-status__icon">
-                {uploadedCount === 3 ? (
-                  <Check size={16} strokeWidth={2} />
-                ) : (
-                  <AlertCircle size={16} strokeWidth={2} />
-                )}
-              </div>
-              <div className="screening-status__text">
-                <strong>{getStatusTitle(uploadedCount)}</strong>
-                <p>{getStatusDesc(uploadedCount)}</p>
-              </div>
-            </div>
-
-            {/* View Tabs */}
-            <div className="screening-tabs">
-              {["FRONT", "SIDE", "BACK"].map((view) => (
+            {/* Tabs desktop */}
+            <div className="screening-tabs screening-tabs--desktop">
+              {ORDER.map((view) => (
                 <button
                   key={view}
                   type="button"
@@ -225,17 +233,44 @@ function NewScreeningPage() {
                     activeView === view ? "screening-tab--active" : ""
                   } ${images[view] ? "screening-tab--uploaded" : ""}`}
                 >
-                  {viewLabels[view]}
+                  {VIEW_LABELS[view]}
                   {images[view] && <Check size={14} strokeWidth={2} />}
                 </button>
               ))}
             </div>
 
-            {/* Upload Area */}
+            {/* Tabs mobile: FRONT+SIDE sejajar, BACK di bawah */}
+            <div className="screening-tabs screening-tabs--mobile">
+              {["FRONT", "SIDE"].map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setActiveView(view)}
+                  className={`screening-tab ${
+                    activeView === view ? "screening-tab--active" : ""
+                  } ${images[view] ? "screening-tab--uploaded" : ""}`}
+                >
+                  {VIEW_LABELS[view]}
+                  {images[view] && <Check size={14} strokeWidth={2} />}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setActiveView("BACK")}
+                className={`screening-tab screening-tab--full ${
+                  activeView === "BACK" ? "screening-tab--active" : ""
+                } ${images["BACK"] ? "screening-tab--uploaded" : ""}`}
+              >
+                {VIEW_LABELS["BACK"]}
+                {images["BACK"] && <Check size={14} strokeWidth={2} />}
+              </button>
+            </div>
+
+            {/* Upload area */}
             <div className="screening-upload">
               <div className="screening-upload__header">
-                <h3>Upload untuk: {viewLabels[activeView]}</h3>
-                <p>Pastikan seluruh tubuh anak terlihat jelas</p>
+                <h3>Upload untuk: {VIEW_LABELS[activeView]}</h3>
+                <p>Pastikan seluruh tubuh anak terlihat jelas.</p>
               </div>
 
               {useCamera ? (
@@ -246,6 +281,7 @@ function NewScreeningPage() {
                       audio={false}
                       screenshotFormat="image/jpeg"
                       videoConstraints={videoConstraints}
+                      className="screening-camera__video"
                     />
                   </div>
                   <button
@@ -254,17 +290,24 @@ function NewScreeningPage() {
                     className="screening-btn screening-btn--primary screening-btn--full"
                   >
                     <Camera size={16} strokeWidth={2} />
-                    Capture {viewLabels[activeView]}
+                    Capture {VIEW_LABELS[activeView]}
                   </button>
                 </div>
               ) : (
                 <div className="screening-file">
-                  <label htmlFor={`file-${activeView}`} className="screening-file__label">
+                  <label
+                    htmlFor={`file-${activeView}`}
+                    className="screening-file__label"
+                  >
                     <div className="screening-file__icon">
                       <Upload size={24} strokeWidth={1.5} />
                     </div>
-                    <p className="screening-file__text">Klik untuk upload foto</p>
-                    <span className="screening-file__format">JPG, PNG (Max 5MB)</span>
+                    <p className="screening-file__text">
+                      Klik untuk upload foto
+                    </p>
+                    <span className="screening-file__format">
+                      JPG, PNG (Max 5MB)
+                    </span>
                   </label>
                   <input
                     id={`file-${activeView}`}
@@ -285,58 +328,130 @@ function NewScreeningPage() {
           </div>
         </div>
 
-        {/* Right Side: Preview & Submit (50%) */}
+        {/* RIGHT */}
         <div className="screening-right">
           <div className="screening-right__content">
             <h2 className="screening-right__title">Hasil Foto</h2>
 
-            {/* Preview Row: 3 kolom, foto portrait pendek */}
-            <div className="screening-preview-row">
-              {Object.entries(previews).map(([view, url]) => (
-                <div key={view} className="screening-preview-cell">
-                  <div className="screening-preview-cell__label">
-                    <span>{viewLabels[view]}</span>
-                    {url && <Check size={12} strokeWidth={2} />}
-                  </div>
-                  <div
-                    className={`screening-preview-cell__box ${
-                      url ? "screening-preview-cell__box--uploaded" : ""
-                    } ${loading ? "screening-preview-cell__box--scanning" : ""}`}
-                    style={{
-                      backgroundImage: url ? `url(${url})` : "none",
-                    }}
-                  >
-                    {!url && (
-                      <div className="screening-preview-cell__placeholder">
-                        <ImageIcon size={28} strokeWidth={1.5} />
-                        <p>Belum ada foto</p>
+            {/* DESKTOP: 3 sejajar + tombol hapus */}
+            <div className="screening-preview-wrapper screening-preview-wrapper--desktop">
+              <div className="screening-preview-row">
+                {ORDER.map((view) => {
+                  const url = previews[view];
+                  return (
+                    <div key={view} className="screening-preview-cell">
+                      <div className="screening-preview-cell__label">
+                        <span>{VIEW_LABELS[view]}</span>
+                        {url && <Check size={12} strokeWidth={2} />}
                       </div>
-                    )}
-                    {loading && url && (
-                      <div className="screening-scan-overlay">
-                        <div className="screening-scan-line"></div>
-                        <div className="screening-scan-text">
-                          <Sparkles size={18} strokeWidth={2} />
-                          <span>Menganalisis...</span>
-                        </div>
+                      <div
+                        className={`screening-preview-cell__box ${
+                          url ? "screening-preview-cell__box--uploaded" : ""
+                        } ${
+                          loading
+                            ? "screening-preview-cell__box--scanning"
+                            : ""
+                        }`}
+                        style={{
+                          backgroundImage: url ? `url(${url})` : "none",
+                        }}
+                        onClick={() => url && setModalImage({ view, url })}
+                      >
+                        {!url && (
+                          <div className="screening-preview-cell__placeholder">
+                            <ImageIcon size={24} strokeWidth={1.5} />
+                            <p>Belum ada foto</p>
+                          </div>
+                        )}
+                        {loading && url && (
+                          <div className="screening-scan-overlay">
+                            <div className="screening-scan-line"></div>
+                            <div className="screening-scan-text">
+                              <Sparkles size={16} strokeWidth={2} />
+                              <span>Menganalisis...</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  {url && !loading && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(view)}
-                      className="screening-preview-cell__remove"
-                    >
-                      <Trash2 size={12} strokeWidth={2} />
-                      Hapus
-                    </button>
-                  )}
-                </div>
-              ))}
+                      {url && !loading && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(view)}
+                          className="screening-preview-cell__remove"
+                        >
+                          <Trash2 size={12} strokeWidth={2} />
+                          Hapus
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Error */}
+            {/* MOBILE: 1 besar + 3 kecil + tombol hapus */}
+            <div className="screening-preview-wrapper screening-preview-wrapper--mobile">
+              <div className="screening-preview-main-mobile">
+                <div className="screening-preview-main-mobile__box">
+                  {previews[mainMobileView] ? (
+                    <div
+                      className="screening-preview-main-mobile__image"
+                      style={{
+                        backgroundImage: `url(${previews[mainMobileView]})`,
+                      }}
+                    />
+                  ) : (
+                    <div className="screening-preview-main-mobile__placeholder">
+                      <ImageIcon size={24} strokeWidth={1.5} />
+                      <p>Belum ada foto</p>
+                    </div>
+                  )}
+                </div>
+                <p className="screening-preview-main-mobile__label">
+                  {VIEW_LABELS[mainMobileView]}
+                </p>
+              </div>
+
+              <div className="screening-preview-thumbs-mobile">
+                {ORDER.map((view) => (
+                  <div key={view} className="screening-thumb-mobile">
+                    <div
+                      className="screening-thumb-mobile__box"
+                      style={{
+                        backgroundImage: previews[view]
+                          ? `url(${previews[view]})`
+                          : "none",
+                      }}
+                      onClick={() =>
+                        previews[view] &&
+                        setMainMobileView(view) &&
+                        setModalImage(null)
+                      }
+                    >
+                      {!previews[view] && (
+                        <div className="screening-thumb-mobile__placeholder">
+                          <ImageIcon size={18} strokeWidth={1.5} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="screening-thumb-mobile__label">
+                      {VIEW_LABELS[view]}
+                    </span>
+                    {previews[view] && !loading && (
+                      <button
+                        type="button"
+                        className="screening-thumb-mobile__remove"
+                        onClick={() => handleRemoveImage(view)}
+                      >
+                        <Trash2 size={11} strokeWidth={2} />
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {error && (
               <div className="screening-error">
                 <AlertCircle size={16} strokeWidth={2} />
@@ -344,7 +459,6 @@ function NewScreeningPage() {
               </div>
             )}
 
-            {/* Submit */}
             <form onSubmit={handleSubmit}>
               <button
                 type="submit"
@@ -357,36 +471,53 @@ function NewScreeningPage() {
 
               <p className="screening-submit__note">
                 {uploadedCount === 1 && "1 foto akan dianalisis"}
-                {uploadedCount === 2 && "2 foto akan dianalisis untuk hasil lebih akurat"}
-                {uploadedCount === 3 && "3 foto akan dianalisis untuk hasil maksimal"}
+                {uploadedCount === 2 &&
+                  "2 foto akan dianalisis untuk hasil lebih akurat"}
+                {uploadedCount === 3 &&
+                  "3 foto akan dianalisis untuk hasil maksimal"}
               </p>
             </form>
           </div>
         </div>
       </div>
+
+      {/* MODAL PREVIEW */}
+      {modalImage && (
+        <div
+          className="screening-modal"
+          onClick={() => setModalImage(null)}
+        >
+          <div
+            className="screening-modal__content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="screening-modal__close"
+              onClick={() => setModalImage(null)}
+              type="button"
+            >
+              <X size={18} strokeWidth={2} />
+            </button>
+            <h3 className="screening-modal__title">
+              Foto {VIEW_LABELS[modalImage.view]}
+            </h3>
+            <img
+              src={modalImage.url}
+              alt={VIEW_LABELS[modalImage.view]}
+              className="screening-modal__image"
+            />
+            <button
+              type="button"
+              className="screening-btn screening-btn--full screening-btn--secondary"
+              onClick={() => setModalImage(null)}
+            >
+              Kembali
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-// Helper functions
-function getStatusType(count) {
-  if (count === 0) return "warning";
-  if (count === 3) return "success";
-  return "info";
-}
-
-function getStatusTitle(count) {
-  if (count === 0) return "Belum ada foto diupload";
-  if (count === 1) return "1 foto terupload";
-  if (count === 2) return "2 foto terupload";
-  return "Lengkap! 3 foto terupload";
-}
-
-function getStatusDesc(count) {
-  if (count === 0) return "Upload minimal 1 foto untuk memulai analisis";
-  if (count === 1) return "Opsional: Tambah Samping atau Belakang untuk akurasi lebih baik";
-  if (count === 2) return "Opsional: Tambah 1 foto lagi untuk hasil maksimal";
-  return "Analisis akan menghasilkan akurasi maksimal";
 }
 
 export default NewScreeningPage;
