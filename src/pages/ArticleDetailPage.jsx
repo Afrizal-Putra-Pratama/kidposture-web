@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { Calendar, Clock, Eye } from "lucide-react";
 import { articleService } from "../services/articleService";
+import "../styles/articleDetail.css";
 
 function ArticleDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
+  const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // load artikel utama
   useEffect(() => {
     const loadArticle = async () => {
       setLoading(true);
@@ -18,37 +23,65 @@ function ArticleDetailPage() {
         if (response.success) {
           setArticle(response.data);
         } else {
-          setError("Article not found");
+          setError("Artikel tidak ditemukan.");
         }
       } catch (err) {
         console.error("Error loading article:", err);
-        setError("Failed to load article");
+        setError("Gagal memuat artikel.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) {
-      loadArticle();
-    }
+    if (slug) loadArticle();
   }, [slug]);
+
+  // load artikel lain (kategori sama / terbaru)
+  useEffect(() => {
+    const loadRelated = async () => {
+      if (!article) return;
+      setRelatedLoading(true);
+      try {
+        const params = { page: 1, per_page: 6 };
+        if (article.category?.id) {
+          params.category_id = article.category.id;
+        }
+        const response = await articleService.getArticles(params);
+        if (response.success) {
+          const list = (response.data || [])
+            .filter((a) => a.id !== article.id)
+            .slice(0, 4); // batasi 4 artikel
+          setRelated(list);
+        }
+      } catch (err) {
+        console.error("Error loading related articles:", err);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+
+    loadRelated();
+  }, [article]);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    try {
+      return new Date(dateStr).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f8f9fa",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⏳</div>
-          <p style={{ color: "#6c757d", fontSize: "1.1rem" }}>
-            Loading article...
-          </p>
+      <div className="ad-page ad-page--center">
+        <div className="ad-loading">
+          <div className="ad-spinner" />
+          <p>Memuat artikel...</p>
         </div>
       </div>
     );
@@ -56,46 +89,16 @@ function ArticleDetailPage() {
 
   if (error || !article) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f8f9fa",
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            borderRadius: 12,
-            padding: "3rem",
-            textAlign: "center",
-            maxWidth: 400,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-        >
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>❌</div>
-          <h2 style={{ color: "#2c3e50", marginBottom: "0.5rem" }}>
-            Article Not Found
-          </h2>
-          <p style={{ color: "#6c757d", marginBottom: "1.5rem" }}>
-            The article you're looking for doesn't exist.
-          </p>
+      <div className="ad-page ad-page--center">
+        <div className="ad-error">
+          <div className="ad-error-icon">❌</div>
+          <h2>Artikel tidak ditemukan</h2>
+          <p>Artikel yang Anda cari tidak tersedia atau sudah dihapus.</p>
           <button
             onClick={() => navigate("/education")}
-            style={{
-              padding: "0.75rem 1.5rem",
-              background: "#4e73df",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontWeight: 500,
-              fontSize: "1rem",
-            }}
+            className="ad-btn-primary"
           >
-            Back to Articles
+            Lihat semua artikel
           </button>
         </div>
       </div>
@@ -103,209 +106,239 @@ function ArticleDetailPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8f9fa",
-        paddingBottom: "3rem",
-      }}
-    >
-      {/* Header with Thumbnail */}
-      <div
-        style={{
-          background: article.thumbnail
-            ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${article.thumbnail})`
-            : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          padding: "3rem 0",
-          color: "white",
-          marginBottom: "2rem",
-        }}
-      >
+    <div className="ad-page">
+      {/* Header hero */}
+      <header className="ad-hero">
         <div
-          style={{ maxWidth: 900, margin: "0 auto", padding: "0 1rem" }}
-        >
-          {/* Back Button */}
-          <Link
-            to="/education"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              color: "white",
-              textDecoration: "none",
-              marginBottom: "2rem",
-              fontSize: "0.95rem",
-              opacity: 0.9,
-            }}
-          >
-            ← Back to Articles
-          </Link>
-
-          {/* Category Badge */}
-          <div style={{ marginBottom: "1rem" }}>
-            <span
-              style={{
-                background: "rgba(255,255,255,0.2)",
-                backdropFilter: "blur(10px)",
-                padding: "0.5rem 1rem",
-                borderRadius: 20,
-                fontSize: "0.9rem",
-                fontWeight: 500,
-              }}
-            >
-              {article.category.icon} {article.category.name}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h1
-            style={{
-              fontSize: "2.5rem",
-              fontWeight: "bold",
-              marginBottom: "1rem",
-              lineHeight: 1.2,
-            }}
-          >
-            {article.title}
-          </h1>
-
-          {/* Meta Info */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1.5rem",
-              fontSize: "0.95rem",
-              opacity: 0.9,
-            }}
-          >
-            <span>👤 {article.author.name}</span>
-            <span>📅 {article.published_at}</span>
-            <span>⏱ {article.read_time} min read</span>
-            <span>👁 {article.views} views</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Article Content */}
-      <div
-        style={{ maxWidth: 900, margin: "0 auto", padding: "0 1rem" }}
-      >
-        <div
+          className="ad-hero-bg"
           style={{
-            background: "white",
-            borderRadius: 12,
-            padding: "2.5rem",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            backgroundImage: article.thumbnail
+              ? `linear-gradient(rgba(15,23,42,0.7), rgba(15,23,42,0.9)), url(${article.thumbnail})`
+              : "linear-gradient(135deg, #38bdf8, #0ea5e9)",
           }}
         >
-          {/* Excerpt */}
-          {article.excerpt && (
+          <div className="ad-hero-inner">
+            {article.category && (
+              <div className="ad-category-badge">
+                {article.category.icon && (
+                  <span className="ad-cat-icon">{article.category.icon}</span>
+                )}
+                <span>{article.category.name}</span>
+              </div>
+            )}
+
+            <h1 className="ad-title">{article.title}</h1>
+
+            <div className="ad-meta-row">
+              {article.author?.name && (
+                <span className="ad-meta-item">👤 {article.author.name}</span>
+              )}
+              <span className="ad-meta-item">
+                <Calendar size={14} strokeWidth={1.7} />
+                {formatDate(article.published_at || article.created_at)}
+              </span>
+              <span className="ad-meta-item">
+                <Clock size={14} strokeWidth={1.7} />
+                {article.read_time} menit baca
+              </span>
+              <span className="ad-meta-item">
+                <Eye size={14} strokeWidth={1.7} />
+                {article.views} kali dibaca
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Konten + related (desktop) */}
+      <main className="ad-main">
+        <div className="ad-main-inner">
+          <article className="ad-article">
+            {article.excerpt && (
+              <div className="ad-excerpt">{article.excerpt}</div>
+            )}
+
             <div
-              style={{
-                background: "#f8f9fa",
-                border: "2px solid #e9ecef",
-                borderRadius: 8,
-                padding: "1.25rem",
-                marginBottom: "2rem",
-                fontStyle: "italic",
-                color: "#495057",
-                fontSize: "1.1rem",
-                lineHeight: 1.6,
-              }}
-            >
-              {article.excerpt}
+              className="ad-content"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+
+            {article.author && (
+              <section className="ad-author">
+                <div className="ad-author-avatar">
+                  {article.author.name
+                    ? article.author.name.charAt(0).toUpperCase()
+                    : "A"}
+                </div>
+                <div className="ad-author-info">
+                  <p className="ad-author-label">Ditulis oleh</p>
+                  <p className="ad-author-name">{article.author.name}</p>
+                </div>
+              </section>
+            )}
+          </article>
+
+          {/* Related di desktop / tablet (kanan) */}
+          <aside className="ad-related ad-related--desktop">
+            <h3>Artikel lain yang mungkin Anda suka</h3>
+            {relatedLoading && (
+              <p className="ad-related-loading">Memuat artikel lain...</p>
+            )}
+            {!relatedLoading && related.length === 0 && (
+              <p className="ad-related-empty">
+                Belum ada artikel lain yang tersedia.
+              </p>
+            )}
+            {!relatedLoading && related.length > 0 && (
+              <div className="ad-related-grid">
+                {related.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={`/education/${item.slug}`}
+                    className="ad-related-card"
+                  >
+                    <div className="ad-related-thumb">
+                      {item.thumbnail ? (
+                        <img src={item.thumbnail} alt={item.title} />
+                      ) : (
+                        <div className="ad-related-placeholder">
+                          <span>Artikel</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ad-related-body">
+                      {item.category && (
+                        <span className="ad-related-cat">
+                          {item.category.icon && (
+                            <span className="ad-cat-icon">
+                              {item.category.icon}
+                            </span>
+                          )}
+                          {item.category.name}
+                        </span>
+                      )}
+                      <h4 className="ad-related-title">{item.title}</h4>
+                      <div className="ad-related-meta">
+                        <span>
+                          {formatDate(item.published_at || item.created_at)}
+                        </span>
+                        <span className="ad-dot">•</span>
+                        <span>{item.read_time} menit</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </aside>
+        </div>
+
+        {/* CTA lihat semua artikel */}
+        <div className="ad-back-bottom">
+          <button
+            onClick={() => navigate("/education")}
+            className="ad-btn-primary"
+          >
+            Lihat semua artikel
+          </button>
+        </div>
+
+        {/* Related versi mobile: tampil setelah artikel selesai sebelum footer */}
+        <section className="ad-related ad-related--mobile">
+          <h3>Artikel lain yang mungkin Anda suka</h3>
+          {relatedLoading && (
+            <p className="ad-related-loading">Memuat artikel lain...</p>
+          )}
+          {!relatedLoading && related.length === 0 && (
+            <p className="ad-related-empty">
+              Belum ada artikel lain yang tersedia.
+            </p>
+          )}
+          {!relatedLoading && related.length > 0 && (
+            <div className="ad-related-grid ad-related-grid--mobile">
+              {related.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/education/${item.slug}`}
+                  className="ad-related-card"
+                >
+                    <div className="ad-related-thumb">
+                      {item.thumbnail ? (
+                        <img src={item.thumbnail} alt={item.title} />
+                      ) : (
+                        <div className="ad-related-placeholder">
+                          <span>Artikel</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ad-related-body">
+                      {item.category && (
+                        <span className="ad-related-cat">
+                          {item.category.icon && (
+                            <span className="ad-cat-icon">
+                              {item.category.icon}
+                            </span>
+                          )}
+                          {item.category.name}
+                        </span>
+                      )}
+                      <h4 className="ad-related-title">{item.title}</h4>
+                      <div className="ad-related-meta">
+                        <span>
+                          {formatDate(item.published_at || item.created_at)}
+                        </span>
+                        <span className="ad-dot">•</span>
+                        <span>{item.read_time} menit</span>
+                      </div>
+                    </div>
+                </Link>
+              ))}
             </div>
           )}
+        </section>
+      </main>
 
-          {/* Article Body */}
-          <div
-            style={{
-              fontSize: "1.1rem",
-              lineHeight: 1.8,
-              color: "#2c3e50",
-            }}
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+      {/* Footer sama seperti landing */}
+      <footer className="landing-footer">
+        <div className="landing-footer__inner">
+          <div className="landing-footer__brand">
+            <div className="landing-logo landing-logo--light">
+              <span className="landing-logo__dot" />
+              <span>Posturely</span>
+            </div>
+            <p>
+              Posturely adalah platform screening postur anak berbasis AI yang
+              membantu orang tua berkolaborasi dengan fisioterapis untuk tumbuh
+              kembang yang lebih sehat.
+            </p>
+          </div>
 
-          {/* Author Info */}
-          <div
-            style={{
-              marginTop: "3rem",
-              paddingTop: "2rem",
-              borderTop: "2px solid #e9ecef",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: "50%",
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.5rem",
-                  color: "white",
-                  fontWeight: "bold",
-                }}
-              >
-                {article.author.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    color: "#2c3e50",
-                    marginBottom: "0.25rem",
-                  }}
-                >
-                  Written by
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.1rem",
-                    color: "#4e73df",
-                    fontWeight: 600,
-                  }}
-                >
-                  {article.author.name}
-                </div>
-              </div>
+          <div className="landing-footer__cols">
+            <div className="landing-footer__col">
+              <h4>Tentang</h4>
+              <button onClick={() => navigate("/")}>Tentang Posturely</button>
+              <button onClick={() => navigate("/")}>Cara Kerja</button>
+            </div>
+            <div className="landing-footer__col">
+              <h4>Layanan</h4>
+              <button onClick={() => navigate("/")}>Screening Postur Anak</button>
+              <button onClick={() => navigate("/education")}>Edukasi Postur</button>
+              <button onClick={() => navigate("/")}>Konsultasi Fisioterapis</button>
+            </div>
+            <div className="landing-footer__col">
+              <h4>Kontak</h4>
+              <button onClick={() => navigate("/login")}>Masuk ke aplikasi</button>
+              <button onClick={() => navigate("/register/physio")}>
+                Bergabung sebagai Fisioterapis
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Back to Articles Button */}
-        <div style={{ textAlign: "center", marginTop: "2rem" }}>
-          <Link
-            to="/education"
-            style={{
-              display: "inline-block",
-              padding: "0.75rem 2rem",
-              background: "#4e73df",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: 8,
-              fontWeight: 500,
-              transition: "background 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "#2e59d9")}
-            onMouseLeave={(e) => (e.target.style.background = "#4e73df")}
-          >
-            ← Back to All Articles
-          </Link>
+        <div className="landing-footer__bottom">
+          <p>© 2026 Posturely. Semua hak cipta dilindungi.</p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
