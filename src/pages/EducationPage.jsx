@@ -13,6 +13,11 @@ import {
 import { articleService } from "../services/articleService";
 import "../styles/education.css";
 
+// BASE URL backend (harus sama dengan APP_URL Laravel, set di VITE_API_URL)
+// Ambil base URL dan potong /api kalau ada
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "")
+  .replace(/\/api\/?$/, ""); // hapus /api di akhir kalau ada
+
 function EducationPage() {
   const navigate = useNavigate();
 
@@ -109,7 +114,10 @@ function EducationPage() {
           </div>
 
           {/* Search bar desktop */}
-          <form className="edu-search-bar desktop-only" onSubmit={handleSearchSubmit}>
+          <form
+            className="edu-search-bar desktop-only"
+            onSubmit={handleSearchSubmit}
+          >
             <input
               type="text"
               placeholder="Cari artikel..."
@@ -124,7 +132,10 @@ function EducationPage() {
         </header>
 
         {/* Search bar mobile */}
-        <form className="edu-search-bar mobile-only" onSubmit={handleSearchSubmit}>
+        <form
+          className="edu-search-bar mobile-only"
+          onSubmit={handleSearchSubmit}
+        >
           <input
             type="text"
             placeholder="Cari artikel..."
@@ -196,7 +207,11 @@ function EducationPage() {
                       <div className="edu-featured-image-wrapper">
                         {featured.thumbnail ? (
                           <img
-                            src={featured.thumbnail}
+                            src={
+                              featured.thumbnail.startsWith("http")
+                                ? featured.thumbnail
+                                : `${API_BASE_URL}${featured.thumbnail}`
+                            }
                             alt={featured.title}
                             className="edu-featured-image"
                           />
@@ -215,7 +230,9 @@ function EducationPage() {
                           )}
                           <span>{featured.category?.name}</span>
                         </div>
-                        <h2 className="edu-featured-title">{featured.title}</h2>
+                        <h2 className="edu-featured-title">
+                          {featured.title}
+                        </h2>
                         {featured.excerpt && (
                           <p className="edu-featured-excerpt">
                             {featured.excerpt.substring(0, 180)}...
@@ -253,7 +270,14 @@ function EducationPage() {
                           >
                             <div className="edu-sidebar-thumb">
                               {article.thumbnail ? (
-                                <img src={article.thumbnail} alt={article.title} />
+                                <img
+                                  src={
+                                    article.thumbnail.startsWith("http")
+                                      ? article.thumbnail
+                                      : `${API_BASE_URL}${article.thumbnail}`
+                                  }
+                                  alt={article.title}
+                                />
                               ) : (
                                 <div className="edu-sidebar-placeholder" />
                               )}
@@ -265,7 +289,8 @@ function EducationPage() {
                               <div className="edu-sidebar-meta">
                                 <span>
                                   {formatDate(
-                                    article.published_at || article.created_at
+                                    article.published_at ||
+                                      article.created_at
                                   )}
                                 </span>
                                 <span className="edu-sep-dot">•</span>
@@ -304,7 +329,9 @@ function EducationPage() {
             {pagination && pagination.last_page > 1 && (
               <div className="edu-pagination">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   className="edu-page-nav"
                 >
@@ -319,7 +346,9 @@ function EducationPage() {
                         key={page}
                         onClick={() => setCurrentPage(page)}
                         className={`edu-page-pill ${
-                          currentPage === page ? "edu-page-pill--active" : ""
+                          currentPage === page
+                            ? "edu-page-pill--active"
+                            : ""
                         }`}
                       >
                         {page}
@@ -363,19 +392,26 @@ function EducationPage() {
           <div className="landing-footer__cols">
             <div className="landing-footer__col">
               <h4>Tentang</h4>
-              {/* Di page education tidak ada section scroll, pakai navigate / link dasar */}
               <button onClick={() => navigate("/")}>Tentang Posturely</button>
               <button onClick={() => navigate("/")}>Cara Kerja</button>
             </div>
             <div className="landing-footer__col">
               <h4>Layanan</h4>
-              <button onClick={() => navigate("/")}>Screening Postur Anak</button>
-              <button onClick={() => navigate("/education")}>Edukasi Postur</button>
-              <button onClick={() => navigate("/")}>Konsultasi Fisioterapis</button>
+              <button onClick={() => navigate("/")}>
+                Screening Postur Anak
+              </button>
+              <button onClick={() => navigate("/education")}>
+                Edukasi Postur
+              </button>
+              <button onClick={() => navigate("/")}>
+                Konsultasi Fisioterapis
+              </button>
             </div>
             <div className="landing-footer__col">
               <h4>Kontak</h4>
-              <button onClick={() => navigate("/login")}>Masuk ke aplikasi</button>
+              <button onClick={() => navigate("/login")}>
+                Masuk ke aplikasi
+              </button>
               <button onClick={() => navigate("/register/physio")}>
                 Bergabung sebagai Fisioterapis
               </button>
@@ -457,12 +493,18 @@ function ArticleCard({ article }) {
     ? article.excerpt.substring(0, 120) + "..."
     : "";
 
+  const thumbnailUrl = article.thumbnail
+    ? article.thumbnail.startsWith("http")
+      ? article.thumbnail
+      : `${API_BASE_URL}${article.thumbnail}`
+    : null;
+
   return (
     <Link to={`/education/${article.slug}`} className="edu-card-link">
       <article className="edu-article-card">
         <div className="edu-card-thumb">
-          {article.thumbnail ? (
-            <img src={article.thumbnail} alt={article.title} />
+          {thumbnailUrl ? (
+            <img src={thumbnailUrl} alt={article.title} />
           ) : (
             <div className="edu-card-placeholder">
               <span>Artikel</span>

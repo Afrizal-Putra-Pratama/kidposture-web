@@ -1,5 +1,6 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
 import ScreeningDetailPage from "./pages/ScreeningDetailPage.jsx";
@@ -9,28 +10,33 @@ import ArticleDetailPage from "./pages/ArticleDetailPage.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
-import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
-// Physio (file lama)
+
+// Physio (lama)
+import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
 import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
 
-// Direktori fisio (file lama)
+// Direktori fisio (lama)
 import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
 import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
 
-// FASE 1 (file baru)
+// FASE 1 (baru)
 import RegisterPhysioPage from "./pages/auth/RegisterPhysioPage.jsx";
 import PhysioProfilePage from "./pages/physio/PhysioProfilePage.jsx";
 import PhysiotherapistListPage from "./pages/parent/PhysiotherapistListPage.jsx";
 import AdminPhysioManagementPage from "./pages/admin/AdminPhysioManagementPage.jsx";
 
-// FASE 2 (file baru)
+// FASE 2 (baru)
 import LandingPage from "./pages/LandingPage.jsx";
 
-// ✅ TAMBAHAN: Register Parent Page
+// Register parent
 import RegisterParentPage from "./pages/RegisterParentPage.jsx";
 
-// ✅ Protected Route: hanya cek token
+// Physio articles (baru)
+import PhysioEducationPage from "./pages/PhysioEducationPage.jsx";
+import PhysioArticleFormPage from "./pages/PhysioArticleFormPage.jsx";
+
+// Protected Route: cek token saja
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
 
@@ -41,7 +47,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// ✅ Role-based Route: cek role user
+// Role-based Route: cek role user
 function RoleRoute({ children, allowedRoles }) {
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
@@ -64,8 +70,6 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
-        
-        {/* ✅ TAMBAHAN: Route Daftar Orang Tua */}
         <Route path="/register/parent" element={<RegisterParentPage />} />
 
         {/* Protected Routes (Parent default) */}
@@ -125,7 +129,7 @@ function App() {
           }
         />
 
-        {/* Education */}
+        {/* Education (public content tapi hanya bisa diakses user login) */}
         <Route
           path="/education"
           element={
@@ -143,16 +147,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ParentProfilePage />
-          </ProtectedRoute>
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ParentProfilePage />
+            </ProtectedRoute>
           }
         />
 
-        {/* Direktori Fisioterapis (Parent) - gunakan yang baru dengan filter & maps */}
+        {/* Direktori Fisioterapis (Parent) - baru */}
         <Route
           path="/physiotherapists"
           element={
@@ -195,6 +200,40 @@ function App() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={["physio"]}>
                 <PhysioProfilePage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Kelola artikel fisio */}
+        <Route
+          path="/physio/education"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioEducationPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/physio/education/create"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioArticleFormPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/physio/education/:id/edit"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioArticleFormPage />
               </RoleRoute>
             </ProtectedRoute>
           }

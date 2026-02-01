@@ -1,0 +1,329 @@
+/* src/styles/physioArticleForm.css */
+
+:root {
+  --pf-bg: #f3f4f6;
+  --pf-surface: #ffffff;
+  --pf-border: #e5e7eb;
+  --pf-text-main: #111827;
+  --pf-text-sub: #6b7280;
+  --pf-text-muted: #9ca3af;
+  --pf-primary: #3b82f6;
+  --pf-primary-dark: #2563eb;
+  --pf-danger: #dc2626;
+  --pf-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --pf-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* PAGE */
+.physio-form-page {
+  min-height: 100vh;
+  background: var(--pf-bg);
+  padding: 2rem 0;
+}
+
+.physio-form-page--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.physio-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* LOADING */
+.physio-form-loading {
+  text-align: center;
+  padding: 2rem;
+  background: var(--pf-surface);
+  border-radius: 12px;
+  box-shadow: var(--pf-shadow-soft);
+}
+
+.physio-form-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid var(--pf-border);
+  border-top-color: var(--pf-primary);
+  margin: 0 auto 0.75rem auto;
+  animation: pf-spin 0.8s linear infinite;
+}
+
+.physio-form-spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin: 0;
+}
+
+@keyframes pf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* HEADER */
+.physio-form-header {
+  margin-bottom: 2rem;
+}
+
+.physio-form-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--pf-border);
+  background: var(--pf-surface);
+  color: var(--pf-text-sub);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.physio-form-back-btn:hover {
+  border-color: var(--pf-primary);
+  color: var(--pf-primary);
+}
+
+.physio-form-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--pf-text-main);
+}
+
+/* ALERT */
+.physio-form-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.physio-form-alert--error {
+  background: #fef2f2;
+  color: var(--pf-danger);
+  border: 1px solid #fee2e2;
+}
+
+/* FORM */
+.physio-form {
+  background: var(--pf-surface);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: var(--pf-shadow-soft);
+}
+
+.physio-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+}
+
+.physio-form-main {
+  min-width: 0;
+}
+
+.physio-form-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.physio-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.physio-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--pf-text-main);
+  margin-bottom: 0.5rem;
+}
+
+.physio-form-required {
+  color: var(--pf-danger);
+}
+
+.physio-form-input,
+.physio-form-textarea,
+.physio-form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  background: var(--pf-surface);
+  font-size: 0.9375rem;
+  color: var(--pf-text-main);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.physio-form-input:focus,
+.physio-form-textarea:focus,
+.physio-form-select:focus {
+  outline: none;
+  border-color: var(--pf-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.physio-form-textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.physio-form-hint {
+  display: block;
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--pf-text-sub);
+}
+
+/* UPLOAD */
+.physio-form-upload {
+  display: block;
+  cursor: pointer;
+}
+
+.physio-form-upload-input {
+  display: none;
+}
+
+.physio-form-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  border: 2px dashed var(--pf-border);
+  border-radius: 10px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.physio-form-upload:hover .physio-form-upload-label {
+  border-color: var(--pf-primary);
+  background: #eff6ff;
+}
+
+.physio-form-upload-label svg {
+  color: var(--pf-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.physio-form-upload-label span {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--pf-text-main);
+}
+
+.physio-form-upload-label small {
+  font-size: 0.8125rem;
+  color: var(--pf-text-sub);
+  margin-top: 0.25rem;
+}
+
+/* THUMBNAIL PREVIEW */
+.physio-form-thumbnail-preview {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--pf-border);
+}
+
+.physio-form-thumbnail-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.physio-form-thumbnail-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.physio-form-thumbnail-remove:hover {
+  background: var(--pf-danger);
+  transform: scale(1.1);
+}
+
+/* SUBMIT BUTTON */
+.physio-form-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.875rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--pf-primary);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.physio-form-submit:hover:not(:disabled) {
+  background: var(--pf-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--pf-shadow-md);
+}
+
+.physio-form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .physio-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .physio-form-sidebar {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .physio-form-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .physio-form {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .physio-form {
+    padding: 1rem;
+  }
+
+  .physio-form-group {
+    margin-bottom: 1.25rem;
+  }
+}

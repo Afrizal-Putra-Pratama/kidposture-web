@@ -1,13 +1,22 @@
 // src/pages/PhysioDashboardPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  Stethoscope, 
+  Clock, 
+  CheckCircle, 
+  Settings,
+  BookOpen,
+  UserCog
+} from "lucide-react";
 import { fetchPhysioReferrals } from "../services/screeningService";
+import "../styles/physioDashboard.css";
 
 function PhysioDashboardPage() {
   const [screenings, setScreenings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("requested"); // requested | accepted | completed
+  const [activeTab, setActiveTab] = useState("requested");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,96 +49,86 @@ function PhysioDashboardPage() {
   const countByStatus = (status) =>
     onlyReferred.filter((s) => s.referral_status === status).length;
 
-  if (loading)
-    return <p style={{ padding: 16 }}>Memuat dashboard fisioterapis...</p>;
-  if (error) return <p style={{ padding: 16, color: "red" }}>{error}</p>;
+  if (loading) {
+    return (
+      <div className="physio-page physio-page--center">
+        <div className="physio-loading">
+          <div className="physio-spinner" />
+          <p>Memuat dashboard fisioterapis...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="physio-page physio-page--center">
+        <div className="physio-error">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{ minHeight: "100vh", background: "#f3f4f6", padding: "2rem 0" }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 1rem" }}>
-        {/* Header + tombol ke profil */}
-        <header
-          style={{
-            marginBottom: "1.5rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <h1 style={{ margin: 0, fontSize: "2rem", color: "#111827" }}>
-              🧑‍⚕️ Dashboard Fisioterapis
-            </h1>
-            <p style={{ marginTop: 8, color: "#6b7280" }}>
-              Screening anak yang dirujuk kepada Anda.
-            </p>
+    <div className="physio-page">
+      <div className="physio-container">
+        {/* Header */}
+        <header className="physio-header">
+          <div className="physio-header-left">
+            <div className="physio-header-text">
+              <h1>
+                <UserCog className="physio-header-icon" size={28} />
+                Dashboard Fisioterapis
+              </h1>
+              <p>Screening anak yang dirujuk kepada Anda.</p>
+            </div>
           </div>
 
-          {/* ✅ Tombol menuju halaman profil fisio */}
-          <button
-            type="button"
-            onClick={() => navigate("/physio/profile")}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: "1px solid #3b82f6",
-              background: "white",
-              color: "#3b82f6",
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            ⚙️ Pengaturan Profil
-          </button>
+          <div className="physio-header-actions">
+            <button
+              type="button"
+              onClick={() => navigate("/physio/education")}
+              className="physio-btn-cta"
+            >
+              <BookOpen size={18} />
+              <span>Kelola Artikel</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/physio/profile")}
+              className="physio-btn-outline"
+            >
+              <Settings size={18} />
+              <span>Pengaturan</span>
+            </button>
+          </div>
         </header>
 
-        {/* Stat cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "1rem",
-            marginBottom: "1.5rem",
-          }}
-        >
+        {/* Stats */}
+        <div className="physio-stats">
           <StatCard
             label="Menunggu Konfirmasi"
             value={countByStatus("requested")}
-            icon="⏳"
+            icon={<Clock size={24} />}
             color="#f59e0b"
           />
           <StatCard
             label="Sedang Ditangani"
             value={countByStatus("accepted")}
-            icon="🩺"
+            icon={<Stethoscope size={24} />}
             color="#3b82f6"
           />
           <StatCard
             label="Selesai"
             value={countByStatus("completed")}
-            icon="✅"
+            icon={<CheckCircle size={24} />}
             color="#10b981"
           />
         </div>
 
         {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            marginBottom: "1rem",
-            borderBottom: "2px solid #e5e7eb",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="physio-tabs">
           {[
             { key: "requested", label: "Menunggu Konfirmasi" },
             { key: "accepted", label: "Sedang Ditangani" },
@@ -138,63 +137,28 @@ function PhysioDashboardPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding: "10px 16px",
-                border: "none",
-                background: "transparent",
-                borderBottom:
-                  activeTab === tab.key ? "3px solid #3b82f6" : "none",
-                color: activeTab === tab.key ? "#3b82f6" : "#6b7280",
-                fontWeight: activeTab === tab.key ? 600 : 400,
-                cursor: "pointer",
-                fontSize: 14,
-              }}
+              className={`physio-tab ${
+                activeTab === tab.key ? "physio-tab--active" : ""
+              }`}
             >
               {tab.label}
             </button>
           ))}
         </div>
 
-        {/* List / Empty state */}
+        {/* List atau empty */}
         {filteredScreenings.length === 0 ? (
-          <div
-            style={{
-              background: "white",
-              borderRadius: 12,
-              padding: "2rem",
-              textAlign: "center",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            }}
-          >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
-              📭
+          <div className="physio-empty">
+            <div className="physio-empty-icon">
+              <Stethoscope size={48} strokeWidth={1.5} />
             </div>
-            <h3
-              style={{ margin: 0, color: "#111827", marginBottom: "0.5rem" }}
-            >
-              Belum ada screening di tab ini
-            </h3>
-            <p style={{ margin: 0, color: "#6b7280" }}>
-              Screening rujukan baru akan muncul di tab “Menunggu Konfirmasi”.
-            </p>
+            <h3>Belum ada screening di tab ini</h3>
+            <p>Screening rujukan baru akan muncul di tab "Menunggu Konfirmasi".</p>
           </div>
         ) : (
-          <div
-            style={{
-              background: "white",
-              borderRadius: 12,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              overflow: "hidden",
-            }}
-          >
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 14,
-              }}
-            >
-              <thead style={{ background: "#f9fafb" }}>
+          <div className="physio-table-wrapper">
+            <table className="physio-table">
+              <thead>
                 <tr>
                   <Th>Anak</Th>
                   <Th>Orang Tua</Th>
@@ -206,49 +170,29 @@ function PhysioDashboardPage() {
               </thead>
               <tbody>
                 {filteredScreenings.map((s) => (
-                  <tr key={s.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <tr key={s.id}>
                     <Td>
-                      <div style={{ fontWeight: 600, color: "#111827" }}>
-                        {s.child?.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#6b7280" }}>
+                      <div className="physio-child-name">{s.child?.name}</div>
+                      <div className="physio-child-age">
                         {s.child?.age_years != null
                           ? `${s.child.age_years} tahun`
                           : "-"}
                       </div>
                     </Td>
                     <Td>
-                      <div style={{ fontSize: 13, color: "#374151" }}>
-                        {s.parent?.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#6b7280" }}>
-                        {s.parent?.email}
-                      </div>
+                      <div className="physio-parent-name">{s.parent?.name}</div>
+                      <div className="physio-parent-email">{s.parent?.email}</div>
                     </Td>
-                    <Td style={{ fontWeight: 600, color: "#111827" }}>
-                      {s.score ?? "-"}
-                    </Td>
+                    <Td className="physio-score">{s.score ?? "-"}</Td>
                     <Td>
                       <span
-                        style={{
-                          display: "inline-block",
-                          padding: "2px 10px",
-                          borderRadius: 999,
-                          background:
-                            s.category === "GOOD"
-                              ? "#d1fae5"
-                              : s.category === "FAIR"
-                              ? "#fed7aa"
-                              : "#fee2e2",
-                          color:
-                            s.category === "GOOD"
-                              ? "#065f46"
-                              : s.category === "FAIR"
-                              ? "#9a3412"
-                              : "#b91c1c",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
+                        className={`physio-badge physio-badge--${
+                          s.category === "GOOD"
+                            ? "good"
+                            : s.category === "FAIR"
+                            ? "fair"
+                            : "poor"
+                        }`}
                       >
                         {s.category || "Perlu perhatian"}
                       </span>
@@ -263,18 +207,8 @@ function PhysioDashboardPage() {
                     <Td>
                       <button
                         type="button"
-                        onClick={() =>
-                          navigate(`/physio/screenings/${s.id}`)
-                        }
-                        style={{
-                          padding: "6px 10px",
-                          borderRadius: 6,
-                          border: "1px solid #3b82f6",
-                          background: "white",
-                          color: "#3b82f6",
-                          fontSize: 12,
-                          cursor: "pointer",
-                        }}
+                        onClick={() => navigate(`/physio/screenings/${s.id}`)}
+                        className="physio-btn-link"
                       >
                         Lihat Detail
                       </button>
@@ -292,77 +226,24 @@ function PhysioDashboardPage() {
 
 function StatCard({ label, value, icon, color }) {
   return (
-    <div
-      style={{
-        background: "white",
-        borderRadius: 12,
-        padding: "1.25rem 1.5rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
-            {label}
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#111827" }}>
-            {value}
-          </div>
-        </div>
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            backgroundColor: color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 22,
-            color: "white",
-          }}
-        >
-          {icon}
-        </div>
+    <div className="physio-stat-card">
+      <div className="physio-stat-info">
+        <div className="physio-stat-label">{label}</div>
+        <div className="physio-stat-value">{value}</div>
+      </div>
+      <div className="physio-stat-icon" style={{ backgroundColor: color }}>
+        {icon}
       </div>
     </div>
   );
 }
 
 function Th({ children }) {
-  return (
-    <th
-      style={{
-        textAlign: "left",
-        padding: "0.75rem 1rem",
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#6b7280",
-        textTransform: "uppercase",
-      }}
-    >
-      {children}
-    </th>
-  );
+  return <th className="physio-th">{children}</th>;
 }
 
-function Td({ children }) {
-  return (
-    <td
-      style={{
-        padding: "0.75rem 1rem",
-        verticalAlign: "top",
-      }}
-    >
-      {children}
-    </td>
-  );
+function Td({ children, className = "" }) {
+  return <td className={`physio-td ${className}`}>{children}</td>;
 }
 
 export default PhysioDashboardPage;
