@@ -1070,6 +1070,91 @@
   font-size: 0.85rem;
   color: var(--gray-500);
 }
+/* Detail fisio + badge verifikasi */
+.physio-card__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.physio-card__name {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.physio-card__clinic {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.physio-card__badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #6ee7b7;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.physio-card__bio {
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.45;
+  min-height: 2.6em;
+}
+
+.physio-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-top: auto;
+}
+
+.physio-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.physio-card__meta-item--fee {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.physio-card__meta-item--fee span {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+}
+
+.physio-card__meta-item--fee strong {
+  font-size: 0.88rem;
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+/* Responsif: tumpuk meta di mobile */
+@media (max-width: 640px) {
+  .physio-card__meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .physio-card__meta-item--fee {
+    align-items: flex-start;
+  }
+}
 
 .no-results {
   text-align: center;

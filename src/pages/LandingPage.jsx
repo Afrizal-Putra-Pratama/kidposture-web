@@ -120,15 +120,27 @@ function LandingPage() {
   const parentsItems = [
     { icon: CheckCircle2, text: "Screening postur anak berkala dengan AI" },
     { icon: CheckCircle2, text: "Pantau riwayat hasil screening setiap anak" },
-    { icon: CheckCircle2, text: "Dapatkan rekomendasi aktivitas dari fisioterapis" },
-    { icon: CheckCircle2, text: "Rujuk langsung ke fisioterapis anak terdekat" },
+    {
+      icon: CheckCircle2,
+      text: "Dapatkan rekomendasi aktivitas dari fisioterapis",
+    },
+    {
+      icon: CheckCircle2,
+      text: "Rujuk langsung ke fisioterapis anak terdekat",
+    },
   ];
 
   const physioItems = [
     { icon: CheckCircle2, text: "Menerima rujukan screening dari orang tua" },
     { icon: CheckCircle2, text: "Melihat hasil analisis AI dan foto postur" },
-    { icon: CheckCircle2, text: "Memberikan rekomendasi latihan dan edukasi" },
-    { icon: CheckCircle2, text: "Membangun profil praktik dan jangkauan pasien" },
+    {
+      icon: CheckCircle2,
+      text: "Memberikan rekomendasi latihan dan edukasi",
+    },
+    {
+      icon: CheckCircle2,
+      text: "Membangun profil praktik dan jangkauan pasien",
+    },
   ];
 
   const [whyRef, whyInView] = useInView();
@@ -184,7 +196,9 @@ function LandingPage() {
   // Filter fisio
   const filteredPhysios = physios.filter((p) => {
     const matchName = p.name?.toLowerCase().includes(searchPhysio.toLowerCase());
-    const matchCity = filterCity ? p.city?.toLowerCase().includes(filterCity.toLowerCase()) : true;
+    const matchCity = filterCity
+      ? p.city?.toLowerCase().includes(filterCity.toLowerCase())
+      : true;
     const matchSpec = filterSpecialty
       ? p.specialty?.toLowerCase().includes(filterSpecialty.toLowerCase())
       : true;
@@ -207,25 +221,43 @@ function LandingPage() {
           </div>
 
           <nav className="landing-nav landing-nav--desktop">
-            <button onClick={() => scrollToSection("about")} className="landing-nav__link">
+            <button
+              onClick={() => scrollToSection("about")}
+              className="landing-nav__link"
+            >
               Tentang
             </button>
-            <button onClick={() => scrollToSection("education")} className="landing-nav__link">
+            <button
+              onClick={() => scrollToSection("education")}
+              className="landing-nav__link"
+            >
               Edukasi
             </button>
-            <button onClick={() => scrollToSection("how-it-works")} className="landing-nav__link">
+            <button
+              onClick={() => scrollToSection("how-it-works")}
+              className="landing-nav__link"
+            >
               Cara Kerja
             </button>
-            <button onClick={() => scrollToSection("for-whom")} className="landing-nav__link">
+            <button
+              onClick={() => scrollToSection("for-whom")}
+              className="landing-nav__link"
+            >
               Untuk Siapa
             </button>
           </nav>
 
           <div className="landing-nav__actions landing-nav__actions--desktop">
-            <button onClick={() => navigate("/login")} className="landing-nav__ghost">
+            <button
+              onClick={() => navigate("/login")}
+              className="landing-nav__ghost"
+            >
               Masuk
             </button>
-            <button onClick={() => navigate("/register/physio")} className="landing-nav__primary">
+            <button
+              onClick={() => navigate("/register/physio")}
+              className="landing-nav__primary"
+            >
               Daftar Fisioterapis
             </button>
           </div>
@@ -240,7 +272,10 @@ function LandingPage() {
 
         {mobileMenuOpen && (
           <div className="landing-nav__mobile">
-            <button onClick={() => scrollToSection("about")} className="landing-nav__mobile-link">
+            <button
+              onClick={() => scrollToSection("about")}
+              className="landing-nav__mobile-link"
+            >
               Tentang
             </button>
             <button
@@ -287,15 +322,14 @@ function LandingPage() {
       {/* Hero */}
       <section className="hero">
         <div className="hero-accent hero-accent--top-left" />
-        
 
         <div className="hero__inner">
           <div className="hero__content">
             <p className="hero__eyebrow">Screening postur anak yang praktis</p>
             <h1 className="hero__title">Deteksi Postur Anak dengan Bantuan AI</h1>
             <p className="hero__subtitle">
-              Posturely membantu orang tua memantau kesehatan muskuloskeletal anak sejak dini,
-              dan terhubung dengan fisioterapis anak saat dibutuhkan.
+              Posturely membantu orang tua memantau kesehatan muskuloskeletal anak
+              sejak dini, dan terhubung dengan fisioterapis anak saat dibutuhkan.
             </p>
 
             <div className="hero__actions hero__actions--stack">
@@ -380,8 +414,9 @@ function LandingPage() {
           <div className="section__header section__header--center" id="about">
             <h2>Kenapa Postur Anak Itu Penting?</h2>
             <p>
-              Postur yang baik bukan hanya soal berdiri tegak, tapi juga berpengaruh pada tumbuh
-              kembang, kenyamanan, dan rasa percaya diri anak di masa depan.
+              Postur yang baik bukan hanya soal berdiri tegak, tapi juga berpengaruh
+              pada tumbuh kembang, kenyamanan, dan rasa percaya diri anak di masa
+              depan.
             </p>
           </div>
 
@@ -403,14 +438,16 @@ function LandingPage() {
       <section
         id="how-it-works"
         ref={howRef}
-        className={`section section--accent-right fade-up ${howInView ? "is-visible" : ""}`}
+        className={`section section--accent-right fade-up ${
+          howInView ? "is-visible" : ""
+        }`}
       >
         <div className="section__inner">
           <div className="section__header section__header--center">
             <h2>Cara Kerja Posturely</h2>
             <p>
-              Alur yang sama dapat diakses dari rumah, dengan dukungan AI dan fisioterapis anak
-              ketika dibutuhkan.
+              Alur yang sama dapat diakses dari rumah, dengan dukungan AI dan
+              fisioterapis anak ketika dibutuhkan.
             </p>
           </div>
 
@@ -430,7 +467,9 @@ function LandingPage() {
 
             <div className="steps-slider">
               <div className="steps-slider__card">
-                <div className="steps-slider__badge">Step {currentStep + 1} dari 4</div>
+                <div className="steps-slider__badge">
+                  Step {currentStep + 1} dari 4
+                </div>
                 <h3>{howSteps[currentStep].title}</h3>
                 <p>{howSteps[currentStep].text}</p>
 
@@ -475,14 +514,16 @@ function LandingPage() {
       <section
         id="features"
         ref={featureRef}
-        className={`section section--alt fade-up ${featureInView ? "is-visible" : ""}`}
+        className={`section section--alt fade-up ${
+          featureInView ? "is-visible" : ""
+        }`}
       >
         <div className="section__inner">
           <div className="section__header section__header--center">
             <h2>Fitur Unggulan Posturely</h2>
             <p>
-              Satu platform yang menghubungkan orang tua, anak, dan fisioterapis melalui screening
-              postur yang mudah dan terstruktur.
+              Satu platform yang menghubungkan orang tua, anak, dan fisioterapis
+              melalui screening postur yang mudah dan terstruktur.
             </p>
           </div>
 
@@ -572,12 +613,12 @@ function LandingPage() {
             <div className="section__header section__header--with-link">
               <div>
                 <h2>Fisioterapis Terpercaya</h2>
-                <p>Profil fisioterapis yang telah diverifikasi dan aktif menerima konsultasi.</p>
+                <p>
+                  Profil fisioterapis yang telah diverifikasi dan aktif menerima
+                  konsultasi.
+                </p>
               </div>
-              <button
-                onClick={() => navigate("/login")}
-                className="section-link"
-              >
+              <button onClick={() => navigate("/login")} className="section-link">
                 Lihat seluruh fisioterapis di aplikasi
                 <ChevronRight size={18} strokeWidth={2} />
               </button>
@@ -632,45 +673,86 @@ function LandingPage() {
             </div>
 
             <div className="grid grid--3 physio-grid">
-              {filteredPhysios.slice(0, 6).map((physio) => (
-                <div
-                  key={physio.id}
-                  className="card physio-card physio-card--hover"
-                  onClick={() => navigate(`/physiotherapists/${physio.id}`)}
-                >
-                  <div className="physio-card__header">
-                    {physio.photo ? (
-                      <img
-                        src={`${import.meta.env.VITE_API_BASE_URL.replace(
-                          "/api",
-                          ""
-                        )}/storage/${physio.photo}`}
-                        alt={physio.name}
-                        className="physio-card__avatar"
-                      />
-                    ) : (
-                      <div className="physio-card__avatar physio-card__avatar--placeholder">
-                        {physio.name?.charAt(0)?.toUpperCase() || "F"}
+              {filteredPhysios.slice(0, 6).map((physio) => {
+                const isVerified =
+                  physio.is_verified === true && physio.is_active === true;
+
+                return (
+                  <div
+                    key={physio.id}
+                    className="card physio-card physio-card--hover"
+                    onClick={() => navigate(`/physiotherapists/${physio.id}`)}
+                  >
+                    <div className="physio-card__header">
+                      {physio.photo_url ? (
+                        <img
+                          src={physio.photo_url}
+                          alt={physio.name}
+                          className="physio-card__avatar"
+                        />
+                      ) : (
+                        <div className="physio-card__avatar physio-card__avatar--placeholder">
+                          {physio.name?.charAt(0)?.toUpperCase() || "F"}
+                        </div>
+                      )}
+
+                      <div className="physio-card__header-text">
+                        <h3 className="physio-card__name">{physio.name}</h3>
+                        <p className="physio-card__clinic">
+                          {physio.clinic_name || "Praktik fisioterapi"}
+                        </p>
                       </div>
+                    </div>
+
+                    {isVerified && (
+                      <span className="physio-card__badge-verified">
+                        <ShieldCheck size={14} strokeWidth={1.8} />
+                        <span>Fisioterapis terverifikasi</span>
+                      </span>
                     )}
-                    <div>
-                      <h3>{physio.name}</h3>
-                      <p>{physio.clinic_name}</p>
+
+                    {physio.specialty && (
+                      <span className="physio-card__tag">{physio.specialty}</span>
+                    )}
+
+                    {(physio.bio_short || physio.bio) && (
+                      <p className="physio-card__bio">
+                        {(() => {
+                          const text = physio.bio_short || physio.bio;
+                          return text.length > 110
+                            ? text.slice(0, 110) + "…"
+                            : text;
+                        })()}
+                      </p>
+                    )}
+
+                    <div className="physio-card__meta">
+                      <div className="physio-card__meta-item">
+                        <MapPin size={14} strokeWidth={1.5} />
+                        <span>{physio.city || "Lokasi tidak tersedia"}</span>
+                      </div>
+
+                      {physio.consultation_fee && (
+                        <div className="physio-card__meta-item physio-card__meta-item--fee">
+                          <span>Tarif konsultasi</span>
+                          <strong>
+                            Rp{" "}
+                            {Number(physio.consultation_fee).toLocaleString(
+                              "id-ID"
+                            )}
+                          </strong>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {physio.specialty && (
-                    <span className="physio-card__tag">{physio.specialty}</span>
-                  )}
-                  <div className="physio-card__location">
-                    <MapPin size={14} strokeWidth={1.5} />
-                    <span>{physio.city}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {filteredPhysios.length === 0 && (
-              <p className="no-results">Tidak ada fisioterapis yang cocok dengan filter Anda.</p>
+              <p className="no-results">
+                Tidak ada fisioterapis yang cocok dengan filter Anda.
+              </p>
             )}
           </div>
         </section>
@@ -690,8 +772,8 @@ function LandingPage() {
               <div>
                 <h2>Edukasi Postur Anak</h2>
                 <p>
-                  Artikel yang dapat diakses publik. Untuk konten lebih lengkap dan personal,
-                  gunakan dashboard setelah masuk.
+                  Artikel yang dapat diakses publik. Untuk konten lebih lengkap dan
+                  personal, gunakan dashboard setelah masuk.
                 </p>
               </div>
               <button onClick={() => navigate("/login")} className="section-link">
@@ -714,7 +796,9 @@ function LandingPage() {
                     <h3>{article.title}</h3>
                     <p>
                       {article.excerpt ||
-                        (article.content ? article.content.substring(0, 130) + "…" : "")}
+                        (article.content
+                          ? article.content.substring(0, 130) + "…"
+                          : "")}
                     </p>
                   </div>
                 </article>
@@ -735,8 +819,8 @@ function LandingPage() {
           <div>
             <h2>Mulai Screening Postur Anak Secara Gratis</h2>
             <p>
-              Buat akun orang tua, lakukan screening pertama, dan lihat bagaimana Posturely
-              membantu Anda memahami postur anak dengan lebih sederhana.
+              Buat akun orang tua, lakukan screening pertama, dan lihat bagaimana
+              Posturely membantu Anda memahami postur anak dengan lebih sederhana.
             </p>
           </div>
           <div className="section-cta__actions">
@@ -765,28 +849,39 @@ function LandingPage() {
               <span>Posturely</span>
             </div>
             <p>
-              Posturely adalah platform screening postur anak berbasis AI yang membantu orang tua
-              berkolaborasi dengan fisioterapis untuk tumbuh kembang yang lebih sehat.
+              Posturely adalah platform screening postur anak berbasis AI yang
+              membantu orang tua berkolaborasi dengan fisioterapis untuk tumbuh
+              kembang yang lebih sehat.
             </p>
           </div>
 
           <div className="landing-footer__cols">
             <div className="landing-footer__col">
               <h4>Tentang</h4>
-              <button onClick={() => scrollToSection("about")}>Tentang Posturely</button>
-              <button onClick={() => scrollToSection("how-it-works")}>Cara Kerja</button>
+              <button onClick={() => scrollToSection("about")}>
+                Tentang Posturely
+              </button>
+              <button onClick={() => scrollToSection("how-it-works")}>
+                Cara Kerja
+              </button>
             </div>
             <div className="landing-footer__col">
               <h4>Layanan</h4>
               <button onClick={() => scrollToSection("why-posture")}>
                 Screening Postur Anak
               </button>
-              <button onClick={() => scrollToSection("education")}>Edukasi Postur</button>
-              <button onClick={() => scrollToSection("for-whom")}>Konsultasi Fisioterapis</button>
+              <button onClick={() => scrollToSection("education")}>
+                Edukasi Postur
+              </button>
+              <button onClick={() => scrollToSection("for-whom")}>
+                Konsultasi Fisioterapis
+              </button>
             </div>
             <div className="landing-footer__col">
               <h4>Kontak</h4>
-              <button onClick={() => navigate("/login")}>Masuk ke aplikasi</button>
+              <button onClick={() => navigate("/login")}>
+                Masuk ke aplikasi
+              </button>
               <button onClick={() => navigate("/register/physio")}>
                 Bergabung sebagai Fisioterapis
               </button>

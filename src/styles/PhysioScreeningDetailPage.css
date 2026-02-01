@@ -1,0 +1,401 @@
+.physio-screening-page {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 2rem 0;
+}
+
+.physio-screening-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.back-button:hover {
+  background: #f3f4ff;
+  border-color: #3b82f6;
+}
+
+.back-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.screening-header {
+  margin-bottom: 1.5rem;
+}
+
+.screening-title {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #111827;
+}
+
+/* Cards */
+
+.card-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  font-size: 14px;
+}
+
+.card-grid-full {
+  grid-column: 1 / -1;
+}
+
+.summary-text {
+  margin: 0.5rem 0 0;
+  color: #374151;
+}
+
+/* Badge */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge--good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge--alert {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Image grid */
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.image-item {
+  text-align: center;
+}
+
+.screening-image {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  object-fit: cover;
+}
+
+.image-caption {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* AI recommendations */
+
+.ai-rec-block {
+  margin-bottom: 1rem;
+}
+
+.ai-rec-title {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+}
+
+.ai-rec-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.ai-rec-item {
+  margin-bottom: 4px;
+}
+
+.ai-rec-raw {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+/* Buttons */
+
+.referral-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-accept {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.btn-accept:hover {
+  background: #059669;
+}
+
+.btn-complete {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.btn-complete:hover {
+  background: #2563eb;
+}
+
+.btn-add {
+  padding: 8px 12px;
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.btn-add:hover {
+  background: #2563eb;
+}
+
+.btn-save {
+  padding: 8px 16px;
+  background: #10b981;
+  color: #ffffff;
+  border-radius: 6px;
+}
+
+.btn-save:hover {
+  background: #059669;
+}
+
+.btn-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Manual recommendation */
+
+.manual-rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-text {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.manual-rec-form {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.manual-rec-form--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.form-group {
+  margin-bottom: 0.75rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.manual-rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.manual-rec-item {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.manual-rec-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.manual-rec-type {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.manual-rec-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.manual-rec-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.manual-rec-content {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+  white-space: pre-line;
+}
+
+.link-inline {
+  font-size: 13px;
+  color: #3b82f6;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+/* States */
+
+.loading-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.error-text {
+  text-align: center;
+  color: #b91c1c;
+  font-size: 1rem;
+}
+
+/* Responsif */
+
+@media (max-width: 768px) {
+  .physio-screening-page {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .screening-title {
+    font-size: 1.4rem;
+  }
+
+  .card-section {
+    padding: 1.25rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-rec-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .referral-actions {
+    flex-direction: column;
+  }
+
+  .btn,
+  .btn-add {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .back-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-section {
+    padding: 1rem;
+  }
+
+  .screening-title {
+    font-size: 1.25rem;
+  }
+}
