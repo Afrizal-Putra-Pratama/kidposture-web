@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { X, CheckCircle } from "lucide-react";
 import {
   fetchScreeningDetail,
   acceptReferralByPhysio,
@@ -25,6 +26,18 @@ function PhysioScreeningDetailPage() {
   });
   const [submittingRec, setSubmittingRec] = useState(false);
 
+  // Modal konfirmasi terima rujukan
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [acceptingReferral, setAcceptingReferral] = useState(false);
+
+  // Modal konfirmasi selesaikan konsultasi
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completingReferral, setCompletingReferral] = useState(false);
+
+  // Modal sukses
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
   useEffect(() => {
     if (!screeningId) {
       setError("ID screening tidak ditemukan di URL.");
@@ -49,26 +62,34 @@ function PhysioScreeningDetailPage() {
   };
 
   const handleAcceptReferral = async () => {
-    if (!window.confirm("Terima rujukan ini?")) return;
+    setAcceptingReferral(true);
     try {
       await acceptReferralByPhysio(screeningId);
-      alert("Rujukan diterima.");
+      setShowAcceptModal(false);
+      setSuccessMessage("Rujukan berhasil diterima.");
+      setShowSuccessModal(true);
       await loadDetail();
     } catch (err) {
       console.error(err);
       alert("Gagal menerima rujukan.");
+    } finally {
+      setAcceptingReferral(false);
     }
   };
 
   const handleCompleteReferral = async () => {
-    if (!window.confirm("Tandai konsultasi selesai?")) return;
+    setCompletingReferral(true);
     try {
       await completeReferralByPhysio(screeningId);
-      alert("Konsultasi selesai.");
+      setShowCompleteModal(false);
+      setSuccessMessage("Konsultasi berhasil diselesaikan.");
+      setShowSuccessModal(true);
       await loadDetail();
     } catch (err) {
       console.error(err);
       alert("Gagal menyelesaikan konsultasi.");
+    } finally {
+      setCompletingReferral(false);
     }
   };
 
@@ -77,7 +98,8 @@ function PhysioScreeningDetailPage() {
     setSubmittingRec(true);
     try {
       await createManualRecommendation(screeningId, recForm);
-      alert("Rekomendasi berhasil disimpan.");
+      setSuccessMessage("Rekomendasi berhasil disimpan.");
+      setShowSuccessModal(true);
       setRecForm({
         type: "exercise",
         title: "",
@@ -142,9 +164,7 @@ function PhysioScreeningDetailPage() {
         </button>
 
         <header className="screening-header">
-          <h1 className="screening-title">
-            Detail screening: {child?.name}
-          </h1>
+          <h1 className="screening-title">Detail screening: {child?.name}</h1>
         </header>
 
         {/* Data anak */}
@@ -300,7 +320,7 @@ function PhysioScreeningDetailPage() {
         <div className="referral-actions">
           {referral_status === "requested" && (
             <button
-              onClick={handleAcceptReferral}
+              onClick={() => setShowAcceptModal(true)}
               className="btn btn-accept"
             >
               Terima rujukan
@@ -309,7 +329,7 @@ function PhysioScreeningDetailPage() {
 
           {referral_status === "accepted" && (
             <button
-              onClick={handleCompleteReferral}
+              onClick={() => setShowCompleteModal(true)}
               className="btn btn-complete"
             >
               Selesaikan konsultasi
@@ -337,15 +357,13 @@ function PhysioScreeningDetailPage() {
 
           {isBeforeAccepted && (
             <p className="info-text">
-              Terima rujukan terlebih dahulu untuk dapat menambahkan
-              rekomendasi.
+              Terima rujukan terlebih dahulu untuk dapat menambahkan rekomendasi.
             </p>
           )}
 
           {isAfterCompleted && (
             <p className="info-text">
-              Konsultasi sudah selesai, rekomendasi baru tidak dapat
-              ditambahkan.
+              Konsultasi sudah selesai, rekomendasi baru tidak dapat ditambahkan.
             </p>
           )}
 
@@ -418,9 +436,7 @@ function PhysioScreeningDetailPage() {
                 type="submit"
                 disabled={submittingRec || !canEditRecommendation}
                 className={`btn btn-save ${
-                  submittingRec || !canEditRecommendation
-                    ? "btn-disabled"
-                    : ""
+                  submittingRec || !canEditRecommendation ? "btn-disabled" : ""
                 }`}
               >
                 {submittingRec ? "Menyimpan..." : "Simpan rekomendasi"}
@@ -433,13 +449,9 @@ function PhysioScreeningDetailPage() {
               {manualRecommendations.map((rec) => (
                 <div key={rec.id} className="manual-rec-item">
                   <div className="manual-rec-meta">
-                    <span className="manual-rec-type">
-                      {rec.type}
-                    </span>
+                    <span className="manual-rec-type">{rec.type}</span>
                     <span className="manual-rec-date">
-                      {new Date(rec.created_at).toLocaleDateString(
-                        "id-ID"
-                      )}
+                      {new Date(rec.created_at).toLocaleDateString("id-ID")}
                     </span>
                   </div>
                   <h4 className="manual-rec-title">{rec.title}</h4>
@@ -462,12 +474,140 @@ function PhysioScreeningDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="info-text">
-              Belum ada rekomendasi manual.
-            </p>
+            <p className="info-text">Belum ada rekomendasi manual.</p>
           )}
         </section>
       </div>
+
+      {/* Modal Konfirmasi Terima Rujukan */}
+      {showAcceptModal && (
+        <div className="sd-modal-overlay" onClick={() => setShowAcceptModal(false)}>
+          <div
+            className="sd-modal sd-modal--small"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sd-modal__header">
+              <h3>Terima Rujukan</h3>
+              <button
+                onClick={() => setShowAcceptModal(false)}
+                className="sd-modal__close"
+              >
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+            <div className="sd-modal__body">
+              <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
+                Apakah Anda yakin ingin menerima rujukan screening untuk{" "}
+                <strong>{child?.name}</strong>?
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <button
+                  onClick={() => setShowAcceptModal(false)}
+                  className="sd-btn sd-btn--secondary"
+                  style={{ flex: 1 }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleAcceptReferral}
+                  disabled={acceptingReferral}
+                  className="sd-btn sd-btn--primary"
+                  style={{ flex: 1 }}
+                >
+                  {acceptingReferral ? "Memproses..." : "Ya, Terima"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Selesaikan Konsultasi */}
+      {showCompleteModal && (
+        <div
+          className="sd-modal-overlay"
+          onClick={() => setShowCompleteModal(false)}
+        >
+          <div
+            className="sd-modal sd-modal--small"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sd-modal__header">
+              <h3>Selesaikan Konsultasi</h3>
+              <button
+                onClick={() => setShowCompleteModal(false)}
+                className="sd-modal__close"
+              >
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+            <div className="sd-modal__body">
+              <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
+                Apakah Anda yakin konsultasi untuk <strong>{child?.name}</strong>{" "}
+                sudah selesai? Setelah diselesaikan, Anda tidak dapat menambahkan
+                rekomendasi baru.
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <button
+                  onClick={() => setShowCompleteModal(false)}
+                  className="sd-btn sd-btn--secondary"
+                  style={{ flex: 1 }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleCompleteReferral}
+                  disabled={completingReferral}
+                  className="sd-btn sd-btn--primary"
+                  style={{ flex: 1 }}
+                >
+                  {completingReferral ? "Memproses..." : "Ya, Selesaikan"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sukses */}
+      {showSuccessModal && (
+        <div
+          className="sd-modal-overlay"
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div
+            className="sd-modal sd-modal--small"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sd-modal__header">
+              <h3>Berhasil</h3>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="sd-modal__close"
+              >
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+            <div className="sd-modal__body" style={{ textAlign: "center" }}>
+              <CheckCircle
+                size={48}
+                strokeWidth={2}
+                style={{ color: "#16a34a", margin: "0 auto 1rem" }}
+              />
+              <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
+                {successMessage}
+              </p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="sd-btn sd-btn--primary"
+                style={{ width: "100%" }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

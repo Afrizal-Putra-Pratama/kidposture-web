@@ -239,7 +239,7 @@ function NewScreeningPage() {
               ))}
             </div>
 
-            {/* Tabs mobile: FRONT+SIDE sejajar, BACK di bawah */}
+            {/* Tabs mobile */}
             <div className="screening-tabs screening-tabs--mobile">
               {["FRONT", "SIDE"].map((view) => (
                 <button
@@ -333,7 +333,7 @@ function NewScreeningPage() {
           <div className="screening-right__content">
             <h2 className="screening-right__title">Hasil Foto</h2>
 
-            {/* DESKTOP: 3 sejajar + tombol hapus */}
+            {/* DESKTOP: 3 sejajar */}
             <div className="screening-preview-wrapper screening-preview-wrapper--desktop">
               <div className="screening-preview-row">
                 {ORDER.map((view) => {
@@ -389,7 +389,7 @@ function NewScreeningPage() {
               </div>
             </div>
 
-            {/* MOBILE: 1 besar + 3 kecil + tombol hapus */}
+            {/* MOBILE: 1 besar + 3 kecil */}
             <div className="screening-preview-wrapper screening-preview-wrapper--mobile">
               <div className="screening-preview-main-mobile">
                 <div className="screening-preview-main-mobile__box">
