@@ -17,6 +17,7 @@ import {
   X,
   ChevronLeft,
   Search,
+  Map,
 } from "lucide-react";
 import api from "../utils/axios";
 import "../styles/landing.css";
@@ -54,7 +55,6 @@ function LandingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const sliderIntervalRef = useRef(null);
 
-  // Filter fisio
   const [searchPhysio, setSearchPhysio] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterSpecialty, setFilterSpecialty] = useState("");
@@ -167,7 +167,6 @@ function LandingPage() {
     loadPreviewData();
   }, []);
 
-  // auto slider (infinity) – depend on howSteps.length
   useEffect(() => {
     if (sliderIntervalRef.current) clearInterval(sliderIntervalRef.current);
 
@@ -193,7 +192,6 @@ function LandingPage() {
     setCurrentStep((prev) => (prev - 1 + howSteps.length) % howSteps.length);
   };
 
-  // Filter fisio
   const filteredPhysios = physios.filter((p) => {
     const matchName = p.name?.toLowerCase().includes(searchPhysio.toLowerCase());
     const matchCity = filterCity
@@ -212,7 +210,6 @@ function LandingPage() {
 
   return (
     <div className="landing-page">
-      {/* Header / Navbar */}
       <header className="landing-header">
         <div className="landing-header__inner">
           <div className="landing-logo" onClick={() => navigate("/")}>
@@ -319,7 +316,6 @@ function LandingPage() {
         )}
       </header>
 
-      {/* Hero */}
       <section className="hero">
         <div className="hero-accent hero-accent--top-left" />
 
@@ -341,10 +337,11 @@ function LandingPage() {
                 <ArrowRight size={18} strokeWidth={2} />
               </button>
               <button
-                onClick={() => scrollToSection("why-posture")}
+                onClick={() => navigate("/map")}
                 className="hero__btn hero__btn--secondary hero__btn--full"
               >
-                Pelajari Kenapa Penting
+                <Map size={18} strokeWidth={2} />
+                Cari Fisioterapis di Peta
               </button>
             </div>
 
@@ -402,7 +399,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Kenapa Postur Anak Penting */}
       <section
         id="why-posture"
         ref={whyRef}
@@ -434,7 +430,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Cara Kerja Posturely */}
       <section
         id="how-it-works"
         ref={howRef}
@@ -510,7 +505,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Fitur Unggulan */}
       <section
         id="features"
         ref={featureRef}
@@ -541,7 +535,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Untuk Orang Tua & Fisioterapis */}
       <section
         id="for-whom"
         ref={roleRef}
@@ -601,7 +594,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Fisioterapis Terpercaya */}
+      {/* SECTION FISIOTERAPIS TERPERCAYA - TETAP ADA */}
       {physios.length > 0 && (
         <section
           ref={physioRef}
@@ -618,8 +611,9 @@ function LandingPage() {
                   konsultasi.
                 </p>
               </div>
-              <button onClick={() => navigate("/login")} className="section-link">
-                Lihat seluruh fisioterapis di aplikasi
+              <button onClick={() => navigate("/map")} className="section-link">
+                <Map size={18} strokeWidth={2} />
+                Lihat di peta
                 <ChevronRight size={18} strokeWidth={2} />
               </button>
             </div>
@@ -758,7 +752,6 @@ function LandingPage() {
         </section>
       )}
 
-      {/* Artikel Edukasi – tanpa thumbnail, teks saja */}
       {articleList.length > 0 && (
         <section
           id="education"
@@ -808,7 +801,6 @@ function LandingPage() {
         </section>
       )}
 
-      {/* CTA sebelum footer */}
       <section
         ref={ctaRef}
         className={`section section-cta section--accent-left fade-up ${
@@ -840,7 +832,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="landing-footer">
         <div className="landing-footer__inner">
           <div className="landing-footer__brand">

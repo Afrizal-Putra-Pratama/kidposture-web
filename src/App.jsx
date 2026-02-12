@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import ChildrenPage from "./pages/ChildrenPage.jsx";
@@ -36,6 +35,9 @@ import RegisterParentPage from "./pages/RegisterParentPage.jsx";
 import PhysioEducationPage from "./pages/PhysioEducationPage.jsx";
 import PhysioArticleFormPage from "./pages/PhysioArticleFormPage.jsx";
 
+// BARU: Halaman Peta Fisioterapis
+import PhysioMapPage from "./pages/PhysioMapPage.jsx";
+
 // Protected Route: cek token saja
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -66,6 +68,9 @@ function App() {
       <Routes>
         {/* Landing Page (Public) */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* BARU: Halaman Peta Fisioterapis (Public, bisa diakses tanpa login) */}
+        <Route path="/map" element={<PhysioMapPage />} />
 
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -175,6 +180,16 @@ function App() {
 
         <Route
           path="/physios/:id"
+          element={
+            <ProtectedRoute>
+              <PhysiotherapistDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* BARU: Detail fisioterapis juga bisa diakses di /physiotherapists/:id */}
+        <Route
+          path="/physiotherapists/:id"
           element={
             <ProtectedRoute>
               <PhysiotherapistDetail />

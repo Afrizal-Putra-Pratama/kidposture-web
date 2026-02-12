@@ -1,10 +1,23 @@
-// src/pages/physio/PhysiotherapistDetail.jsx
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
+  Briefcase,
+  Clock,
+  ShieldCheck,
+  Calendar,
+  DollarSign,
+  Map,
+} from 'lucide-react';
 import physioService from '../../services/physioService';
+import '../../styles/PhysiotherapistDetail.css';
 
 export default function PhysiotherapistDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [physio, setPhysio] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,95 +39,226 @@ export default function PhysiotherapistDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        Memuat profil...
+      <div className="physio-detail-page">
+        <div className="physio-detail-container">
+          <p className="physio-detail-loading">Memuat profil...</p>
+        </div>
       </div>
     );
   }
 
   if (!physio) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center text-gray-500">
-        Fisioterapis tidak ditemukan.
+      <div className="physio-detail-page">
+        <div className="physio-detail-container">
+          <div className="physio-detail-empty">
+            <p>Fisioterapis tidak ditemukan.</p>
+            <button
+              onClick={() => navigate('/physiotherapists')}
+              className="physio-detail-empty-btn"
+            >
+              Kembali ke Direktori
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Link
-        to="/physios"
-        className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6"
-      >
-        ← Kembali ke Direktori
-      </Link>
+  const isVerified = physio.is_verified === true && physio.is_active === true;
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-8 text-white">
-          <div className="flex items-center gap-6">
-            {physio.photo_url ? (
-              <img
-                src={physio.photo_url}
-                alt={physio.name}
-                className="w-32 h-32 rounded-full object-cover border-4 border-white"
-              />
-            ) : (
-              <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center text-6xl font-bold text-blue-600">
-                {physio.name.charAt(0)}
+  return (
+    <div className="physio-detail-page">
+      <div className="physio-detail-container">
+        {/* Card */}
+        <div className="physio-detail-card">
+          {/* Header dengan gradient */}
+          <div className="physio-detail-header">
+            <div className="physio-detail-header-content">
+              {physio.photo_url ? (
+                <img
+                  src={physio.photo_url}
+                  alt={physio.name}
+                  className="physio-detail-avatar"
+                />
+              ) : (
+                <div className="physio-detail-avatar physio-detail-avatar--placeholder">
+                  {physio.name?.charAt(0)?.toUpperCase() || 'F'}
+                </div>
+              )}
+
+              <div className="physio-detail-header-text">
+                <h1 className="physio-detail-name">{physio.name}</h1>
+                
+                {isVerified && (
+                  <div className="physio-detail-badge">
+                    <ShieldCheck size={16} strokeWidth={2} />
+                    <span>Fisioterapis Terverifikasi</span>
+                  </div>
+                )}
+
+                <div className="physio-detail-meta">
+                  {physio.specialty && (
+                    <div className="physio-detail-meta-item">
+                      <Briefcase size={16} strokeWidth={2} />
+                      <span>{physio.specialty}</span>
+                    </div>
+                  )}
+                  {physio.experience_years && (
+                    <div className="physio-detail-meta-item">
+                      <Clock size={16} strokeWidth={2} />
+                      <span>{physio.experience_years} tahun pengalaman</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="physio-detail-body">
+            {/* Bio Section */}
+            {(physio.bio_short || physio.bio) && (
+              <div className="physio-detail-section">
+                <h2 className="physio-detail-section-title">Tentang</h2>
+                <p className="physio-detail-section-text">
+                  {physio.bio_short || physio.bio || 'Belum ada deskripsi.'}
+                </p>
               </div>
             )}
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{physio.name}</h1>
-              <p className="text-blue-100 text-lg">
-                {physio.specialty || 'Fisioterapi Umum'}
-              </p>
-              <p className="text-blue-100">
-                {physio.experience_years} tahun pengalaman
+
+            {/* Informasi Klinik */}
+            <div className="physio-detail-section">
+              <h2 className="physio-detail-section-title">Informasi Klinik</h2>
+              <div className="physio-detail-info-grid">
+                <div className="physio-detail-info-item">
+                  <Building2 size={20} strokeWidth={1.5} />
+                  <div className="physio-detail-info-content">
+                    <span className="physio-detail-info-label">Klinik</span>
+                    <span className="physio-detail-info-value">
+                      {physio.clinic_name || 'Praktik fisioterapi'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="physio-detail-info-item physio-detail-info-item--location">
+                  <MapPin size={20} strokeWidth={1.5} />
+                  <div className="physio-detail-info-content">
+                    <span className="physio-detail-info-label">Lokasi</span>
+                    <span className="physio-detail-info-value">
+                      {physio.city || 'Tidak tersedia'}
+                    </span>
+                    {physio.latitude && physio.longitude && (
+                      <button
+                        onClick={() => navigate('/map')}
+                        className="physio-detail-map-link"
+                      >
+                        <Map size={14} strokeWidth={2} />
+                        Lihat di peta
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {physio.phone && (
+                  <div className="physio-detail-info-item">
+                    <Phone size={20} strokeWidth={1.5} />
+                    <div className="physio-detail-info-content">
+                      <span className="physio-detail-info-label">Telepon</span>
+                      <span className="physio-detail-info-value">
+                        {physio.phone}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {physio.email && (
+                  <div className="physio-detail-info-item">
+                    <Mail size={20} strokeWidth={1.5} />
+                    <div className="physio-detail-info-content">
+                      <span className="physio-detail-info-label">Email</span>
+                      <span className="physio-detail-info-value">
+                        {physio.email}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {physio.consultation_fee && (
+                  <div className="physio-detail-info-item">
+                    <DollarSign size={20} strokeWidth={1.5} />
+                    <div className="physio-detail-info-content">
+                      <span className="physio-detail-info-label">
+                        Tarif Konsultasi
+                      </span>
+                      <span className="physio-detail-info-value physio-detail-info-value--price">
+                        Rp {Number(physio.consultation_fee).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CTA Booking */}
+            <div className="physio-detail-cta">
+              <button
+                disabled
+                className="physio-detail-cta-btn physio-detail-cta-btn--disabled"
+              >
+                <Calendar size={18} strokeWidth={2} />
+                <span>Booking Konsultasi (Segera Hadir)</span>
+              </button>
+              <p className="physio-detail-cta-note">
+                Fitur booking akan segera tersedia
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="p-8">
-          {/* Bio */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">
-              Tentang
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {physio.bio_short || 'Belum ada deskripsi.'}
-            </p>
-          </div>
-
-          {/* Info Klinik */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">
-              Informasi Klinik
-            </h2>
-            <div className="space-y-2 text-gray-700">
-              <p>🏥 <strong>Klinik:</strong> {physio.clinic_name || '-'}</p>
-              <p>📍 <strong>Lokasi:</strong> {physio.city || '-'}</p>
-              <p>📞 <strong>Telepon:</strong> {physio.phone || '-'}</p>
-              <p>✉️ <strong>Email:</strong> {physio.email || '-'}</p>
-            </div>
-          </div>
-
-          {/* CTA Booking (nanti aktif setelah fitur booking) */}
-          <div className="mt-8">
-            <button
-              disabled
-              className="w-full py-3 bg-gray-300 text-gray-500 rounded-lg font-semibold cursor-not-allowed"
-            >
-              Booking Konsultasi (Segera Hadir)
-            </button>
-            <p className="text-center text-sm text-gray-500 mt-2">
-              Fitur booking akan segera tersedia
-            </p>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="physio-detail-footer">
+        <div className="physio-detail-footer__inner">
+          <div className="physio-detail-footer__brand">
+            <div className="physio-detail-footer__logo">
+              <span className="physio-detail-footer__logo-dot" />
+              <span>Posturely</span>
+            </div>
+            <p>
+              Platform screening postur anak berbasis AI yang membantu orang tua
+              berkolaborasi dengan fisioterapis untuk tumbuh kembang yang lebih sehat.
+            </p>
+          </div>
+
+          <div className="physio-detail-footer__cols">
+            <div className="physio-detail-footer__col">
+              <h4>Tentang</h4>
+              <button onClick={() => navigate('/')}>Tentang Posturely</button>
+              <button onClick={() => navigate('/')}>Cara Kerja</button>
+            </div>
+            <div className="physio-detail-footer__col">
+              <h4>Layanan</h4>
+              <button onClick={() => navigate('/')}>Screening Postur Anak</button>
+              <button onClick={() => navigate('/education')}>Edukasi Postur</button>
+              <button onClick={() => navigate('/physiotherapists')}>
+                Konsultasi Fisioterapis
+              </button>
+            </div>
+            <div className="physio-detail-footer__col">
+              <h4>Kontak</h4>
+              <button onClick={() => navigate('/login')}>Masuk ke aplikasi</button>
+              <button onClick={() => navigate('/register/physio')}>
+                Bergabung sebagai Fisioterapis
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="physio-detail-footer__bottom">
+          <p>© 2026 Posturely. Semua hak cipta dilindungi.</p>
+        </div>
+      </footer>
     </div>
   );
 }

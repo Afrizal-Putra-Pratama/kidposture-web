@@ -10,10 +10,15 @@ import {
   ShieldAlert,
   Hourglass,
   LogOut,
+  User,
+  Building2,
+  FileText,
+  Briefcase,
 } from "lucide-react";
 import api from "../../utils/axios";
+import MapPicker from "../../components/MapPicker";
 import "../../styles/PhysioProfilePage.css";
-
+import "../../styles/MapPicker.css";
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ""
@@ -60,8 +65,7 @@ function PhysioProfilePage() {
         specialty: data.specialty || "",
         bio: data.bio || "",
         consultation_fee: data.consultation_fee || "",
-        is_accepting_consultations:
-          data.is_accepting_consultations ?? true,
+        is_accepting_consultations: data.is_accepting_consultations ?? true,
       });
 
       if (data.photo) {
@@ -118,23 +122,14 @@ function PhysioProfilePage() {
     }
   };
 
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation tidak didukung di browser Anda");
-      return;
+  const handleLocationChange = (position) => {
+    if (position && Array.isArray(position) && position.length === 2) {
+      setForm((prev) => ({
+        ...prev,
+        latitude: position[0],
+        longitude: position[1],
+      }));
     }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setForm((prev) => ({
-          ...prev,
-          latitude: position.coords.latitude.toFixed(6),
-          longitude: position.coords.longitude.toFixed(6),
-        }));
-      },
-      (error) => {
-        alert("Gagal mendapatkan lokasi: " + error.message);
-      }
-    );
   };
 
   const handleLogout = async () => {
@@ -154,7 +149,7 @@ function PhysioProfilePage() {
     if (!profile.is_verified) {
       return (
         <div className="status-badge status-badge--pending">
-          <Hourglass size={16} />
+          <Hourglass size={16} strokeWidth={2} />
           <span>Menunggu verifikasi admin</span>
         </div>
       );
@@ -163,7 +158,7 @@ function PhysioProfilePage() {
     if (profile.is_verified && profile.is_active) {
       return (
         <div className="status-badge status-badge--active">
-          <ShieldCheck size={16} />
+          <ShieldCheck size={16} strokeWidth={2} />
           <span>Akun terverifikasi dan aktif</span>
         </div>
       );
@@ -172,7 +167,7 @@ function PhysioProfilePage() {
     if (profile.is_verified && !profile.is_active) {
       return (
         <div className="status-badge status-badge--inactive">
-          <ShieldAlert size={16} />
+          <ShieldAlert size={16} strokeWidth={2} />
           <span>Akun dinonaktifkan</span>
         </div>
       );
@@ -191,6 +186,12 @@ function PhysioProfilePage() {
     );
   }
 
+  // Prepare position for MapPicker
+  const mapPosition =
+    form.latitude && form.longitude
+      ? [parseFloat(form.latitude), parseFloat(form.longitude)]
+      : null;
+
   return (
     <div className="physio-profile-page">
       <div className="physio-profile-container">
@@ -200,31 +201,19 @@ function PhysioProfilePage() {
             {renderStatus()}
           </div>
 
-          <button
-            type="button"
-            className="logout-button"
-            onClick={handleLogout}
-          >
-            <LogOut size={16} />
+          <button type="button" className="logout-button" onClick={handleLogout}>
+            <LogOut size={16} strokeWidth={2} />
             <span>Keluar</span>
           </button>
         </div>
 
-        {success && (
-          <div className="success-box">
-            Profil berhasil diperbarui.
-          </div>
-        )}
+        {success && <div className="success-box">Profil berhasil diperbarui</div>}
 
         <form onSubmit={handleSubmit} className="physio-profile-form">
           <div className="photo-section">
             <div className="photo-wrapper">
               {photoPreview ? (
-                <img
-                  src={photoPreview}
-                  alt="Profile"
-                  className="photo-preview"
-                />
+                <img src={photoPreview} alt="Profile" className="photo-preview" />
               ) : (
                 <div className="photo-placeholder">
                   <Image size={48} strokeWidth={1.5} color="#9ca3af" />
@@ -232,7 +221,7 @@ function PhysioProfilePage() {
               )}
             </div>
             <label htmlFor="photo" className="photo-button">
-              <Image size={16} strokeWidth={1.5} />
+              <Image size={16} strokeWidth={2} />
               <span>Ubah foto</span>
             </label>
             <input
@@ -247,15 +236,13 @@ function PhysioProfilePage() {
           <div className="physio-profile-grid">
             <div className="input-group">
               <label className="input-label">
-                <Phone size={16} strokeWidth={1.5} />
+                <User size={16} strokeWidth={2} />
                 <span>Nama lengkap</span>
               </label>
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="input-field"
                 required
               />
@@ -263,41 +250,41 @@ function PhysioProfilePage() {
 
             <div className="input-group">
               <label className="input-label">
-                <Phone size={16} strokeWidth={1.5} />
+                <Phone size={16} strokeWidth={2} />
                 <span>Nomor telepon</span>
               </label>
               <input
                 type="tel"
                 value={form.phone}
-                onChange={(e) =>
-                  setForm({ ...form, phone: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="input-field"
                 required
               />
             </div>
 
             <div className="input-group">
-              <label className="input-label">Nama klinik</label>
+              <label className="input-label">
+                <Building2 size={16} strokeWidth={2} />
+                <span>Nama klinik</span>
+              </label>
               <input
                 type="text"
                 value={form.clinic_name}
-                onChange={(e) =>
-                  setForm({ ...form, clinic_name: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, clinic_name: e.target.value })}
                 className="input-field"
                 required
               />
             </div>
 
             <div className="input-group">
-              <label className="input-label">Kota</label>
+              <label className="input-label">
+                <MapPin size={16} strokeWidth={2} />
+                <span>Kota</span>
+              </label>
               <input
                 type="text"
                 value={form.city}
-                onChange={(e) =>
-                  setForm({ ...form, city: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
                 className="input-field"
                 required
               />
@@ -305,85 +292,56 @@ function PhysioProfilePage() {
 
             <div className="input-group input-group--full">
               <label className="input-label">
-                <MapPin size={16} strokeWidth={1.5} />
+                <MapPin size={16} strokeWidth={2} />
                 <span>Alamat lengkap</span>
               </label>
               <textarea
                 value={form.address}
-                onChange={(e) =>
-                  setForm({ ...form, address: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
                 className="input-field input-field--textarea"
                 rows={2}
               />
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Latitude</label>
-              <input
-                type="text"
-                value={form.latitude}
-                onChange={(e) =>
-                  setForm({ ...form, latitude: e.target.value })
-                }
-                className="input-field"
-                placeholder="-0.026789"
-              />
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">Longitude</label>
-              <input
-                type="text"
-                value={form.longitude}
-                onChange={(e) =>
-                  setForm({ ...form, longitude: e.target.value })
-                }
-                className="input-field"
-                placeholder="109.342453"
+            <div className="input-group input-group--full">
+              <MapPicker
+                value={mapPosition}
+                onChange={handleLocationChange}
+                label="Lokasi Klinik di Peta"
               />
             </div>
 
             <div className="input-group input-group--full">
-              <button
-                type="button"
-                onClick={handleGetLocation}
-                className="location-button"
-              >
-                <MapPin size={16} strokeWidth={1.5} />
-                <span>Gunakan lokasi saat ini</span>
-              </button>
-            </div>
-
-            <div className="input-group input-group--full">
-              <label className="input-label">Spesialisasi</label>
+              <label className="input-label">
+                <Briefcase size={16} strokeWidth={2} />
+                <span>Spesialisasi</span>
+              </label>
               <input
                 type="text"
                 value={form.specialty}
-                onChange={(e) =>
-                  setForm({ ...form, specialty: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, specialty: e.target.value })}
                 className="input-field"
-                placeholder="Fisioterapi anak, postur, dan lainnya"
+                placeholder="Fisioterapi anak, postur, rehabilitasi"
               />
             </div>
 
             <div className="input-group input-group--full">
-              <label className="input-label">Bio</label>
+              <label className="input-label">
+                <FileText size={16} strokeWidth={2} />
+                <span>Bio</span>
+              </label>
               <textarea
                 value={form.bio}
-                onChange={(e) =>
-                  setForm({ ...form, bio: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 className="input-field input-field--textarea"
                 rows={3}
-                placeholder="Ceritakan tentang pengalaman dan keahlian Anda."
+                placeholder="Ceritakan tentang pengalaman dan keahlian Anda"
               />
             </div>
 
             <div className="input-group">
               <label className="input-label">
-                <DollarSign size={16} strokeWidth={1.5} />
+                <DollarSign size={16} strokeWidth={2} />
                 <span>Tarif konsultasi (Rp)</span>
               </label>
               <input
@@ -402,7 +360,7 @@ function PhysioProfilePage() {
 
             <div className="input-group">
               <label className="input-label">
-                <Clock size={16} strokeWidth={1.5} />
+                <Clock size={16} strokeWidth={2} />
                 <span>Status konsultasi</span>
               </label>
               <select
@@ -410,8 +368,7 @@ function PhysioProfilePage() {
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    is_accepting_consultations:
-                      e.target.value === "true",
+                    is_accepting_consultations: e.target.value === "true",
                   })
                 }
                 className="input-field"
@@ -422,12 +379,8 @@ function PhysioProfilePage() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="submit-button"
-          >
-            <Save size={18} strokeWidth={1.5} />
+          <button type="submit" disabled={saving} className="submit-button">
+            <Save size={18} strokeWidth={2} />
             <span>{saving ? "Menyimpan..." : "Simpan perubahan"}</span>
           </button>
         </form>

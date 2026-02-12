@@ -29,6 +29,26 @@ const physioService = {
     const response = await api.get(`/physiotherapists/${id}`);
     return response.data.data;
   },
+
+  // BARU: untuk profile fisio yang login
+  getProfile: async () => {
+    const response = await api.get('/physio/profile');
+    return response.data.data;
+  },
+
+  // BARU: update profile fisio
+  updateProfile: async (formData) => {
+    const response = await api.post('/physio/profile', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // BARU: search dengan parameter lebih lengkap
+  search: async (params) => {
+    const response = await api.get('/physiotherapists', { params });
+    return response.data.data || [];
+  },
 };
 
 export default physioService;
