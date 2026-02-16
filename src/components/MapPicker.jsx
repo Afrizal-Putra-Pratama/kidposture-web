@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapPin, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import PropTypes from 'prop-types';
@@ -28,43 +29,52 @@ LocationMarker.propTypes = {
   onPositionChange: PropTypes.func.isRequired,
 };
 
-export default function MapPicker({ value, onChange, label }) {
-  // Validasi dan normalize initial position
-  const getInitialPosition = () => {
-    if (!value) return null;
-    
-    // Jika value adalah array
-    if (Array.isArray(value)) {
-      const lat = parseFloat(value[0]);
-      const lng = parseFloat(value[1]);
-      
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return [lat, lng];
-      }
-    }
-    
-    // Jika value adalah object dengan lat/lng
-    if (typeof value === 'object' && value.lat && value.lng) {
-      const lat = parseFloat(value.lat);
-      const lng = parseFloat(value.lng);
-      
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return [lat, lng];
-      }
-    }
-    
-    return null;
-  };
-
-  const [position, setPosition] = useState(getInitialPosition);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-
-  // Update position when value prop changes
+function MapController({ mapRef }) {
+  const map = useMapEvents({});
+  
   useEffect(() => {
-    const newPosition = getInitialPosition();
-    if (newPosition) {
-      setPosition(newPosition);
+    if (map && mapRef) {
+      mapRef.current = map;
+    }
+  }, [map, mapRef]);
+
+  return null;
+}
+
+MapController.propTypes = {
+  mapRef: PropTypes.object.isRequired,
+};
+
+export default function MapPicker({ value, onChange, label }) {
+  const mapRef = useRef(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [position, setPosition] = useState(null);
+  
+  // Initialize position from value prop
+  useEffect(() => {
+    if (!value) {
+      setPosition((prev) => prev === null ? prev : null);
+      return;
+    }
+    
+    let lat, lng;
+    
+    if (Array.isArray(value)) {
+      lat = parseFloat(value[0]);
+      lng = parseFloat(value[1]);
+    } else if (typeof value === 'object' && value.lat && value.lng) {
+      lat = parseFloat(value.lat);
+      lng = parseFloat(value.lng);
+    }
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const newPos = [lat, lng];
+      setPosition((prev) => {
+        if (!prev) return newPos;
+        if (prev[0] === newPos[0] && prev[1] === newPos[1]) return prev;
+        return newPos;
+      });
     }
   }, [value]);
 
@@ -78,106 +88,130 @@ export default function MapPicker({ value, onChange, label }) {
     [onChange]
   );
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          searchQuery
-        )}`
-      );
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        const newPosition = [parseFloat(lat), parseFloat(lon)];
-        handlePositionChange(newPosition);
-      } else {
-        alert('Lokasi tidak ditemukan. Coba kata kunci lain.');
+  // Toggle map
+  const handleToggleMap = () => {
+    setIsMapExpanded((prev) => {
+      const newState = !prev;
+      
+      if (newState && mapRef.current) {
+        setTimeout(() => {
+          mapRef.current.invalidateSize();
+        }, 100);
       }
-    } catch (error) {
-      console.error('Error searching location:', error);
-      alert('Gagal mencari lokasi. Silakan coba lagi.');
-    } finally {
-      setIsSearching(false);
-    }
+      
+      return newState;
+    });
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // Default center (Indonesia)
-  const defaultCenter = [-2.5489, 118.0149];
+  const defaultCenter = [-7.5505, 110.8282];
   const mapCenter = position || defaultCenter;
 
-  // Format koordinat untuk ditampilkan
   const formatCoordinates = () => {
-    if (!position || !Array.isArray(position)) return 'Klik pada peta untuk memilih lokasi';
+    if (!position || !Array.isArray(position)) {
+      return 'Belum ada lokasi dipilih';
+    }
     
     const lat = parseFloat(position[0]);
     const lng = parseFloat(position[1]);
     
-    if (isNaN(lat) || isNaN(lng)) return 'Koordinat tidak valid';
+    if (isNaN(lat) || isNaN(lng)) {
+      return 'Koordinat tidak valid';
+    }
     
     return `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
   };
 
   return (
     <div className="map-picker">
-      {label && <label className="map-picker-label">{label}</label>}
+      {/* HEADER */}
+      <div className="map-picker-header">
+        <div className="map-picker-label-group">
+          {label && <label className="map-picker-label">{label}</label>}
+          
+          {/* Tooltip */}
+          <div className="map-picker-tooltip-wrapper">
+            <button
+              type="button"
+              className="map-picker-tooltip-trigger"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowTooltip(!showTooltip);
+              }}
+            >
+              <Info size={16} strokeWidth={2} />
+              <span>Lihat Panduan</span>
+            </button>
 
-      {/* Search Box */}
-      <div className="map-picker-search">
-        <input
-          type="text"
-          placeholder="Cari lokasi (contoh: Jakarta, Indonesia)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="map-picker-search-input"
-          disabled={isSearching}
-        />
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={isSearching}
-          className="map-picker-search-btn"
-        >
-          {isSearching ? 'Mencari...' : 'Cari'}
-        </button>
+            {showTooltip && (
+              <div className="map-picker-tooltip">
+                <div className="map-picker-tooltip-content">
+                  <h4>Cara Menentukan Lokasi Klinik</h4>
+                  <ol>
+                    <li>Klik tombol &quot;Buka Peta&quot; di bawah untuk membuka tampilan peta</li>
+                    <li>Gunakan scroll mouse untuk zoom in/out peta</li>
+                    <li>Drag peta untuk navigasi ke area klinik Anda</li>
+                    <li>Klik langsung pada titik lokasi klinik di peta</li>
+                  </ol>
+                  <p className="map-picker-tooltip-note">
+                    <strong>Tips:</strong> Zoom hingga level jalan untuk akurasi maksimal. Koordinat akan otomatis tersimpan setelah diklik.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Map Container */}
-      <div className="map-picker-container">
-        <MapContainer
-          center={mapCenter}
-          zoom={position ? 13 : 5}
-          style={{ height: '100%', width: '100%' }}
-          key={`${mapCenter[0]}-${mapCenter[1]}`}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-          <LocationMarker
-            position={position}
-            onPositionChange={handlePositionChange}
-          />
-        </MapContainer>
+      {/* COORDINATE DISPLAY */}
+      <div className="map-picker-coordinates-box">
+        <MapPin size={16} strokeWidth={2} />
+        <span>{formatCoordinates()}</span>
       </div>
 
-      {/* Coordinate Display */}
-      <div className="map-picker-info">
-        <p className="map-picker-coordinates">{formatCoordinates()}</p>
-        <p className="map-picker-hint">
-          Klik pada peta untuk memilih lokasi atau gunakan pencarian di atas
-        </p>
-      </div>
+      {/* TOGGLE BUTTON */}
+      <button
+        type="button"
+        onClick={handleToggleMap}
+        className="map-picker-toggle-btn"
+      >
+        <MapPin size={18} strokeWidth={2} />
+        <span>{isMapExpanded ? 'Tutup Peta' : 'Buka Peta untuk Memilih Lokasi'}</span>
+        {isMapExpanded ? (
+          <ChevronUp size={18} strokeWidth={2} />
+        ) : (
+          <ChevronDown size={18} strokeWidth={2} />
+        )}
+      </button>
+
+      {/* MAP CONTAINER */}
+      {isMapExpanded && (
+        <div className="map-picker-container">
+          <MapContainer
+            center={mapCenter}
+            zoom={position ? 15 : 12}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors'
+            />
+            <LocationMarker
+              position={position}
+              onPositionChange={handlePositionChange}
+            />
+            <MapController mapRef={mapRef} />
+          </MapContainer>
+          
+          {/* Instruction Overlay */}
+          <div className="map-picker-instruction">
+            <MapPin size={14} strokeWidth={2} />
+            <span>Klik pada peta untuk menentukan lokasi klinik</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

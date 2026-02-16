@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Calendar,
   DollarSign,
-  Map,
+  ExternalLink,
 } from 'lucide-react';
 import physioService from '../../services/physioService';
 import '../../styles/PhysiotherapistDetail.css';
@@ -35,6 +35,27 @@ export default function PhysiotherapistDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ FUNGSI BUKA GOOGLE MAPS
+  const openInGoogleMaps = (latitude, longitude, clinicName) => {
+    if (!latitude || !longitude) {
+      alert("Koordinat klinik tidak tersedia");
+      return;
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      alert("Koordinat klinik tidak valid");
+      return;
+    }
+
+    const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
+    const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
+    
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -141,6 +162,7 @@ export default function PhysiotherapistDetail() {
                   </div>
                 </div>
 
+                {/* ✅ LOKASI - DENGAN TOMBOL GOOGLE MAPS */}
                 <div className="physio-detail-info-item physio-detail-info-item--location">
                   <MapPin size={20} strokeWidth={1.5} />
                   <div className="physio-detail-info-content">
@@ -150,11 +172,16 @@ export default function PhysiotherapistDetail() {
                     </span>
                     {physio.latitude && physio.longitude && (
                       <button
-                        onClick={() => navigate('/map')}
+                        onClick={() => openInGoogleMaps(
+                          physio.latitude,
+                          physio.longitude,
+                          physio.clinic_name
+                        )}
                         className="physio-detail-map-link"
                       >
-                        <Map size={14} strokeWidth={2} />
-                        Lihat di peta
+                        <MapPin size={14} strokeWidth={2} />
+                        Buka di Google Maps
+                        <ExternalLink size={12} strokeWidth={2} />
                       </button>
                     )}
                   </div>

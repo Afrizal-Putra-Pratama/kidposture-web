@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   Search,
   Map,
+  ExternalLink,
 } from "lucide-react";
 import api from "../utils/axios";
 import "../styles/landing.css";
@@ -207,6 +208,28 @@ function LandingPage() {
   const specialties = [...new Set(physios.map((p) => p.specialty).filter(Boolean))];
 
   const articleList = articles.slice(0, 6);
+
+  // ✅ FUNGSI BARU: Buka Google Maps
+  const openInGoogleMaps = (latitude, longitude, clinicName) => {
+    if (!latitude || !longitude) {
+      alert("Koordinat klinik tidak tersedia");
+      return;
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      alert("Koordinat klinik tidak valid");
+      return;
+    }
+
+    // Format URL Google Maps dengan label
+    const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
+    const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
+    
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="landing-page">
@@ -594,7 +617,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION FISIOTERAPIS TERPERCAYA - TETAP ADA */}
+      {/* ✅ SECTION FISIOTERAPIS - TOMBOL REDIRECT KE GOOGLE MAPS */}
       {physios.length > 0 && (
         <section
           ref={physioRef}
@@ -667,81 +690,100 @@ function LandingPage() {
             </div>
 
             <div className="grid grid--3 physio-grid">
-              {filteredPhysios.slice(0, 6).map((physio) => {
-                const isVerified =
-                  physio.is_verified === true && physio.is_active === true;
+  {filteredPhysios.slice(0, 6).map((physio) => {
+    const isVerified =
+      physio.is_verified === true && physio.is_active === true;
 
-                return (
-                  <div
-                    key={physio.id}
-                    className="card physio-card physio-card--hover"
-                    onClick={() => navigate(`/physiotherapists/${physio.id}`)}
-                  >
-                    <div className="physio-card__header">
-                      {physio.photo_url ? (
-                        <img
-                          src={physio.photo_url}
-                          alt={physio.name}
-                          className="physio-card__avatar"
-                        />
-                      ) : (
-                        <div className="physio-card__avatar physio-card__avatar--placeholder">
-                          {physio.name?.charAt(0)?.toUpperCase() || "F"}
-                        </div>
-                      )}
-
-                      <div className="physio-card__header-text">
-                        <h3 className="physio-card__name">{physio.name}</h3>
-                        <p className="physio-card__clinic">
-                          {physio.clinic_name || "Praktik fisioterapi"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {isVerified && (
-                      <span className="physio-card__badge-verified">
-                        <ShieldCheck size={14} strokeWidth={1.8} />
-                        <span>Fisioterapis terverifikasi</span>
-                      </span>
-                    )}
-
-                    {physio.specialty && (
-                      <span className="physio-card__tag">{physio.specialty}</span>
-                    )}
-
-                    {(physio.bio_short || physio.bio) && (
-                      <p className="physio-card__bio">
-                        {(() => {
-                          const text = physio.bio_short || physio.bio;
-                          return text.length > 110
-                            ? text.slice(0, 110) + "…"
-                            : text;
-                        })()}
-                      </p>
-                    )}
-
-                    <div className="physio-card__meta">
-                      <div className="physio-card__meta-item">
-                        <MapPin size={14} strokeWidth={1.5} />
-                        <span>{physio.city || "Lokasi tidak tersedia"}</span>
-                      </div>
-
-                      {physio.consultation_fee && (
-                        <div className="physio-card__meta-item physio-card__meta-item--fee">
-                          <span>Tarif konsultasi</span>
-                          <strong>
-                            Rp{" "}
-                            {Number(physio.consultation_fee).toLocaleString(
-                              "id-ID"
-                            )}
-                          </strong>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+    return (
+      <div
+        key={physio.id}
+        className="card physio-card physio-card--hover"
+        onClick={() => navigate(`/physiotherapists/${physio.id}`)}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="physio-card__header">
+          {physio.photo_url ? (
+            <img
+              src={physio.photo_url}
+              alt={physio.name}
+              className="physio-card__avatar"
+            />
+          ) : (
+            <div className="physio-card__avatar physio-card__avatar--placeholder">
+              {physio.name?.charAt(0)?.toUpperCase() || "F"}
             </div>
+          )}
+
+          <div className="physio-card__header-text">
+            <h3 className="physio-card__name">{physio.name}</h3>
+            <p className="physio-card__clinic">
+              {physio.clinic_name || "Praktik fisioterapi"}
+            </p>
+          </div>
+        </div>
+
+        {isVerified && (
+          <span className="physio-card__badge-verified">
+            <ShieldCheck size={14} strokeWidth={1.8} />
+            <span>Fisioterapis terverifikasi</span>
+          </span>
+        )}
+
+        {physio.specialty && (
+          <span className="physio-card__tag">{physio.specialty}</span>
+        )}
+
+        {(physio.bio_short || physio.bio) && (
+          <p className="physio-card__bio">
+            {(() => {
+              const text = physio.bio_short || physio.bio;
+              return text.length > 110
+                ? text.slice(0, 110) + "…"
+                : text;
+            })()}
+          </p>
+        )}
+
+        <div className="physio-card__meta">
+          <div className="physio-card__meta-item">
+            <MapPin size={14} strokeWidth={1.5} />
+            <span>{physio.city || "Lokasi tidak tersedia"}</span>
+          </div>
+
+          {physio.consultation_fee && (
+            <div className="physio-card__meta-item physio-card__meta-item--fee">
+              <span>Tarif konsultasi</span>
+              <strong>
+                Rp{" "}
+                {Number(physio.consultation_fee).toLocaleString(
+                  "id-ID"
+                )}
+              </strong>
+            </div>
+          )}
+        </div>
+
+        {/* ✅ TOMBOL GOOGLE MAPS - DENGAN stopPropagation */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation(); // Mencegah event bubbling ke card
+            openInGoogleMaps(
+              physio.latitude, 
+              physio.longitude,
+              physio.clinic_name
+            );
+          }}
+          className="physio-card__btn-maps"
+        >
+          <MapPin size={16} strokeWidth={2} />
+          Buka Lokasi di Google Maps
+          <ExternalLink size={14} strokeWidth={2} />
+        </button>
+      </div>
+    );
+  })}
+</div>
 
             {filteredPhysios.length === 0 && (
               <p className="no-results">
