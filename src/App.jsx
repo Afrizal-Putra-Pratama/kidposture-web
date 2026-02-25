@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import AccessibilityWidget from './components/AccessibilityWidget';
 import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
 import ScreeningDetailPage from "./pages/ScreeningDetailPage.jsx";
@@ -65,6 +66,7 @@ function RoleRoute({ children, allowedRoles }) {
 function App() {
   return (
     <BrowserRouter>
+    <AccessibilityWidget />
       <Routes>
         {/* Landing Page (Public) */}
         <Route path="/" element={<LandingPage />} />

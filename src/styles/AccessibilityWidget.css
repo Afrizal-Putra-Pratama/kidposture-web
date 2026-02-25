@@ -1,0 +1,390 @@
+/* ========================================
+   ACCESSIBILITY WIDGET - FINAL VERSION
+   ======================================== */
+
+/* ✅ Toggle Button - TETAP WARNA ASLI */
+.accessibility-toggle {
+  position: fixed !important;
+  bottom: 2rem !important;
+  left: 2rem !important;
+  z-index: 9999999 !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  
+  transform: translate3d(0, 0, 0) !important;
+  will-change: transform !important;
+  isolation: isolate !important;
+}
+
+.accessibility-toggle:hover {
+  transform: translate3d(0, 0, 0) scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5) !important;
+  background: #0284c7 !important;
+}
+
+.accessibility-toggle:active {
+  transform: translate3d(0, 0, 0) scale(0.95) !important;
+}
+
+/* Indicator ketika ada setting aktif */
+.accessibility-toggle--active::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  animation: pulseIndicator 2s ease-in-out infinite;
+}
+
+@keyframes pulseIndicator {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Backdrop */
+.accessibility-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999998 !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(2px) !important;
+  animation: fadeIn 0.2s ease !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ✅ Widget Panel - TETAP PUTIH SOLID */
+.accessibility-panel {
+  position: fixed !important;
+  bottom: 6rem !important;
+  left: 2rem !important;
+  z-index: 9999999 !important;
+  width: 320px !important;
+  max-width: calc(100vw - 4rem) !important;
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.15) !important;
+  border: 1px solid #e2e8f0 !important;
+  animation: panelSlideUp 0.3s ease !important;
+  
+  transform: translate3d(0, 0, 0) !important;
+  isolation: isolate !important;
+}
+
+@keyframes panelSlideUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Header */
+.accessibility-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.accessibility-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.accessibility-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.accessibility-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* Options Container */
+.accessibility-options {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Option Button */
+.accessibility-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+}
+
+.accessibility-option:hover {
+  background: #f8fafc;
+  border-color: #0ea5e9;
+}
+
+.accessibility-option.active {
+  background: #e0f2fe;
+  border-color: #0ea5e9;
+}
+
+.accessibility-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.accessibility-option.active .accessibility-option-icon {
+  background: #0ea5e9;
+  color: #ffffff;
+}
+
+.accessibility-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.accessibility-option-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.accessibility-option-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Reset Button */
+.accessibility-reset {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  width: 100%;
+}
+
+.accessibility-reset:hover {
+  background: #fecaca;
+}
+
+/* Footer Note */
+.accessibility-footer-note {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ✅ HIGHLIGHT LINKS - JANGAN UBAH WIDGET */
+html.accessibility-highlight-links a:not(.accessibility-toggle):not(.accessibility-close),
+html.accessibility-highlight-links button:not(.accessibility-toggle):not(.accessibility-close):not(.accessibility-option):not(.accessibility-reset) {
+  background: #ffeb3b !important;
+  color: #000000 !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+  box-shadow: 0 0 0 3px #ffeb3b !important;
+  text-decoration: underline !important;
+  font-weight: 600 !important;
+}
+
+/* Link di navbar/header */
+html.accessibility-highlight-links .landing-nav__link,
+html.accessibility-highlight-links .landing-nav__ghost,
+html.accessibility-highlight-links .landing-nav__primary,
+html.accessibility-highlight-links .landing-nav__mobile-link {
+  background: #ffeb3b !important;
+  color: #000000 !important;
+  border: 2px solid #fdd835 !important;
+}
+
+/* Button CTA */
+html.accessibility-highlight-links .hero__btn,
+html.accessibility-highlight-links .role-card__btn,
+html.accessibility-highlight-links .section-link {
+  background: #ffeb3b !important;
+  color: #000000 !important;
+  border: 3px solid #fdd835 !important;
+  box-shadow: 0 0 0 2px #000000, 0 0 0 5px #ffeb3b !important;
+}
+
+/* Link di card fisio */
+html.accessibility-highlight-links .physio-card,
+html.accessibility-highlight-links .article-card {
+  outline: 3px solid #ffeb3b !important;
+  outline-offset: 3px !important;
+}
+
+/* Link text di paragraf */
+html.accessibility-highlight-links p a,
+html.accessibility-highlight-links li a {
+  background: #ffeb3b !important;
+  color: #000000 !important;
+  padding: 2px 4px !important;
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+}
+
+/* ✅ CRITICAL: WIDGET TIDAK KENA HIGHLIGHT - TETAP WARNA ASLI */
+html.accessibility-highlight-links .accessibility-toggle {
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4) !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  font-weight: normal !important;
+}
+
+html.accessibility-highlight-links .accessibility-panel {
+  background: #ffffff !important;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.15) !important;
+}
+
+html.accessibility-highlight-links .accessibility-backdrop {
+  background: rgba(15, 23, 42, 0.4) !important;
+}
+
+html.accessibility-highlight-links .accessibility-option {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+  padding: 0.85rem 1rem !important;
+  text-decoration: none !important;
+  font-weight: normal !important;
+}
+
+html.accessibility-highlight-links .accessibility-option.active {
+  background: #e0f2fe !important;
+  border-color: #0ea5e9 !important;
+}
+
+html.accessibility-highlight-links .accessibility-option-icon {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+html.accessibility-highlight-links .accessibility-option.active .accessibility-option-icon {
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+}
+
+html.accessibility-highlight-links .accessibility-close {
+  background: transparent !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+}
+
+html.accessibility-highlight-links .accessibility-close:hover {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+html.accessibility-highlight-links .accessibility-reset {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  box-shadow: none !important;
+  padding: 0.7rem 1rem !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+html.accessibility-highlight-links .accessibility-option-title,
+html.accessibility-highlight-links .accessibility-option-desc,
+html.accessibility-highlight-links .accessibility-header h3,
+html.accessibility-highlight-links .accessibility-footer-note {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* ✅ Counter-filter untuk invert mode */
+html[style*="filter"] .accessibility-toggle,
+html[style*="filter"] .accessibility-panel,
+html[style*="filter"] .accessibility-backdrop {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .accessibility-toggle {
+    bottom: 1.5rem !important;
+    left: 1.5rem !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .accessibility-panel {
+    bottom: 5rem !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+  }
+}

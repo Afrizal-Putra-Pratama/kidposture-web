@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import api from "../utils/axios";
 import "../styles/landing.css";
+import AccessibilityWidget from "../components/AccessibilityWidget";
 
 function useInView(options = {}) {
   const ref = useRef(null);
@@ -926,6 +927,7 @@ function LandingPage() {
           <p>© 2026 Posturely. Semua hak cipta dilindungi.</p>
         </div>
       </footer>
+      <AccessibilityWidget />
     </div>
   );
 }
