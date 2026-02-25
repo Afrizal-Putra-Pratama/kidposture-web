@@ -427,11 +427,12 @@
   color: #f9fafb;
 }
 
-.landing-logo__dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #0ea5e9, #22c55e);
+.brand-logo-img {
+  height: 65px; /* Sesuaikan dengan tinggi navbar Anda */
+  width: auto;
+  max-width: 160px; /* Mencegah SVG meledak/kebesaran */
+  display: block;
+  object-fit: contain;
 }
 
 .landing-footer__brand p {

@@ -249,8 +249,11 @@ export default function PhysiotherapistDetail() {
         <div className="physio-detail-footer__inner">
           <div className="physio-detail-footer__brand">
             <div className="physio-detail-footer__logo">
-              <span className="physio-detail-footer__logo-dot" />
-              <span>Posturely</span>
+              <img 
+              src="/logo-posturely.svg" 
+              alt="Posturely Logo" 
+              className="brand-logo-img" 
+            />
             </div>
             <p>
               Platform screening postur anak berbasis AI yang membantu orang tua

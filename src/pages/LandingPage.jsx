@@ -237,8 +237,11 @@ function LandingPage() {
       <header className="landing-header">
         <div className="landing-header__inner">
           <div className="landing-logo" onClick={() => navigate("/")}>
-            <span className="landing-logo__dot" />
-            <span>Posturely</span>
+            <img 
+              src="/logo-posturely.svg" 
+              alt="Posturely Logo" 
+              className="brand-logo-img" 
+            />
           </div>
 
           <nav className="landing-nav landing-nav--desktop">
@@ -879,8 +882,11 @@ function LandingPage() {
         <div className="landing-footer__inner">
           <div className="landing-footer__brand">
             <div className="landing-logo landing-logo--light">
-              <span className="landing-logo__dot" />
-              <span>Posturely</span>
+              <img 
+              src="/logo-posturely.svg" 
+              alt="Posturely Logo" 
+              className="brand-logo-img" 
+            />
             </div>
             <p>
               Posturely adalah platform screening postur anak berbasis AI yang

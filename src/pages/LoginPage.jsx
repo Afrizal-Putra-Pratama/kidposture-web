@@ -89,8 +89,11 @@ function LoginPage() {
       <div className="auth-form-container">
         <div className="auth-form">
           <div className="auth-logo" onClick={() => navigate("/")}>
-            <span className="auth-logo__dot" />
-            <span>Posturely</span>
+            <img 
+              src="/logo-posturely.svg" 
+              alt="Posturely Logo" 
+              className="brand-logo-img" 
+            />
           </div>
 
           <div className="auth-header">

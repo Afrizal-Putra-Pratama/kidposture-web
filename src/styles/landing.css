@@ -40,7 +40,8 @@
 .landing-header__inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0.9rem 1.5rem;
+  height: 65px;
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,22 +63,12 @@
   opacity: 0.85;
 }
 
-.landing-logo__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), #38bdf8);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+.brand-logo-img {
+  height: 65px; /* Sesuaikan dengan tinggi navbar Anda */
+  width: auto;
+  max-width: 160px; /* Mencegah SVG meledak/kebesaran */
+  display: block;
+  object-fit: contain;
 }
 
 .landing-logo--light {
