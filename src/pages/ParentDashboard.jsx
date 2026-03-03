@@ -18,8 +18,9 @@ import {
   MoreVertical,
   CheckCircle,
   Trash2,
+  Pencil,
 } from "lucide-react";
-import { fetchChildren, createChild } from "../services/childService.jsx";
+import { fetchChildren, createChild, updateChild, deleteChild } from "../services/childService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
 import { useNotifications } from "../hooks/useNotification.jsx";
 import "../styles/dashboard.css";
@@ -49,6 +50,26 @@ function ParentDashboard() {
   const [saving, setSaving] = useState(false);
   const [maxDate, setMaxDate] = useState("");
 
+  // Modal edit anak
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    birth_date: "",
+    gender: "",
+    weight: "",
+    height: "",
+  });
+  const [editChildId, setEditChildId] = useState(null);
+  const [editError, setEditError] = useState(null);
+  const [editFieldErrors, setEditFieldErrors] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Modal delete anak
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteChildData, setDeleteChildData] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
   // Filter states
   const [searchName, setSearchName] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -69,7 +90,6 @@ function ParentDashboard() {
     }
     loadData();
 
-    // Set max date to today
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -79,7 +99,8 @@ function ParentDashboard() {
 
   // Block body scroll when modal open
   useEffect(() => {
-    if (showAddModal) {
+    const anyModalOpen = showAddModal || showEditModal || showDeleteModal;
+    if (anyModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -87,7 +108,7 @@ function ParentDashboard() {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [showAddModal]);
+  }, [showAddModal, showEditModal, showDeleteModal]);
 
   const applyFilters = useCallback(() => {
     let filtered = [...children];
@@ -167,16 +188,12 @@ function ParentDashboard() {
     }
   };
 
+  // =====================
   // Modal Add Child
+  // =====================
   const openAddModal = () => {
     setShowAddModal(true);
-    setAddForm({
-      name: "",
-      birth_date: "",
-      gender: "",
-      weight: "",
-      height: "",
-    });
+    setAddForm({ name: "", birth_date: "", gender: "", weight: "", height: "" });
     setAddError(null);
     setFieldErrors({});
   };
@@ -189,10 +206,7 @@ function ParentDashboard() {
   };
 
   const handleAddChange = (e) => {
-    setAddForm({
-      ...addForm,
-      [e.target.name]: e.target.value,
-    });
+    setAddForm({ ...addForm, [e.target.name]: e.target.value });
     setAddError(null);
     setFieldErrors({});
   };
@@ -217,7 +231,6 @@ function ParentDashboard() {
       closeAddModal();
     } catch (err) {
       console.error("Create child error:", err);
-
       let msg = "Gagal menyimpan data anak. Coba lagi.";
       if (err.response?.status === 422 && err.response.data?.errors) {
         setFieldErrors(err.response.data.errors);
@@ -227,6 +240,103 @@ function ParentDashboard() {
       setAddError(msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // =====================
+  // Modal Edit Child
+  // =====================
+  const openEditModal = (child) => {
+    setEditChildId(child.id);
+    setEditForm({
+      name: child.name || "",
+      birth_date: child.birth_date || "",
+      gender: child.gender || "",
+      weight: child.weight || "",
+      height: child.height || "",
+    });
+    setEditError(null);
+    setEditFieldErrors({});
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditSaving(false);
+    setEditError(null);
+    setEditFieldErrors({});
+    setEditChildId(null);
+  };
+
+  const handleEditChange = (e) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    setEditError(null);
+    setEditFieldErrors({});
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditSaving(true);
+    setEditError(null);
+    setEditFieldErrors({});
+
+    try {
+      const payload = {
+        name: editForm.name,
+        birth_date: editForm.birth_date,
+        gender: editForm.gender,
+        weight: editForm.weight ? Number(editForm.weight) : null,
+        height: editForm.height ? Number(editForm.height) : null,
+      };
+
+      await updateChild(editChildId, payload);
+      await loadData();
+      closeEditModal();
+    } catch (err) {
+      console.error("Update child error:", err);
+      let msg = "Gagal memperbarui data anak. Coba lagi.";
+      if (err.response?.status === 422 && err.response.data?.errors) {
+        setEditFieldErrors(err.response.data.errors);
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message;
+      }
+      setEditError(msg);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // =====================
+  // Modal Delete Child
+  // =====================
+  const openDeleteModal = (child) => {
+    setDeleteChildData(child);
+    setDeleteError(null);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleting(false);
+    setDeleteError(null);
+    setDeleteChildData(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteChildData) return;
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteChild(deleteChildData.id);
+      await loadData();
+      closeDeleteModal();
+    } catch (err) {
+      console.error("Delete child error:", err);
+      const msg = err.response?.data?.message || "Gagal menghapus data anak. Coba lagi.";
+      setDeleteError(msg);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -462,23 +572,21 @@ function ParentDashboard() {
           </div>
 
           {/* Stats Grid */}
-          {/* Stats Grid */}
-<div className="dashboard-stats">
-  <StatCard label="Total Anak" value={children.length} color="primary">
-    <Users size={28} strokeWidth={1.5} />
-  </StatCard>
-  <StatCard label="Total Screening" value={totalScreenings} color="success">
-    <Activity size={28} strokeWidth={1.5} />
-  </StatCard>
-  <StatCard
-    label="Perlu Perhatian"
-    value={childrenNeedingAttention.length}
-    color="warning"
-  >
-    <AlertCircle size={28} strokeWidth={1.5} />
-  </StatCard>
-</div>
-
+          <div className="dashboard-stats">
+            <StatCard label="Total Anak" value={children.length} color="primary">
+              <Users size={28} strokeWidth={1.5} />
+            </StatCard>
+            <StatCard label="Total Screening" value={totalScreenings} color="success">
+              <Activity size={28} strokeWidth={1.5} />
+            </StatCard>
+            <StatCard
+              label="Perlu Perhatian"
+              value={childrenNeedingAttention.length}
+              color="warning"
+            >
+              <AlertCircle size={28} strokeWidth={1.5} />
+            </StatCard>
+          </div>
 
           {/* Children Section */}
           <div className="dashboard-section">
@@ -560,6 +668,8 @@ function ParentDashboard() {
                           onHistoryClick={() =>
                             navigate(`/children/${child.id}/screenings`)
                           }
+                          onEditClick={() => openEditModal(child)}
+                          onDeleteClick={() => openDeleteModal(child)}
                         />
                       ))}
                     </tbody>
@@ -589,6 +699,14 @@ function ParentDashboard() {
                           onHistoryClick={() =>
                             navigate(`/children/${child.id}/screenings`)
                           }
+                          onEditClick={() => {
+                            openEditModal(child);
+                            setActionMenuOpen(null);
+                          }}
+                          onDeleteClick={() => {
+                            openDeleteModal(child);
+                            setActionMenuOpen(null);
+                          }}
                         />
                       ))}
                     </tbody>
@@ -600,15 +718,13 @@ function ParentDashboard() {
         </div>
       </div>
 
-      {/* Modal Add Child - DI LUAR dashboard-page */}
+      {/* ===================== */}
+      {/* Modal Add Child       */}
+      {/* ===================== */}
       {showAddModal && (
         <div
           className="modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeAddModal();
-            }
-          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeAddModal(); }}
         >
           <div className="modal-content">
             <div className="modal-header">
@@ -754,6 +870,289 @@ function ParentDashboard() {
           </div>
         </div>
       )}
+
+      {/* ===================== */}
+      {/* Modal Edit Child      */}
+      {/* ===================== */}
+      {showEditModal && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) closeEditModal(); }}
+        >
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Edit Data Anak</h3>
+              <button onClick={closeEditModal} className="modal-close" type="button">
+                <X size={20} strokeWidth={2} />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="modal-error">
+                <AlertCircle size={16} strokeWidth={2} />
+                {editError}
+              </div>
+            )}
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="form-group">
+                <label htmlFor="edit-name">
+                  Nama Anak <span className="required">*</span>
+                </label>
+                <input
+                  id="edit-name"
+                  name="name"
+                  type="text"
+                  value={editForm.name}
+                  onChange={handleEditChange}
+                  placeholder="Misal: Aisyah"
+                  required
+                  className={editFieldErrors.name ? "input-error" : ""}
+                />
+                {editFieldErrors.name && (
+                  <div className="field-error">{editFieldErrors.name[0]}</div>
+                )}
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="edit-birth">
+                    Tanggal Lahir <span className="required">*</span>
+                  </label>
+                  <input
+                    id="edit-birth"
+                    name="birth_date"
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={handleEditChange}
+                    max={maxDate}
+                    required
+                    className={editFieldErrors.birth_date ? "input-error" : ""}
+                  />
+                  {editFieldErrors.birth_date && (
+                    <div className="field-error">{editFieldErrors.birth_date[0]}</div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-gender">
+                    Jenis Kelamin <span className="required">*</span>
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      id="edit-gender"
+                      name="gender"
+                      value={editForm.gender}
+                      onChange={handleEditChange}
+                      required
+                      className={editFieldErrors.gender ? "input-error" : ""}
+                    >
+                      <option value="">Pilih</option>
+                      <option value="M">Laki-laki</option>
+                      <option value="F">Perempuan</option>
+                    </select>
+                    <ChevronDown size={16} className="select-icon" />
+                  </div>
+                  {editFieldErrors.gender && (
+                    <div className="field-error">{editFieldErrors.gender[0]}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="edit-weight">Berat Badan (kg)</label>
+                  <input
+                    id="edit-weight"
+                    name="weight"
+                    type="number"
+                    min="1"
+                    max="200"
+                    step="0.1"
+                    value={editForm.weight}
+                    onChange={handleEditChange}
+                    placeholder="20"
+                    className={editFieldErrors.weight ? "input-error" : ""}
+                  />
+                  {editFieldErrors.weight && (
+                    <div className="field-error">{editFieldErrors.weight[0]}</div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-height">Tinggi Badan (cm)</label>
+                  <input
+                    id="edit-height"
+                    name="height"
+                    type="number"
+                    min="30"
+                    max="220"
+                    step="0.1"
+                    value={editForm.height}
+                    onChange={handleEditChange}
+                    placeholder="115"
+                    className={editFieldErrors.height ? "input-error" : ""}
+                  />
+                  {editFieldErrors.height && (
+                    <div className="field-error">{editFieldErrors.height[0]}</div>
+                  )}
+                </div>
+              </div>
+
+              <p className="form-help">
+                Data BB dan TB opsional, tapi membantu akurasi analisis postur.
+              </p>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="dashboard-btn dashboard-btn--secondary"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="dashboard-btn dashboard-btn--primary"
+                >
+                  {editSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== */}
+      {/* Modal Delete Child    */}
+      {/* ===================== */}
+      {showDeleteModal && deleteChildData && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) closeDeleteModal(); }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              width: "90%",
+              maxWidth: "400px",
+              padding: "2rem 2rem 2rem",
+              position: "relative",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1.25rem",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeDeleteModal}
+              type="button"
+              style={{
+                position: "absolute",
+                top: "1rem",
+                right: "1rem",
+                background: "#f3f4f6",
+                border: "none",
+                borderRadius: "8px",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#6b7280",
+              }}
+            >
+              <X size={16} strokeWidth={2} />
+            </button>
+
+            {/* Icon */}
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "50%",
+                background: "#fef2f2",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#ef4444",
+                marginTop: "0.5rem",
+              }}
+            >
+              <Trash2 size={28} strokeWidth={1.5} />
+            </div>
+
+            {/* Title */}
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#111827",
+                textAlign: "center",
+              }}
+            >
+              Hapus Data Anak
+            </h3>
+
+            {/* Description */}
+            <p
+              style={{
+                margin: 0,
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                textAlign: "center",
+                lineHeight: 1.6,
+              }}
+            >
+              Kamu yakin ingin menghapus data{" "}
+              <strong style={{ color: "#111827" }}>{deleteChildData.name}</strong>?{" "}
+              Semua riwayat screening terkait juga akan terhapus dan tidak dapat dikembalikan.
+            </p>
+
+            {deleteError && (
+              <div className="modal-error" style={{ width: "100%" }}>
+                <AlertCircle size={16} strokeWidth={2} />
+                {deleteError}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                width: "100%",
+                marginTop: "0.25rem",
+              }}
+            >
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={deleting}
+                className="dashboard-btn dashboard-btn--secondary"
+                style={{ flex: 1 }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="dashboard-btn dashboard-btn--danger"
+                style={{ flex: 1 }}
+              >
+                {deleting ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -774,9 +1173,7 @@ function StatCard({ label, value, color, children }) {
   );
 }
 
-
-
-function ChildRowDesktop({ child, onScreeningClick, onHistoryClick }) {
+function ChildRowDesktop({ child, onScreeningClick, onHistoryClick, onEditClick, onDeleteClick }) {
   const latest = child.latest_screening;
   const badge = latest?.category ? getBadgeConfig(latest.category) : null;
 
@@ -792,9 +1189,7 @@ function ChildRowDesktop({ child, onScreeningClick, onHistoryClick }) {
       <td>
         <div className="table-cell-metrics">
           {child.weight && child.height ? (
-            <>
-              {child.weight} kg / {child.height} cm
-            </>
+            <>{child.weight} kg / {child.height} cm</>
           ) : (
             <span className="table-empty">-</span>
           )}
@@ -828,6 +1223,20 @@ function ChildRowDesktop({ child, onScreeningClick, onHistoryClick }) {
             <Camera size={14} strokeWidth={2} />
             Screening
           </button>
+          <button
+            className="dashboard-btn dashboard-btn--secondary dashboard-btn--sm"
+            onClick={onEditClick}
+            title="Edit data anak"
+          >
+            <Pencil size={14} strokeWidth={2} />
+          </button>
+          <button
+            className="dashboard-btn dashboard-btn--danger dashboard-btn--sm"
+            onClick={onDeleteClick}
+            title="Hapus data anak"
+          >
+            <Trash2 size={14} strokeWidth={2} />
+          </button>
         </div>
       </td>
     </tr>
@@ -840,6 +1249,8 @@ function ChildRowMobile({
   setActionMenuOpen,
   onScreeningClick,
   onHistoryClick,
+  onEditClick,
+  onDeleteClick,
 }) {
   const latest = child.latest_screening;
   const badge = latest?.category ? getBadgeConfig(latest.category) : null;
@@ -851,9 +1262,7 @@ function ChildRowMobile({
         <div className="table-name">{child.name}</div>
         <div className="table-meta">
           {child.weight && child.height && (
-            <>
-              {child.weight}kg / {child.height}cm
-            </>
+            <>{child.weight}kg / {child.height}cm</>
           )}
         </div>
       </td>
@@ -898,6 +1307,17 @@ function ChildRowMobile({
                 >
                   <History size={16} strokeWidth={2} />
                   Riwayat
+                </button>
+                <button onClick={onEditClick}>
+                  <Pencil size={16} strokeWidth={2} />
+                  Edit Data
+                </button>
+                <button
+                  className="action-menu-dropdown__danger"
+                  onClick={onDeleteClick}
+                >
+                  <Trash2 size={16} strokeWidth={2} />
+                  Hapus
                 </button>
               </div>
             )}
