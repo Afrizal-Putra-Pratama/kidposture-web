@@ -1,8 +1,12 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "https://posturely.infinityfree.me/api/:path*"
+      "src": "/api/(.*)",
+      "dest": "https://posturely.infinityfree.me/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
