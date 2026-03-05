@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Cookie': '__test=c4754fc4c9d5f2a5e0b2c4a9f1d3e7b8',
+    'Cookie': '__test=f4f482ff9fdedfd9ac27012a76b0229c',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
   };
 
