@@ -6,7 +6,9 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Cookie': '__test=f4f482ff9fdedfd9ac27012a76b0229c',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer': 'https://posturely.infinityfree.me/',
+    'Origin': 'https://posturely.infinityfree.me',
   };
 
   if (req.headers.authorization) {
@@ -24,8 +26,20 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(targetUrl, fetchOptions);
-    const data = await response.json();
-    res.status(response.status).json(data);
+    const text = await response.text();
+    
+    // Cek apakah response adalah HTML (anti-bot)
+    if (text.includes('aes.js') || text.includes('slowAES')) {
+      res.status(503).json({ message: 'Blocked by anti-bot protection' });
+      return;
+    }
+
+    try {
+      const data = JSON.parse(text);
+      res.status(response.status).json(data);
+    } catch {
+      res.status(500).json({ message: 'Invalid JSON response', raw: text.substring(0, 200) });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Proxy error', error: error.message });
   }
