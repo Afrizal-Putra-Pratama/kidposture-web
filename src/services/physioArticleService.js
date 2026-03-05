@@ -1,7 +1,7 @@
 // src/services/physioArticleService.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://kidposture-api.test/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://posturely.infinityfree.me/api';
 
 // Interceptor untuk auth token
 const api = axios.create({

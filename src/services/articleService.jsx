@@ -1,7 +1,7 @@
 // src/services/articleService.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://kidposture-api.test/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://posturely.infinityfree.me/api';
 
 export const articleService = {
   // Get all categories
