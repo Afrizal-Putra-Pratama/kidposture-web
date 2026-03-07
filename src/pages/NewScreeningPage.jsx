@@ -274,25 +274,36 @@ function NewScreeningPage() {
               </div>
 
               {useCamera ? (
-                <div className="screening-camera">
-                  <div className="screening-camera__preview">
-                    <Webcam
-                      ref={webcamRef}
-                      audio={false}
-                      screenshotFormat="image/jpeg"
-                      videoConstraints={videoConstraints}
-                      className="screening-camera__video"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCaptureFromCamera}
-                    className="screening-btn screening-btn--primary screening-btn--full"
-                  >
-                    <Camera size={16} strokeWidth={2} />
-                    Capture {VIEW_LABELS[activeView]}
-                  </button>
-                </div>
+                <div className="screening-camera screening-camera--fullscreen">
+  <div className="screening-camera__preview">
+    <Webcam
+      ref={webcamRef}
+      audio={false}
+      screenshotFormat="image/jpeg"
+      videoConstraints={videoConstraints}
+      className="screening-camera__video"
+    />
+    <div className="screening-camera__overlay">
+      <div className="screening-camera__guide">
+        <span>Pastikan seluruh tubuh terlihat</span>
+      </div>
+      <button
+        type="button"
+        onClick={handleCaptureFromCamera}
+        className="screening-camera__shutter"
+      >
+        <Camera size={28} strokeWidth={2} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setUseCamera(false)}
+        className="screening-camera__close"
+      >
+        <X size={20} strokeWidth={2} />
+      </button>
+    </div>
+  </div>
+</div>
               ) : (
                 <div className="screening-file">
                   <label
