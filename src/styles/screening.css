@@ -807,22 +807,48 @@
     height: 72px;
   }
 }
-.screening-camera--fullscreen .screening-camera__preview {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: #000;
-  display: flex;
-  flex-direction: column;
+/* FULLSCREEN CAMERA */
+@media (max-width: 768px) {
+  .screening-camera--fullscreen .screening-camera__preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 99999;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    overflow: visible;
+  }
+
+  .screening-camera--fullscreen .screening-camera__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex: 1;
+  }
 }
 
-.screening-camera--fullscreen .screening-camera__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@media (min-width: 769px) {
+  .screening-camera--fullscreen .screening-camera__preview {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    border: none;
+    margin-bottom: 1rem;
+  }
+
+  .screening-camera--fullscreen .screening-camera__video {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+  }
 }
 
 .screening-camera__overlay {
@@ -861,7 +887,7 @@
 
 .screening-camera__close {
   position: absolute;
-  top: -180px;
+  top: 16px;
   right: 16px;
   background: rgba(0,0,0,0.5);
   border: none;
@@ -873,4 +899,5 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 1;
 }
