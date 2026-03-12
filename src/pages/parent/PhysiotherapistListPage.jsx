@@ -111,13 +111,13 @@ function PhysiotherapistListPage() {
             {filteredPhysios.map((physio) => (
               <div key={physio.id} style={styles.card}>
                 <div style={styles.cardHeader}>
-                  {physio.photo ? (
-                    <img
-                      src={`${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/storage/${physio.photo}`}
-                      alt={physio.name}
-                      style={styles.avatar}
-                    />
-                  ) : (
+                  {physio.photo_url ? (
+  <img
+    src={physio.photo_url}
+    alt={physio.name}
+    style={styles.avatar}
+  />
+) : (
                     <div style={styles.avatarPlaceholder}>
                       {physio.name?.charAt(0) || "F"}
                     </div>
