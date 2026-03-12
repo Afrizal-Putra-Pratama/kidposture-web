@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Calendar, Clock, Eye } from "lucide-react";
 import { articleService } from "../services/articleService";
-import { toProxiedUrl } from "../utils/axios";
 import "../styles/articleDetail.css";
 
 function ArticleDetailPage() {
@@ -14,6 +13,7 @@ function ArticleDetailPage() {
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // load artikel utama
   useEffect(() => {
     const loadArticle = async () => {
       setLoading(true);
@@ -36,6 +36,7 @@ function ArticleDetailPage() {
     if (slug) loadArticle();
   }, [slug]);
 
+  // load artikel lain (kategori sama / terbaru)
   useEffect(() => {
     const loadRelated = async () => {
       if (!article) return;
@@ -49,7 +50,7 @@ function ArticleDetailPage() {
         if (response.success) {
           const list = (response.data || [])
             .filter((a) => a.id !== article.id)
-            .slice(0, 4);
+            .slice(0, 4); // batasi 4 artikel
           setRelated(list);
         }
       } catch (err) {
@@ -93,7 +94,10 @@ function ArticleDetailPage() {
           <div className="ad-error-icon">❌</div>
           <h2>Artikel tidak ditemukan</h2>
           <p>Artikel yang Anda cari tidak tersedia atau sudah dihapus.</p>
-          <button onClick={() => navigate("/education")} className="ad-btn-primary">
+          <button
+            onClick={() => navigate("/education")}
+            className="ad-btn-primary"
+          >
             Lihat semua artikel
           </button>
         </div>
@@ -109,7 +113,7 @@ function ArticleDetailPage() {
           className="ad-hero-bg"
           style={{
             backgroundImage: article.thumbnail
-              ? `linear-gradient(rgba(15,23,42,0.7), rgba(15,23,42,0.9)), url(${toProxiedUrl(article.thumbnail)})`
+              ? `linear-gradient(rgba(15,23,42,0.7), rgba(15,23,42,0.9)), url(${article.thumbnail})`
               : "linear-gradient(135deg, #38bdf8, #0ea5e9)",
           }}
         >
@@ -146,7 +150,7 @@ function ArticleDetailPage() {
         </div>
       </header>
 
-      {/* Konten + related */}
+      {/* Konten + related (desktop) */}
       <main className="ad-main">
         <div className="ad-main-inner">
           <article className="ad-article">
@@ -174,20 +178,28 @@ function ArticleDetailPage() {
             )}
           </article>
 
-          {/* Related desktop */}
+          {/* Related di desktop / tablet (kanan) */}
           <aside className="ad-related ad-related--desktop">
             <h3>Artikel lain yang mungkin Anda suka</h3>
-            {relatedLoading && <p className="ad-related-loading">Memuat artikel lain...</p>}
+            {relatedLoading && (
+              <p className="ad-related-loading">Memuat artikel lain...</p>
+            )}
             {!relatedLoading && related.length === 0 && (
-              <p className="ad-related-empty">Belum ada artikel lain yang tersedia.</p>
+              <p className="ad-related-empty">
+                Belum ada artikel lain yang tersedia.
+              </p>
             )}
             {!relatedLoading && related.length > 0 && (
               <div className="ad-related-grid">
                 {related.map((item) => (
-                  <Link key={item.id} to={`/education/${item.slug}`} className="ad-related-card">
+                  <Link
+                    key={item.id}
+                    to={`/education/${item.slug}`}
+                    className="ad-related-card"
+                  >
                     <div className="ad-related-thumb">
                       {item.thumbnail ? (
-                        <img src={toProxiedUrl(item.thumbnail)} alt={item.title} />
+                        <img src={item.thumbnail} alt={item.title} />
                       ) : (
                         <div className="ad-related-placeholder">
                           <span>Artikel</span>
@@ -198,14 +210,18 @@ function ArticleDetailPage() {
                       {item.category && (
                         <span className="ad-related-cat">
                           {item.category.icon && (
-                            <span className="ad-cat-icon">{item.category.icon}</span>
+                            <span className="ad-cat-icon">
+                              {item.category.icon}
+                            </span>
                           )}
                           {item.category.name}
                         </span>
                       )}
                       <h4 className="ad-related-title">{item.title}</h4>
                       <div className="ad-related-meta">
-                        <span>{formatDate(item.published_at || item.created_at)}</span>
+                        <span>
+                          {formatDate(item.published_at || item.created_at)}
+                        </span>
                         <span className="ad-dot">•</span>
                         <span>{item.read_time} menit</span>
                       </div>
@@ -217,48 +233,64 @@ function ArticleDetailPage() {
           </aside>
         </div>
 
+        {/* CTA lihat semua artikel */}
         <div className="ad-back-bottom">
-          <button onClick={() => navigate("/education")} className="ad-btn-primary">
+          <button
+            onClick={() => navigate("/education")}
+            className="ad-btn-primary"
+          >
             Lihat semua artikel
           </button>
         </div>
 
-        {/* Related mobile */}
+        {/* Related versi mobile: tampil setelah artikel selesai sebelum footer */}
         <section className="ad-related ad-related--mobile">
           <h3>Artikel lain yang mungkin Anda suka</h3>
-          {relatedLoading && <p className="ad-related-loading">Memuat artikel lain...</p>}
+          {relatedLoading && (
+            <p className="ad-related-loading">Memuat artikel lain...</p>
+          )}
           {!relatedLoading && related.length === 0 && (
-            <p className="ad-related-empty">Belum ada artikel lain yang tersedia.</p>
+            <p className="ad-related-empty">
+              Belum ada artikel lain yang tersedia.
+            </p>
           )}
           {!relatedLoading && related.length > 0 && (
             <div className="ad-related-grid ad-related-grid--mobile">
               {related.map((item) => (
-                <Link key={item.id} to={`/education/${item.slug}`} className="ad-related-card">
-                  <div className="ad-related-thumb">
-                    {item.thumbnail ? (
-                      <img src={toProxiedUrl(item.thumbnail)} alt={item.title} />
-                    ) : (
-                      <div className="ad-related-placeholder">
-                        <span>Artikel</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="ad-related-body">
-                    {item.category && (
-                      <span className="ad-related-cat">
-                        {item.category.icon && (
-                          <span className="ad-cat-icon">{item.category.icon}</span>
-                        )}
-                        {item.category.name}
-                      </span>
-                    )}
-                    <h4 className="ad-related-title">{item.title}</h4>
-                    <div className="ad-related-meta">
-                      <span>{formatDate(item.published_at || item.created_at)}</span>
-                      <span className="ad-dot">•</span>
-                      <span>{item.read_time} menit</span>
+                <Link
+                  key={item.id}
+                  to={`/education/${item.slug}`}
+                  className="ad-related-card"
+                >
+                    <div className="ad-related-thumb">
+                      {item.thumbnail ? (
+                        <img src={item.thumbnail} alt={item.title} />
+                      ) : (
+                        <div className="ad-related-placeholder">
+                          <span>Artikel</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                    <div className="ad-related-body">
+                      {item.category && (
+                        <span className="ad-related-cat">
+                          {item.category.icon && (
+                            <span className="ad-cat-icon">
+                              {item.category.icon}
+                            </span>
+                          )}
+                          {item.category.name}
+                        </span>
+                      )}
+                      <h4 className="ad-related-title">{item.title}</h4>
+                      <div className="ad-related-meta">
+                        <span>
+                          {formatDate(item.published_at || item.created_at)}
+                        </span>
+                        <span className="ad-dot">•</span>
+                        <span>{item.read_time} menit</span>
+                      </div>
+                    </div>
                 </Link>
               ))}
             </div>
@@ -266,12 +298,16 @@ function ArticleDetailPage() {
         </section>
       </main>
 
-      {/* Footer */}
+      {/* Footer sama seperti landing */}
       <footer className="landing-footer">
         <div className="landing-footer__inner">
           <div className="landing-footer__brand">
             <div className="landing-logo landing-logo--light">
-              <img src="/logo-posturely.svg" alt="Posturely Logo" className="brand-logo-img" />
+              <img 
+              src="/logo-posturely.svg" 
+              alt="Posturely Logo" 
+              className="brand-logo-img" 
+            />
             </div>
             <p>
               Posturely adalah platform screening postur anak berbasis AI yang
