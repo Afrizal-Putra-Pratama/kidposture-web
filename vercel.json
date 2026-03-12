@@ -2,22 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://wheezier-unagreed-kizzie.ngrok-free.dev/api/:path*"
+      "destination": "/api/proxy"
     },
     {
       "source": "/((?!assets/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/:path*",
-      "headers": [
-        {
-          "key": "ngrok-skip-browser-warning",
-          "value": "true"
-        }
-      ]
     }
   ]
 }
