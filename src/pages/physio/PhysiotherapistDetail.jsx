@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import physioService from '../../services/physioService';
+import { toProxiedUrl } from '../../utils/axios';
 import '../../styles/PhysiotherapistDetail.css';
 
 export default function PhysiotherapistDetail() {
@@ -37,24 +38,19 @@ export default function PhysiotherapistDetail() {
     }
   };
 
-  // ✅ FUNGSI BUKA GOOGLE MAPS
   const openInGoogleMaps = (latitude, longitude, clinicName) => {
     if (!latitude || !longitude) {
       alert("Koordinat klinik tidak tersedia");
       return;
     }
-
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
-
     if (isNaN(lat) || isNaN(lng)) {
       alert("Koordinat klinik tidak valid");
       return;
     }
-
     const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
     const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
-    
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -91,14 +87,13 @@ export default function PhysiotherapistDetail() {
   return (
     <div className="physio-detail-page">
       <div className="physio-detail-container">
-        {/* Card */}
         <div className="physio-detail-card">
-          {/* Header dengan gradient */}
+          {/* Header */}
           <div className="physio-detail-header">
             <div className="physio-detail-header-content">
               {physio.photo_url ? (
                 <img
-                  src={physio.photo_url}
+                  src={toProxiedUrl(physio.photo_url)}
                   alt={physio.name}
                   className="physio-detail-avatar"
                 />
@@ -110,7 +105,7 @@ export default function PhysiotherapistDetail() {
 
               <div className="physio-detail-header-text">
                 <h1 className="physio-detail-name">{physio.name}</h1>
-                
+
                 {isVerified && (
                   <div className="physio-detail-badge">
                     <ShieldCheck size={16} strokeWidth={2} />
@@ -138,7 +133,6 @@ export default function PhysiotherapistDetail() {
 
           {/* Body */}
           <div className="physio-detail-body">
-            {/* Bio Section */}
             {(physio.bio_short || physio.bio) && (
               <div className="physio-detail-section">
                 <h2 className="physio-detail-section-title">Tentang</h2>
@@ -148,7 +142,6 @@ export default function PhysiotherapistDetail() {
               </div>
             )}
 
-            {/* Informasi Klinik */}
             <div className="physio-detail-section">
               <h2 className="physio-detail-section-title">Informasi Klinik</h2>
               <div className="physio-detail-info-grid">
@@ -162,7 +155,6 @@ export default function PhysiotherapistDetail() {
                   </div>
                 </div>
 
-                {/* ✅ LOKASI - DENGAN TOMBOL GOOGLE MAPS */}
                 <div className="physio-detail-info-item physio-detail-info-item--location">
                   <MapPin size={20} strokeWidth={1.5} />
                   <div className="physio-detail-info-content">
@@ -172,11 +164,7 @@ export default function PhysiotherapistDetail() {
                     </span>
                     {physio.latitude && physio.longitude && (
                       <button
-                        onClick={() => openInGoogleMaps(
-                          physio.latitude,
-                          physio.longitude,
-                          physio.clinic_name
-                        )}
+                        onClick={() => openInGoogleMaps(physio.latitude, physio.longitude, physio.clinic_name)}
                         className="physio-detail-map-link"
                       >
                         <MapPin size={14} strokeWidth={2} />
@@ -192,9 +180,7 @@ export default function PhysiotherapistDetail() {
                     <Phone size={20} strokeWidth={1.5} />
                     <div className="physio-detail-info-content">
                       <span className="physio-detail-info-label">Telepon</span>
-                      <span className="physio-detail-info-value">
-                        {physio.phone}
-                      </span>
+                      <span className="physio-detail-info-value">{physio.phone}</span>
                     </div>
                   </div>
                 )}
@@ -204,9 +190,7 @@ export default function PhysiotherapistDetail() {
                     <Mail size={20} strokeWidth={1.5} />
                     <div className="physio-detail-info-content">
                       <span className="physio-detail-info-label">Email</span>
-                      <span className="physio-detail-info-value">
-                        {physio.email}
-                      </span>
+                      <span className="physio-detail-info-value">{physio.email}</span>
                     </div>
                   </div>
                 )}
@@ -215,9 +199,7 @@ export default function PhysiotherapistDetail() {
                   <div className="physio-detail-info-item">
                     <DollarSign size={20} strokeWidth={1.5} />
                     <div className="physio-detail-info-content">
-                      <span className="physio-detail-info-label">
-                        Tarif Konsultasi
-                      </span>
+                      <span className="physio-detail-info-label">Tarif Konsultasi</span>
                       <span className="physio-detail-info-value physio-detail-info-value--price">
                         Rp {Number(physio.consultation_fee).toLocaleString('id-ID')}
                       </span>
@@ -227,18 +209,12 @@ export default function PhysiotherapistDetail() {
               </div>
             </div>
 
-            {/* CTA Booking */}
             <div className="physio-detail-cta">
-              <button
-                disabled
-                className="physio-detail-cta-btn physio-detail-cta-btn--disabled"
-              >
+              <button disabled className="physio-detail-cta-btn physio-detail-cta-btn--disabled">
                 <Calendar size={18} strokeWidth={2} />
                 <span>Booking Konsultasi (Segera Hadir)</span>
               </button>
-              <p className="physio-detail-cta-note">
-                Fitur booking akan segera tersedia
-              </p>
+              <p className="physio-detail-cta-note">Fitur booking akan segera tersedia</p>
             </div>
           </div>
         </div>
@@ -249,11 +225,7 @@ export default function PhysiotherapistDetail() {
         <div className="physio-detail-footer__inner">
           <div className="physio-detail-footer__brand">
             <div className="physio-detail-footer__logo">
-              <img 
-              src="/logo-posturely.svg" 
-              alt="Posturely Logo" 
-              className="brand-logo-img" 
-            />
+              <img src="/logo-posturely.svg" alt="Posturely Logo" className="brand-logo-img" />
             </div>
             <p>
               Platform screening postur anak berbasis AI yang membantu orang tua
@@ -271,16 +243,12 @@ export default function PhysiotherapistDetail() {
               <h4>Layanan</h4>
               <button onClick={() => navigate('/')}>Screening Postur Anak</button>
               <button onClick={() => navigate('/education')}>Edukasi Postur</button>
-              <button onClick={() => navigate('/physiotherapists')}>
-                Konsultasi Fisioterapis
-              </button>
+              <button onClick={() => navigate('/physiotherapists')}>Konsultasi Fisioterapis</button>
             </div>
             <div className="physio-detail-footer__col">
               <h4>Kontak</h4>
               <button onClick={() => navigate('/login')}>Masuk ke aplikasi</button>
-              <button onClick={() => navigate('/register/physio')}>
-                Bergabung sebagai Fisioterapis
-              </button>
+              <button onClick={() => navigate('/register/physio')}>Bergabung sebagai Fisioterapis</button>
             </div>
           </div>
         </div>

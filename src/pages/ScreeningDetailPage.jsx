@@ -19,6 +19,7 @@ import {
   referScreeningToPhysio,
 } from "../services/screeningService.jsx";
 import physioService from "../services/physioService.jsx";
+import { toProxiedUrl } from "../utils/axios";
 import "../styles/screeningDetail.css";
 
 function ScreeningDetailPage() {
@@ -40,7 +41,6 @@ function ScreeningDetailPage() {
   const [submittingRefer, setSubmittingRefer] = useState(false);
   const [referError, setReferError] = useState(null);
 
-  // Modal konfirmasi rujukan
   const [confirmReferModal, setConfirmReferModal] = useState({
     show: false,
     physioId: null,
@@ -91,7 +91,6 @@ function ScreeningDetailPage() {
     }
   };
 
-  // Kirim rujukan ke backend
   const handleRefer = async (physioId) => {
     setSubmittingRefer(true);
     setReferError(null);
@@ -190,7 +189,6 @@ function ScreeningDetailPage() {
   const hasAIRec =
     currentImage?.recommendations && currentImage.recommendations.length > 0;
 
-  // DEViasi pakai field dari Python
   const shoulderDeviated =
     metrics?.shoulder_tilt_index !== undefined &&
     metrics.shoulder_tilt_index >= 2;
@@ -208,15 +206,7 @@ function ScreeningDetailPage() {
     metrics.torso_inclination_deg >= 15;
 
   const hasAnyDeviation =
-    shoulderDeviated ||
-    hipDeviated ||
-    headDeviated ||
-    neckDeviated ||
-    torsoDeviated;
-
-  const handleOpenDeviationModal = () => {
-    setShowDeviationModal(true);
-  };
+    shoulderDeviated || hipDeviated || headDeviated || neckDeviated || torsoDeviated;
 
   return (
     <div className="sd-page">
@@ -292,7 +282,7 @@ function ScreeningDetailPage() {
 
         {/* Main Layout 2 Kolom */}
         <div className="sd-main-layout">
-          {/* LEFT: Tabel Pengukuran */}
+          {/* LEFT */}
           <div className="sd-left-panel">
             {metrics && Object.keys(metrics).length > 0 && (
               <section className="sd-metrics-table">
@@ -301,7 +291,7 @@ function ScreeningDetailPage() {
                   {hasAnyDeviation && (
                     <button
                       className="sd-deviation-cta"
-                      onClick={handleOpenDeviationModal}
+                      onClick={() => setShowDeviationModal(true)}
                     >
                       <AlertTriangle size={14} strokeWidth={2} />
                       Lihat Area Deviasi
@@ -322,16 +312,8 @@ function ScreeningDetailPage() {
                         <td>Kemiringan Bahu</td>
                         <td>{metrics.shoulder_tilt_index.toFixed(1)}%</td>
                         <td>
-                          <span
-                            className={
-                              metrics.shoulder_tilt_index < 2
-                                ? "status-ok"
-                                : "status-warn"
-                            }
-                          >
-                            {metrics.shoulder_tilt_index < 2
-                              ? "Normal"
-                              : "Deviasi"}
+                          <span className={metrics.shoulder_tilt_index < 2 ? "status-ok" : "status-warn"}>
+                            {metrics.shoulder_tilt_index < 2 ? "Normal" : "Deviasi"}
                           </span>
                         </td>
                       </tr>
@@ -341,13 +323,7 @@ function ScreeningDetailPage() {
                         <td>Kemiringan Panggul</td>
                         <td>{metrics.hip_tilt_index.toFixed(1)}%</td>
                         <td>
-                          <span
-                            className={
-                              metrics.hip_tilt_index < 2
-                                ? "status-ok"
-                                : "status-warn"
-                            }
-                          >
+                          <span className={metrics.hip_tilt_index < 2 ? "status-ok" : "status-warn"}>
                             {metrics.hip_tilt_index < 2 ? "Normal" : "Deviasi"}
                           </span>
                         </td>
@@ -358,16 +334,8 @@ function ScreeningDetailPage() {
                         <td>Forward Head Posture</td>
                         <td>{metrics.forward_head_index.toFixed(2)}</td>
                         <td>
-                          <span
-                            className={
-                              metrics.forward_head_index < 0.2
-                                ? "status-ok"
-                                : "status-warn"
-                            }
-                          >
-                            {metrics.forward_head_index < 0.2
-                              ? "Normal"
-                              : "Forward Head"}
+                          <span className={metrics.forward_head_index < 0.2 ? "status-ok" : "status-warn"}>
+                            {metrics.forward_head_index < 0.2 ? "Normal" : "Forward Head"}
                           </span>
                         </td>
                       </tr>
@@ -377,16 +345,8 @@ function ScreeningDetailPage() {
                         <td>Kemiringan Leher</td>
                         <td>{metrics.neck_inclination_deg.toFixed(1)}°</td>
                         <td>
-                          <span
-                            className={
-                              metrics.neck_inclination_deg < 15
-                                ? "status-ok"
-                                : "status-warn"
-                            }
-                          >
-                            {metrics.neck_inclination_deg < 15
-                              ? "Normal"
-                              : "Deviasi"}
+                          <span className={metrics.neck_inclination_deg < 15 ? "status-ok" : "status-warn"}>
+                            {metrics.neck_inclination_deg < 15 ? "Normal" : "Deviasi"}
                           </span>
                         </td>
                       </tr>
@@ -396,16 +356,8 @@ function ScreeningDetailPage() {
                         <td>Kemiringan Punggung</td>
                         <td>{metrics.torso_inclination_deg.toFixed(1)}°</td>
                         <td>
-                          <span
-                            className={
-                              metrics.torso_inclination_deg < 15
-                                ? "status-ok"
-                                : "status-warn"
-                            }
-                          >
-                            {metrics.torso_inclination_deg < 15
-                              ? "Normal"
-                              : "Deviasi"}
+                          <span className={metrics.torso_inclination_deg < 15 ? "status-ok" : "status-warn"}>
+                            {metrics.torso_inclination_deg < 15 ? "Normal" : "Deviasi"}
                           </span>
                         </td>
                       </tr>
@@ -415,14 +367,12 @@ function ScreeningDetailPage() {
               </section>
             )}
 
-            {/* Status konsultasi */}
             {category !== "GOOD" && (
               <section className="sd-referral-card">
                 <h3>
                   <User size={16} strokeWidth={1.5} />
                   Status Konsultasi Fisioterapis
                 </h3>
-
                 {physiotherapist ? (
                   <p className="sd-physio-line">
                     <strong>{physiotherapist.name}</strong>
@@ -432,7 +382,6 @@ function ScreeningDetailPage() {
                 ) : (
                   <p className="sd-no-physio">Belum ada fisioterapis yang dipilih.</p>
                 )}
-
                 <p className="sd-referral-status">
                   Status:{" "}
                   <strong>
@@ -443,13 +392,11 @@ function ScreeningDetailPage() {
                     {referral_status === "cancelled" && "Dibatalkan"}
                   </strong>
                 </p>
-
                 {canRefer && (
                   <button onClick={openReferModal} className="sd-cta sd-cta--outline">
                     Konsultasi dengan Fisioterapis
                   </button>
                 )}
-
                 {referError && <p className="sd-refer-error">{referError}</p>}
               </section>
             )}
@@ -472,9 +419,7 @@ function ScreeningDetailPage() {
                       <button
                         key={img.id}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`sd-view-tab ${
-                          selectedImageIndex === index ? "sd-view-tab--active" : ""
-                        }`}
+                        className={`sd-view-tab ${selectedImageIndex === index ? "sd-view-tab--active" : ""}`}
                       >
                         {img.type}
                       </button>
@@ -485,7 +430,7 @@ function ScreeningDetailPage() {
                 {currentImage && (
                   <div className="sd-image-wrapper">
                     <img
-                      src={currentImage.url_processed || currentImage.url_original}
+                      src={toProxiedUrl(currentImage.url_processed || currentImage.url_original)}
                       alt={currentImage.type}
                       className="sd-image"
                     />
@@ -508,7 +453,6 @@ function ScreeningDetailPage() {
               </section>
             )}
 
-            {/* CTA Rekomendasi AI (kalau masih ada data) */}
             {hasAIRec && (
               <button
                 className="sd-cta sd-cta--primary-fill"
@@ -535,9 +479,7 @@ function ScreeningDetailPage() {
                   <p>{rec.content}</p>
                   <small>
                     oleh {rec.physio?.name || "Fisioterapis"} pada{" "}
-                    {rec.created_at
-                      ? new Date(rec.created_at).toLocaleDateString("id-ID")
-                      : "-"}
+                    {rec.created_at ? new Date(rec.created_at).toLocaleDateString("id-ID") : "-"}
                   </small>
                 </li>
               ))}
@@ -571,12 +513,7 @@ function ScreeningDetailPage() {
                   </p>
                   {rec.parent_note && <div className="sd-rec-note">{rec.parent_note}</div>}
                   {rec.video_url && (
-                    <a
-                      href={rec.video_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sd-rec-video-link"
-                    >
+                    <a href={rec.video_url} target="_blank" rel="noopener noreferrer" className="sd-rec-video-link">
                       Lihat Video Tutorial
                     </a>
                   )}
@@ -590,16 +527,10 @@ function ScreeningDetailPage() {
       {/* Modal Deviasi */}
       {showDeviationModal && (
         <div className="sd-modal-overlay" onClick={() => setShowDeviationModal(false)}>
-          <div
-            className="sd-modal sd-modal--small"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="sd-modal sd-modal--small" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Detail Area Deviasi</h3>
-              <button
-                onClick={() => setShowDeviationModal(false)}
-                className="sd-modal__close"
-              >
+              <button onClick={() => setShowDeviationModal(false)} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
@@ -607,39 +538,19 @@ function ScreeningDetailPage() {
               {hasAnyDeviation ? (
                 <div className="sd-deviation-list">
                   {shoulderDeviated && (
-                    <DeviationRow
-                      label="Kemiringan Bahu"
-                      metric={metrics.shoulder_tilt_index.toFixed(1) + "%"}
-                      note="Bahu kiri-kanan tidak sejajar."
-                    />
+                    <DeviationRow label="Kemiringan Bahu" metric={metrics.shoulder_tilt_index.toFixed(1) + "%"} note="Bahu kiri-kanan tidak sejajar." />
                   )}
                   {hipDeviated && (
-                    <DeviationRow
-                      label="Kemiringan Panggul"
-                      metric={metrics.hip_tilt_index.toFixed(1) + "%"}
-                      note="Panggul kiri-kanan tidak sejajar."
-                    />
+                    <DeviationRow label="Kemiringan Panggul" metric={metrics.hip_tilt_index.toFixed(1) + "%"} note="Panggul kiri-kanan tidak sejajar." />
                   )}
                   {headDeviated && (
-                    <DeviationRow
-                      label="Forward Head Posture"
-                      metric={metrics.forward_head_index.toFixed(2)}
-                      note="Kepala terlalu maju ke depan."
-                    />
+                    <DeviationRow label="Forward Head Posture" metric={metrics.forward_head_index.toFixed(2)} note="Kepala terlalu maju ke depan." />
                   )}
                   {neckDeviated && (
-                    <DeviationRow
-                      label="Kemiringan Leher"
-                      metric={metrics.neck_inclination_deg.toFixed(1) + "°"}
-                      note="Leher cenderung menunduk."
-                    />
+                    <DeviationRow label="Kemiringan Leher" metric={metrics.neck_inclination_deg.toFixed(1) + "°"} note="Leher cenderung menunduk." />
                   )}
                   {torsoDeviated && (
-                    <DeviationRow
-                      label="Kemiringan Punggung"
-                      metric={metrics.torso_inclination_deg.toFixed(1) + "°"}
-                      note="Punggung cenderung membungkuk."
-                    />
+                    <DeviationRow label="Kemiringan Punggung" metric={metrics.torso_inclination_deg.toFixed(1) + "°"} note="Punggung cenderung membungkuk." />
                   )}
 
                   {cropImages.length > 0 && (
@@ -648,18 +559,17 @@ function ScreeningDetailPage() {
                       <div className="sd-deviation-crops-grid">
                         {cropImages.map((crop) => {
                           const regionName = crop.type.replace("CROP_", "");
-                          const displayName =
-                            {
-                              SHOULDER: "Bahu",
-                              HIP: "Panggul",
-                              HEAD: "Kepala",
-                              NECK: "Leher",
-                              TORSO: "Punggung",
-                            }[regionName] || regionName;
+                          const displayName = {
+                            SHOULDER: "Bahu",
+                            HIP: "Panggul",
+                            HEAD: "Kepala",
+                            NECK: "Leher",
+                            TORSO: "Punggung",
+                          }[regionName] || regionName;
 
                           return (
                             <div key={crop.id} className="sd-deviation-thumb">
-                              <img src={crop.url_original} alt={`Crop ${regionName}`} />
+                              <img src={toProxiedUrl(crop.url_original)} alt={`Crop ${regionName}`} />
                               <span>{displayName}</span>
                             </div>
                           );
@@ -669,9 +579,7 @@ function ScreeningDetailPage() {
                   )}
                 </div>
               ) : (
-                <p className="sd-modal__empty">
-                  Tidak ada deviasi bermakna yang terdeteksi.
-                </p>
+                <p className="sd-modal__empty">Tidak ada deviasi bermakna yang terdeteksi.</p>
               )}
             </div>
           </div>
@@ -684,10 +592,7 @@ function ScreeningDetailPage() {
           <div className="sd-modal" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Pilih Fisioterapis</h3>
-              <button
-                onClick={() => setIsReferModalOpen(false)}
-                className="sd-modal__close"
-              >
+              <button onClick={() => setIsReferModalOpen(false)} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
@@ -702,24 +607,15 @@ function ScreeningDetailPage() {
                     <div key={p.id} className="sd-physio-item">
                       <div className="sd-physio-item__info">
                         <strong>{p.name}</strong>
-                        <p>
-                          {p.clinic_name || "-"} · {p.city || "-"}
-                        </p>
+                        <p>{p.clinic_name || "-"} · {p.city || "-"}</p>
                         <p className="sd-physio-specialty">
                           Spesialisasi: {p.specialty || "-"}
-                          {p.experience_years != null &&
-                            ` · ${p.experience_years} tahun pengalaman`}
+                          {p.experience_years != null && ` · ${p.experience_years} tahun pengalaman`}
                         </p>
                       </div>
                       <button
                         disabled={submittingRefer}
-                        onClick={() =>
-                          setConfirmReferModal({
-                            show: true,
-                            physioId: p.id,
-                            physioName: p.name,
-                          })
-                        }
+                        onClick={() => setConfirmReferModal({ show: true, physioId: p.id, physioName: p.name })}
                         className="sd-physio-item__btn"
                       >
                         {submittingRefer ? "Mengirim..." : "Pilih"}
@@ -735,42 +631,22 @@ function ScreeningDetailPage() {
 
       {/* Modal Konfirmasi Rujukan */}
       {confirmReferModal.show && (
-        <div
-          className="sd-modal-overlay"
-          onClick={() =>
-            setConfirmReferModal({ show: false, physioId: null, physioName: "" })
-          }
-        >
-          <div
-            className="sd-modal sd-modal--small"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="sd-modal-overlay" onClick={() => setConfirmReferModal({ show: false, physioId: null, physioName: "" })}>
+          <div className="sd-modal sd-modal--small" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Konfirmasi Rujukan</h3>
-              <button
-                onClick={() =>
-                  setConfirmReferModal({ show: false, physioId: null, physioName: "" })
-                }
-                className="sd-modal__close"
-              >
+              <button onClick={() => setConfirmReferModal({ show: false, physioId: null, physioName: "" })} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
             <div className="sd-modal__body">
               <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
                 Apakah Anda yakin ingin mengirimkan hasil screening ini ke{" "}
-                <strong>{confirmReferModal.physioName}</strong> untuk konsultasi
-                lebih lanjut?
+                <strong>{confirmReferModal.physioName}</strong> untuk konsultasi lebih lanjut?
               </p>
               <div style={{ display: "flex", gap: "0.75rem" }}>
                 <button
-                  onClick={() =>
-                    setConfirmReferModal({
-                      show: false,
-                      physioId: null,
-                      physioName: "",
-                    })
-                  }
+                  onClick={() => setConfirmReferModal({ show: false, physioId: null, physioName: "" })}
                   className="sd-btn sd-btn--secondary"
                   style={{ flex: 1 }}
                 >

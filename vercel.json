@@ -5,6 +5,10 @@
       "destination": "/api/proxy"
     },
     {
+      "source": "/storage/:path*",
+      "destination": "/api/storage-proxy"
+    },
+    {
       "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }

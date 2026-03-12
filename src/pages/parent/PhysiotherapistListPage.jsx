@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Phone, DollarSign, Clock, Search, Filter } from "lucide-react";
-import api from "../../utils/axios";
+import api, { toProxiedUrl } from '../utils/axios';
 
 function PhysiotherapistListPage() {
   const navigate = useNavigate();
@@ -113,7 +113,7 @@ function PhysiotherapistListPage() {
                 <div style={styles.cardHeader}>
                   {physio.photo_url ? (
   <img
-    src={physio.photo_url}
+    src={toProxiedUrl(physio.photo_url)}
     alt={physio.name}
     style={styles.avatar}
   />

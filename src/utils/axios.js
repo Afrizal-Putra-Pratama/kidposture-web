@@ -6,14 +6,12 @@ const api = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning':'true',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
-// Interceptor untuk token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  console.log('🔑 Token check:', token ? 'OK' : 'MISSING');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,10 +24,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const publicPaths = ['/', '/map', '/login', '/register'];
       const currentPath = window.location.pathname;
-      const isPublic = publicPaths.some(path => 
+      const isPublic = publicPaths.some(path =>
         currentPath === path || currentPath.startsWith('/register')
       );
-      
       if (!isPublic) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -39,5 +36,14 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Helper: convert ngrok URL ke relative URL agar lewat proxy
+export function toProxiedUrl(url) {
+  if (!url) return null;
+  if (url && url.includes('ngrok-free.dev')) {
+    return url.replace(/https?:\/\/[^/]+/, '');
+  }
+  return url;
+}
 
 export default api;
