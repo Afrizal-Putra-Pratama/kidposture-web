@@ -71,13 +71,17 @@ function App() {
         {/* Landing Page (Public) */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* BARU: Halaman Peta Fisioterapis (Public, bisa diakses tanpa login) */}
+        {/* Halaman Peta Fisioterapis (Public) */}
         <Route path="/map" element={<PhysioMapPage />} />
 
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
         <Route path="/register/parent" element={<RegisterParentPage />} />
+
+        {/* ✅ Education (PUBLIC - bisa diakses tanpa login) */}
+        <Route path="/education" element={<EducationPage />} />
+        <Route path="/education/:slug" element={<ArticleDetailPage />} />
 
         {/* Protected Routes (Parent default) */}
         <Route
@@ -136,25 +140,6 @@ function App() {
           }
         />
 
-        {/* Education (public content tapi hanya bisa diakses user login) */}
-        <Route
-          path="/education"
-          element={
-            <ProtectedRoute>
-              <EducationPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/education/:slug"
-          element={
-            <ProtectedRoute>
-              <ArticleDetailPage />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/profile"
           element={
@@ -164,7 +149,7 @@ function App() {
           }
         />
 
-        {/* Direktori Fisioterapis (Parent) - baru */}
+        {/* Direktori Fisioterapis (Parent) */}
         <Route
           path="/physiotherapists"
           element={
@@ -189,7 +174,6 @@ function App() {
           }
         />
 
-        {/* BARU: Detail fisioterapis juga bisa diakses di /physiotherapists/:id */}
         <Route
           path="/physiotherapists/:id"
           element={
