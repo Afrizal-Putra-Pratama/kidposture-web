@@ -39,13 +39,9 @@ api.interceptors.response.use(
   }
 );
 
-// Helper: convert ngrok URL ke relative URL agar lewat proxy
 export function toProxiedUrl(url) {
   if (!url) return null;
-  if (url && url.includes('ngrok-free.dev')) {
-    return url.replace(/https?:\/\/[^/]+/, '');
-  }
-  return url;
+  return url; 
 }
 
 export default api;
