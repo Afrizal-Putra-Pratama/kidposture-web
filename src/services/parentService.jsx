@@ -1,14 +1,9 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://posturely.infinityfree.me/api';
+// src/services/parentService.jsx
+import api from '../utils/axios';
 
 export const parentService = {
-  getChildrenWithSummary: async (token) => {
-    const response = await axios.get(`${API_URL}/children`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  getChildrenWithSummary: async () => {
+    const response = await api.get('/children');
     return response.data;
   },
 };
