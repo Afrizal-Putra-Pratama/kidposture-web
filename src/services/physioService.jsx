@@ -1,16 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://posturely.infinityfree.me/api',
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from '../utils/axios';
 
 const physioService = {
   getAll: async (filters = {}) => {
@@ -30,13 +18,11 @@ const physioService = {
     return response.data.data;
   },
 
-  // BARU: untuk profile fisio yang login
   getProfile: async () => {
     const response = await api.get('/physio/profile');
     return response.data.data;
   },
 
-  // BARU: update profile fisio
   updateProfile: async (formData) => {
     const response = await api.post('/physio/profile', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -44,7 +30,6 @@ const physioService = {
     return response.data;
   },
 
-  // BARU: search dengan parameter lebih lengkap
   search: async (params) => {
     const response = await api.get('/physiotherapists', { params });
     return response.data.data || [];
