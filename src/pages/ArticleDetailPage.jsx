@@ -20,6 +20,8 @@ function ArticleDetailPage() {
       setError(null);
       try {
         const response = await articleService.getArticleBySlug(slug);
+        console.log('Response:', response); // tambah ini
+        console.log('Article:', response?.data); // tambah ini
         if (response.success) {
           setArticle(response.data);
         } else {
