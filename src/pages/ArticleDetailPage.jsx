@@ -20,8 +20,6 @@ function ArticleDetailPage() {
       setError(null);
       try {
         const response = await articleService.getArticleBySlug(slug);
-        console.log('Response:', response); // tambah ini
-        console.log('Article:', response?.data); // tambah ini
         if (response.success) {
           setArticle(response.data);
         } else {
@@ -79,9 +77,9 @@ function ArticleDetailPage() {
 
   if (loading) {
     return (
-      <div className="ad-page ad-page--center">
-        <div className="ad-loading">
-          <div className="ad-spinner" />
+      <div className="art-page art-page--center">
+        <div className="art-loading">
+          <div className="art-spinner" />
           <p>Memuat artikel...</p>
         </div>
       </div>
@@ -90,12 +88,12 @@ function ArticleDetailPage() {
 
   if (error || !article) {
     return (
-      <div className="ad-page ad-page--center">
-        <div className="ad-error">
-          <div className="ad-error-icon">❌</div>
+      <div className="art-page art-page--center">
+        <div className="art-error">
+          <div className="art-error-icon">❌</div>
           <h2>Artikel tidak ditemukan</h2>
           <p>Artikel yang Anda cari tidak tersedia atau sudah dihapus.</p>
-          <button onClick={() => navigate("/education")} className="ad-btn-primary">
+          <button onClick={() => navigate("/education")} className="art-btn-primary">
             Lihat semua artikel
           </button>
         </div>
@@ -104,42 +102,42 @@ function ArticleDetailPage() {
   }
 
   return (
-    <div className="ad-page">
+    <div className="art-page">
       {/* Header hero */}
-      <header className="ad-hero">
+      <header className="art-hero">
         <div
-          className="ad-hero-bg"
+          className="art-hero-bg"
           style={{
             backgroundImage: article.thumbnail
               ? `linear-gradient(rgba(15,23,42,0.7), rgba(15,23,42,0.9)), url(${toProxiedUrl(article.thumbnail)})`
               : "linear-gradient(135deg, #38bdf8, #0ea5e9)",
           }}
         >
-          <div className="ad-hero-inner">
+          <div className="art-hero-inner">
             {article.category && (
-              <div className="ad-category-badge">
+              <div className="art-category-badge">
                 {article.category.icon && (
-                  <span className="ad-cat-icon">{article.category.icon}</span>
+                  <span className="art-cat-icon">{article.category.icon}</span>
                 )}
                 <span>{article.category.name}</span>
               </div>
             )}
 
-            <h1 className="ad-title">{article.title}</h1>
+            <h1 className="art-title">{article.title}</h1>
 
-            <div className="ad-meta-row">
+            <div className="art-meta-row">
               {article.author?.name && (
-                <span className="ad-meta-item">👤 {article.author.name}</span>
+                <span className="art-meta-item">👤 {article.author.name}</span>
               )}
-              <span className="ad-meta-item">
+              <span className="art-meta-item">
                 <Calendar size={14} strokeWidth={1.7} />
                 {formatDate(article.published_at || article.created_at)}
               </span>
-              <span className="ad-meta-item">
+              <span className="art-meta-item">
                 <Clock size={14} strokeWidth={1.7} />
                 {article.read_time} menit baca
               </span>
-              <span className="ad-meta-item">
+              <span className="art-meta-item">
                 <Eye size={14} strokeWidth={1.7} />
                 {article.views} kali dibaca
               </span>
@@ -149,66 +147,66 @@ function ArticleDetailPage() {
       </header>
 
       {/* Konten + related */}
-      <main className="ad-main">
-        <div className="ad-main-inner">
-          <article className="ad-article">
+      <main className="art-main">
+        <div className="art-main-inner">
+          <article className="art-article">
             {article.excerpt && (
-              <div className="ad-excerpt">{article.excerpt}</div>
+              <div className="art-excerpt">{article.excerpt}</div>
             )}
 
             <div
-              className="ad-content"
+              className="art-content"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 
             {article.author && (
-              <section className="ad-author">
-                <div className="ad-author-avatar">
+              <section className="art-author">
+                <div className="art-author-avatar">
                   {article.author.name
                     ? article.author.name.charAt(0).toUpperCase()
                     : "A"}
                 </div>
-                <div className="ad-author-info">
-                  <p className="ad-author-label">Ditulis oleh</p>
-                  <p className="ad-author-name">{article.author.name}</p>
+                <div className="art-author-info">
+                  <p className="art-author-label">Ditulis oleh</p>
+                  <p className="art-author-name">{article.author.name}</p>
                 </div>
               </section>
             )}
           </article>
 
           {/* Related desktop */}
-          <aside className="ad-related ad-related--desktop">
+          <aside className="art-related art-related--desktop">
             <h3>Artikel lain yang mungkin Anda suka</h3>
-            {relatedLoading && <p className="ad-related-loading">Memuat artikel lain...</p>}
+            {relatedLoading && <p className="art-related-loading">Memuat artikel lain...</p>}
             {!relatedLoading && related.length === 0 && (
-              <p className="ad-related-empty">Belum ada artikel lain yang tersedia.</p>
+              <p className="art-related-empty">Belum ada artikel lain yang tersedia.</p>
             )}
             {!relatedLoading && related.length > 0 && (
-              <div className="ad-related-grid">
+              <div className="art-related-grid">
                 {related.map((item) => (
-                  <Link key={item.id} to={`/education/${item.slug}`} className="ad-related-card">
-                    <div className="ad-related-thumb">
+                  <Link key={item.id} to={`/education/${item.slug}`} className="art-related-card">
+                    <div className="art-related-thumb">
                       {item.thumbnail ? (
                         <img src={toProxiedUrl(item.thumbnail)} alt={item.title} />
                       ) : (
-                        <div className="ad-related-placeholder">
+                        <div className="art-related-placeholder">
                           <span>Artikel</span>
                         </div>
                       )}
                     </div>
-                    <div className="ad-related-body">
+                    <div className="art-related-body">
                       {item.category && (
-                        <span className="ad-related-cat">
+                        <span className="art-related-cat">
                           {item.category.icon && (
-                            <span className="ad-cat-icon">{item.category.icon}</span>
+                            <span className="art-cat-icon">{item.category.icon}</span>
                           )}
                           {item.category.name}
                         </span>
                       )}
-                      <h4 className="ad-related-title">{item.title}</h4>
-                      <div className="ad-related-meta">
+                      <h4 className="art-related-title">{item.title}</h4>
+                      <div className="art-related-meta">
                         <span>{formatDate(item.published_at || item.created_at)}</span>
-                        <span className="ad-dot">•</span>
+                        <span className="art-dot">•</span>
                         <span>{item.read_time} menit</span>
                       </div>
                     </div>
@@ -219,45 +217,45 @@ function ArticleDetailPage() {
           </aside>
         </div>
 
-        <div className="ad-back-bottom">
-          <button onClick={() => navigate("/education")} className="ad-btn-primary">
+        <div className="art-back-bottom">
+          <button onClick={() => navigate("/education")} className="art-btn-primary">
             Lihat semua artikel
           </button>
         </div>
 
         {/* Related mobile */}
-        <section className="ad-related ad-related--mobile">
+        <section className="art-related art-related--mobile">
           <h3>Artikel lain yang mungkin Anda suka</h3>
-          {relatedLoading && <p className="ad-related-loading">Memuat artikel lain...</p>}
+          {relatedLoading && <p className="art-related-loading">Memuat artikel lain...</p>}
           {!relatedLoading && related.length === 0 && (
-            <p className="ad-related-empty">Belum ada artikel lain yang tersedia.</p>
+            <p className="art-related-empty">Belum ada artikel lain yang tersedia.</p>
           )}
           {!relatedLoading && related.length > 0 && (
-            <div className="ad-related-grid ad-related-grid--mobile">
+            <div className="art-related-grid art-related-grid--mobile">
               {related.map((item) => (
-                <Link key={item.id} to={`/education/${item.slug}`} className="ad-related-card">
-                  <div className="ad-related-thumb">
+                <Link key={item.id} to={`/education/${item.slug}`} className="art-related-card">
+                  <div className="art-related-thumb">
                     {item.thumbnail ? (
                       <img src={toProxiedUrl(item.thumbnail)} alt={item.title} />
                     ) : (
-                      <div className="ad-related-placeholder">
+                      <div className="art-related-placeholder">
                         <span>Artikel</span>
                       </div>
                     )}
                   </div>
-                  <div className="ad-related-body">
+                  <div className="art-related-body">
                     {item.category && (
-                      <span className="ad-related-cat">
+                      <span className="art-related-cat">
                         {item.category.icon && (
-                          <span className="ad-cat-icon">{item.category.icon}</span>
+                          <span className="art-cat-icon">{item.category.icon}</span>
                         )}
                         {item.category.name}
                       </span>
                     )}
-                    <h4 className="ad-related-title">{item.title}</h4>
-                    <div className="ad-related-meta">
+                    <h4 className="art-related-title">{item.title}</h4>
+                    <div className="art-related-meta">
                       <span>{formatDate(item.published_at || item.created_at)}</span>
-                      <span className="ad-dot">•</span>
+                      <span className="art-dot">•</span>
                       <span>{item.read_time} menit</span>
                     </div>
                   </div>
