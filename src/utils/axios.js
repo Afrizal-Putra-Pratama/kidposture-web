@@ -22,10 +22,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const publicPaths = ['/', '/map', '/login', '/register'];
+      const publicPaths = ['/', '/map', '/login', '/register','/education'];
       const currentPath = window.location.pathname;
       const isPublic = publicPaths.some(path =>
-        currentPath === path || currentPath.startsWith('/register')
+      currentPath === path || 
+      currentPath.startsWith('/register') ||
+      currentPath.startsWith('/education') 
       );
       if (!isPublic) {
         localStorage.removeItem('token');

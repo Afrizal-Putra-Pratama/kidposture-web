@@ -19,6 +19,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_
   .replace(/\/api\/?$/, ""); // hapus /api di akhir kalau ada
 
 function EducationPage() {
+  console.log('API URL:', import.meta.env.VITE_API_BASE_URL);
   const navigate = useNavigate();
 
   const [articles, setArticles] = useState([]);
