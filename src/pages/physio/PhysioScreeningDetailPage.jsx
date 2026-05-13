@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { X, CheckCircle } from "lucide-react";
+import { X, CheckCircle, MessageCircle, Crown } from "lucide-react";
 import {
   fetchScreeningDetail,
   acceptReferralByPhysio,
   completeReferralByPhysio,
   createManualRecommendation,
 } from "../../services/screeningService";
+import { getConversations } from "../../services/chatService";
 import "./../../styles/PhysioScreeningDetailPage.css";
 
 function PhysioScreeningDetailPage() {
@@ -26,17 +27,17 @@ function PhysioScreeningDetailPage() {
   });
   const [submittingRec, setSubmittingRec] = useState(false);
 
-  // Modal konfirmasi terima rujukan
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [acceptingReferral, setAcceptingReferral] = useState(false);
 
-  // Modal konfirmasi selesaikan konsultasi
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completingReferral, setCompletingReferral] = useState(false);
 
-  // Modal sukses
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // ✅ BARU: cari conversation dengan parent ini
+  const [parentConvId, setParentConvId] = useState(null);
 
   useEffect(() => {
     if (!screeningId) {
@@ -45,6 +46,7 @@ function PhysioScreeningDetailPage() {
       return;
     }
     loadDetail();
+    loadParentConversation();
   }, [screeningId]);
 
   const loadDetail = async () => {
@@ -58,6 +60,17 @@ function PhysioScreeningDetailPage() {
       setError("Gagal memuat detail screening.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadParentConversation = async () => {
+    try {
+      const res = await getConversations();
+      const list = res?.data || res || [];
+      // Akan di-match setelah screening loaded — disimpan sementara
+      setParentConvId(list);
+    } catch {
+      setParentConvId([]);
     }
   };
 
@@ -100,12 +113,7 @@ function PhysioScreeningDetailPage() {
       await createManualRecommendation(screeningId, recForm);
       setSuccessMessage("Rekomendasi berhasil disimpan.");
       setShowSuccessModal(true);
-      setRecForm({
-        type: "exercise",
-        title: "",
-        content: "",
-        media_url: "",
-      });
+      setRecForm({ type: "exercise", title: "", content: "", media_url: "" });
       setShowRecommendationForm(false);
       await loadDetail();
     } catch (err) {
@@ -146,11 +154,19 @@ function PhysioScreeningDetailPage() {
     );
   }
 
-  const { child, images, manualRecommendations, referral_status } = screening;
+  const { child, images, manualRecommendations, referral_status, parent } = screening;
 
   const canEditRecommendation = referral_status === "accepted";
   const isBeforeAccepted = referral_status === "requested";
   const isAfterCompleted = referral_status === "completed";
+
+  // ✅ Cari conversation yang terhubung dengan parent ini
+  const convList = Array.isArray(parentConvId) ? parentConvId : [];
+  const parentConv = convList.find(
+    (c) =>
+      (c.parent?.id || c.parent_id) === (parent?.id || screening.parent_id)
+  );
+  const isParentPremium = parent?.is_premium === true || screening.is_premium === true;
 
   return (
     <div className="physio-screening-page">
@@ -163,32 +179,78 @@ function PhysioScreeningDetailPage() {
           <span>Kembali ke dashboard</span>
         </button>
 
-        <header className="screening-header">
-          <h1 className="screening-title">Detail screening: {child?.name}</h1>
+        <header className="screening-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+          <h1 className="screening-title">
+            Detail screening: {child?.name}
+          </h1>
+
+          {/* ✅ BARU: Tombol chat ke parent premium */}
+          {isParentPremium && (
+            <button
+              onClick={() =>
+                navigate(
+                  parentConv
+                    ? `/physio/chat?conversation_id=${parentConv.id}`
+                    : "/physio/chat"
+                )
+              }
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                background: "linear-gradient(135deg, #fef3c7, #fffbeb)",
+                color: "#92400e",
+                border: "1.5px solid #fde68a",
+                borderRadius: 10,
+                padding: "0.5rem 1rem",
+                fontSize: "0.875rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              <Crown size={14} color="#d97706" />
+              <MessageCircle size={14} />
+              Chat dengan {parent?.name || "Parent"}
+            </button>
+          )}
         </header>
+
+        {/* ✅ BARU: Banner premium di atas halaman detail */}
+        {isParentPremium && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
+              border: "1.5px solid #fde68a",
+              borderRadius: 12,
+              padding: "0.875rem 1.125rem",
+              marginBottom: "1.25rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+            }}
+          >
+            <Crown size={18} color="#d97706" />
+            <div>
+              <span style={{ fontWeight: 700, color: "#92400e", fontSize: "0.875rem" }}>
+                Pasien Premium
+              </span>
+              <span style={{ color: "#b45309", fontSize: "0.8rem", marginLeft: "0.5rem" }}>
+                · {parent?.name} berlangganan premium dan dapat menghubungi Anda via chat.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Data anak */}
         <section className="card-section">
           <h2 className="card-title">Data anak</h2>
           <div className="card-grid">
-            <div>
-              <strong>Nama:</strong> {child?.name}
-            </div>
-            <div>
-              <strong>Usia:</strong>{" "}
-              {child?.age_years ? `${child.age_years} tahun` : "-"}
-            </div>
-            <div>
-              <strong>Jenis kelamin:</strong> {child?.gender || "-"}
-            </div>
-            <div>
-              <strong>Berat badan:</strong>{" "}
-              {child?.weight ? `${child.weight} kg` : "-"}
-            </div>
-            <div>
-              <strong>Tinggi badan:</strong>{" "}
-              {child?.height ? `${child.height} cm` : "-"}
-            </div>
+            <div><strong>Nama:</strong> {child?.name}</div>
+            <div><strong>Usia:</strong> {child?.age_years ? `${child.age_years} tahun` : "-"}</div>
+            <div><strong>Jenis kelamin:</strong> {child?.gender || "-"}</div>
+            <div><strong>Berat badan:</strong> {child?.weight ? `${child.weight} kg` : "-"}</div>
+            <div><strong>Tinggi badan:</strong> {child?.height ? `${child.height} cm` : "-"}</div>
           </div>
         </section>
 
@@ -196,26 +258,16 @@ function PhysioScreeningDetailPage() {
         <section className="card-section">
           <h2 className="card-title">Hasil screening</h2>
           <div className="card-grid">
-            <div>
-              <strong>Skor:</strong> {screening.score ?? "-"}
-            </div>
+            <div><strong>Skor:</strong> {screening.score ?? "-"}</div>
             <div>
               <strong>Kategori:</strong>{" "}
-              <span
-                className={
-                  screening.category === "GOOD"
-                    ? "badge badge--good"
-                    : "badge badge--alert"
-                }
-              >
+              <span className={screening.category === "GOOD" ? "badge badge--good" : "badge badge--alert"}>
                 {screening.category || "Perlu perhatian"}
               </span>
             </div>
             <div className="card-grid-full">
               <strong>Ringkasan:</strong>
-              <p className="summary-text">
-                {screening.summary || "Tidak ada ringkasan."}
-              </p>
+              <p className="summary-text">{screening.summary || "Tidak ada ringkasan."}</p>
             </div>
           </div>
         </section>
@@ -252,59 +304,24 @@ function PhysioScreeningDetailPage() {
                     <h3 className="ai-rec-title">{img.type}</h3>
                     <ul className="ai-rec-list">
                       {img.recommendations.map((rec, idx) => {
-                        if (typeof rec === "string") {
-                          return <li key={idx}>{rec}</li>;
-                        }
-
+                        if (typeof rec === "string") return <li key={idx}>{rec}</li>;
                         const issue = rec.issue ?? rec.problem ?? "";
                         const duration = rec.duration ?? "";
                         const exercise = rec.exercise ?? "";
                         const videoUrl = rec.video_url ?? rec.videoUrl ?? "";
                         const parentNote = rec.parent_note ?? "";
-
-                        const isEmptyStructured =
-                          !issue &&
-                          !duration &&
-                          !exercise &&
-                          !videoUrl &&
-                          !parentNote;
-
+                        const isEmptyStructured = !issue && !duration && !exercise && !videoUrl && !parentNote;
                         return (
                           <li key={idx} className="ai-rec-item">
-                            {issue && (
-                              <span>
-                                <strong>Keluhan:</strong> {issue}{" "}
-                              </span>
-                            )}
-                            {duration && (
-                              <span>
-                                <strong>Durasi:</strong> {duration}{" "}
-                              </span>
-                            )}
-                            {exercise && (
-                              <span>
-                                <strong>Latihan:</strong> {exercise}{" "}
-                              </span>
-                            )}
-                            {parentNote && (
-                              <span>
-                                <strong>Catatan:</strong> {parentNote}{" "}
-                              </span>
-                            )}
+                            {issue && <span><strong>Keluhan:</strong> {issue} </span>}
+                            {duration && <span><strong>Durasi:</strong> {duration} </span>}
+                            {exercise && <span><strong>Latihan:</strong> {exercise} </span>}
+                            {parentNote && <span><strong>Catatan:</strong> {parentNote} </span>}
                             {videoUrl && (
-                              <a
-                                href={videoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="link-inline"
-                              >
-                                Video
-                              </a>
+                              <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="link-inline">Video</a>
                             )}
                             {isEmptyStructured && (
-                              <span className="ai-rec-raw">
-                                {JSON.stringify(rec, null, 2)}
-                              </span>
+                              <span className="ai-rec-raw">{JSON.stringify(rec, null, 2)}</span>
                             )}
                           </li>
                         );
@@ -319,19 +336,12 @@ function PhysioScreeningDetailPage() {
         {/* Tombol aksi rujukan */}
         <div className="referral-actions">
           {referral_status === "requested" && (
-            <button
-              onClick={() => setShowAcceptModal(true)}
-              className="btn btn-accept"
-            >
+            <button onClick={() => setShowAcceptModal(true)} className="btn btn-accept">
               Terima rujukan
             </button>
           )}
-
           {referral_status === "accepted" && (
-            <button
-              onClick={() => setShowCompleteModal(true)}
-              className="btn btn-complete"
-            >
+            <button onClick={() => setShowCompleteModal(true)} className="btn btn-complete">
               Selesaikan konsultasi
             </button>
           )}
@@ -342,45 +352,31 @@ function PhysioScreeningDetailPage() {
           <div className="manual-rec-header">
             <h2 className="card-title">Rekomendasi manual</h2>
             <button
-              onClick={() => {
-                if (!canEditRecommendation) return;
-                setShowRecommendationForm((prev) => !prev);
-              }}
+              onClick={() => { if (!canEditRecommendation) return; setShowRecommendationForm((prev) => !prev); }}
               disabled={!canEditRecommendation}
-              className={`btn btn-add ${
-                !canEditRecommendation ? "btn-disabled" : ""
-              }`}
+              className={`btn btn-add ${!canEditRecommendation ? "btn-disabled" : ""}`}
             >
               Tambah rekomendasi
             </button>
           </div>
 
           {isBeforeAccepted && (
-            <p className="info-text">
-              Terima rujukan terlebih dahulu untuk dapat menambahkan rekomendasi.
-            </p>
+            <p className="info-text">Terima rujukan terlebih dahulu untuk dapat menambahkan rekomendasi.</p>
           )}
-
           {isAfterCompleted && (
-            <p className="info-text">
-              Konsultasi sudah selesai, rekomendasi baru tidak dapat ditambahkan.
-            </p>
+            <p className="info-text">Konsultasi sudah selesai, rekomendasi baru tidak dapat ditambahkan.</p>
           )}
 
           {showRecommendationForm && (
             <form
               onSubmit={handleSubmitRecommendation}
-              className={`manual-rec-form ${
-                !canEditRecommendation ? "manual-rec-form--disabled" : ""
-              }`}
+              className={`manual-rec-form ${!canEditRecommendation ? "manual-rec-form--disabled" : ""}`}
             >
               <div className="form-group">
                 <label className="form-label">Tipe</label>
                 <select
                   value={recForm.type}
-                  onChange={(e) =>
-                    setRecForm({ ...recForm, type: e.target.value })
-                  }
+                  onChange={(e) => setRecForm({ ...recForm, type: e.target.value })}
                   disabled={!canEditRecommendation}
                   className="form-input"
                 >
@@ -390,54 +386,42 @@ function PhysioScreeningDetailPage() {
                   <option value="referral">Rujukan</option>
                 </select>
               </div>
-
               <div className="form-group">
                 <label className="form-label">Judul</label>
                 <input
                   type="text"
                   value={recForm.title}
-                  onChange={(e) =>
-                    setRecForm({ ...recForm, title: e.target.value })
-                  }
+                  onChange={(e) => setRecForm({ ...recForm, title: e.target.value })}
                   required
                   disabled={!canEditRecommendation}
                   className="form-input"
                 />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Konten</label>
                 <textarea
                   value={recForm.content}
-                  onChange={(e) =>
-                    setRecForm({ ...recForm, content: e.target.value })
-                  }
+                  onChange={(e) => setRecForm({ ...recForm, content: e.target.value })}
                   required
                   rows={4}
                   disabled={!canEditRecommendation}
                   className="form-input form-textarea"
                 />
               </div>
-
               <div className="form-group">
                 <label className="form-label">URL media (opsional)</label>
                 <input
                   type="url"
                   value={recForm.media_url}
-                  onChange={(e) =>
-                    setRecForm({ ...recForm, media_url: e.target.value })
-                  }
+                  onChange={(e) => setRecForm({ ...recForm, media_url: e.target.value })}
                   disabled={!canEditRecommendation}
                   className="form-input"
                 />
               </div>
-
               <button
                 type="submit"
                 disabled={submittingRec || !canEditRecommendation}
-                className={`btn btn-save ${
-                  submittingRec || !canEditRecommendation ? "btn-disabled" : ""
-                }`}
+                className={`btn btn-save ${submittingRec || !canEditRecommendation ? "btn-disabled" : ""}`}
               >
                 {submittingRec ? "Menyimpan..." : "Simpan rekomendasi"}
               </button>
@@ -456,17 +440,10 @@ function PhysioScreeningDetailPage() {
                   </div>
                   <h4 className="manual-rec-title">{rec.title}</h4>
                   <p className="manual-rec-content">
-                    {typeof rec.content === "string"
-                      ? rec.content
-                      : JSON.stringify(rec.content, null, 2)}
+                    {typeof rec.content === "string" ? rec.content : JSON.stringify(rec.content, null, 2)}
                   </p>
                   {rec.media_url && (
-                    <a
-                      href={rec.media_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="link-inline"
-                    >
+                    <a href={rec.media_url} target="_blank" rel="noopener noreferrer" className="link-inline">
                       Lihat media
                     </a>
                   )}
@@ -479,19 +456,13 @@ function PhysioScreeningDetailPage() {
         </section>
       </div>
 
-      {/* Modal Konfirmasi Terima Rujukan */}
+      {/* Modal Terima Rujukan */}
       {showAcceptModal && (
         <div className="sd-modal-overlay" onClick={() => setShowAcceptModal(false)}>
-          <div
-            className="sd-modal sd-modal--small"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="sd-modal sd-modal--small" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Terima Rujukan</h3>
-              <button
-                onClick={() => setShowAcceptModal(false)}
-                className="sd-modal__close"
-              >
+              <button onClick={() => setShowAcceptModal(false)} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
@@ -501,19 +472,8 @@ function PhysioScreeningDetailPage() {
                 <strong>{child?.name}</strong>?
               </p>
               <div style={{ display: "flex", gap: "0.75rem" }}>
-                <button
-                  onClick={() => setShowAcceptModal(false)}
-                  className="sd-btn sd-btn--secondary"
-                  style={{ flex: 1 }}
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleAcceptReferral}
-                  disabled={acceptingReferral}
-                  className="sd-btn sd-btn--primary"
-                  style={{ flex: 1 }}
-                >
+                <button onClick={() => setShowAcceptModal(false)} className="sd-btn sd-btn--secondary" style={{ flex: 1 }}>Batal</button>
+                <button onClick={handleAcceptReferral} disabled={acceptingReferral} className="sd-btn sd-btn--primary" style={{ flex: 1 }}>
                   {acceptingReferral ? "Memproses..." : "Ya, Terima"}
                 </button>
               </div>
@@ -522,45 +482,23 @@ function PhysioScreeningDetailPage() {
         </div>
       )}
 
-      {/* Modal Konfirmasi Selesaikan Konsultasi */}
+      {/* Modal Selesaikan Konsultasi */}
       {showCompleteModal && (
-        <div
-          className="sd-modal-overlay"
-          onClick={() => setShowCompleteModal(false)}
-        >
-          <div
-            className="sd-modal sd-modal--small"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="sd-modal-overlay" onClick={() => setShowCompleteModal(false)}>
+          <div className="sd-modal sd-modal--small" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Selesaikan Konsultasi</h3>
-              <button
-                onClick={() => setShowCompleteModal(false)}
-                className="sd-modal__close"
-              >
+              <button onClick={() => setShowCompleteModal(false)} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
             <div className="sd-modal__body">
               <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
-                Apakah Anda yakin konsultasi untuk <strong>{child?.name}</strong>{" "}
-                sudah selesai? Setelah diselesaikan, Anda tidak dapat menambahkan
-                rekomendasi baru.
+                Apakah Anda yakin konsultasi untuk <strong>{child?.name}</strong> sudah selesai? Setelah diselesaikan, Anda tidak dapat menambahkan rekomendasi baru.
               </p>
               <div style={{ display: "flex", gap: "0.75rem" }}>
-                <button
-                  onClick={() => setShowCompleteModal(false)}
-                  className="sd-btn sd-btn--secondary"
-                  style={{ flex: 1 }}
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleCompleteReferral}
-                  disabled={completingReferral}
-                  className="sd-btn sd-btn--primary"
-                  style={{ flex: 1 }}
-                >
+                <button onClick={() => setShowCompleteModal(false)} className="sd-btn sd-btn--secondary" style={{ flex: 1 }}>Batal</button>
+                <button onClick={handleCompleteReferral} disabled={completingReferral} className="sd-btn sd-btn--primary" style={{ flex: 1 }}>
                   {completingReferral ? "Memproses..." : "Ya, Selesaikan"}
                 </button>
               </div>
@@ -571,39 +509,18 @@ function PhysioScreeningDetailPage() {
 
       {/* Modal Sukses */}
       {showSuccessModal && (
-        <div
-          className="sd-modal-overlay"
-          onClick={() => setShowSuccessModal(false)}
-        >
-          <div
-            className="sd-modal sd-modal--small"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="sd-modal-overlay" onClick={() => setShowSuccessModal(false)}>
+          <div className="sd-modal sd-modal--small" onClick={(e) => e.stopPropagation()}>
             <div className="sd-modal__header">
               <h3>Berhasil</h3>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="sd-modal__close"
-              >
+              <button onClick={() => setShowSuccessModal(false)} className="sd-modal__close">
                 <X size={20} strokeWidth={2} />
               </button>
             </div>
             <div className="sd-modal__body" style={{ textAlign: "center" }}>
-              <CheckCircle
-                size={48}
-                strokeWidth={2}
-                style={{ color: "#16a34a", margin: "0 auto 1rem" }}
-              />
-              <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>
-                {successMessage}
-              </p>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="sd-btn sd-btn--primary"
-                style={{ width: "100%" }}
-              >
-                OK
-              </button>
+              <CheckCircle size={48} strokeWidth={2} style={{ color: "#16a34a", margin: "0 auto 1rem" }} />
+              <p style={{ marginBottom: "1.5rem", lineHeight: "1.6" }}>{successMessage}</p>
+              <button onClick={() => setShowSuccessModal(false)} className="sd-btn sd-btn--primary" style={{ width: "100%" }}>OK</button>
             </div>
           </div>
         </div>

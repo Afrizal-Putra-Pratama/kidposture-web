@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Accessibility, Moon, Link2, Palette, X } from 'lucide-react';
 import '../styles/AccessibilityWidget.css';
 
 export default function AccessibilityWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [settings, setSettings] = useState({
     invertColors: false,
@@ -10,7 +12,9 @@ export default function AccessibilityWidget() {
     desaturate: false,
   });
 
-  // ✅ FIX: Load settings SAAT MOUNT (no cascading)
+  // Menyembunyikan widget jika pengguna berada di halaman chat
+  const isChatPage = location.pathname.includes('/chat');
+
   useEffect(() => {
     const saved = localStorage.getItem('accessibilitySettings');
     if (saved) {
@@ -21,41 +25,35 @@ export default function AccessibilityWidget() {
         console.error('Failed to load accessibility settings');
       }
     }
-  }, []); // ✅ Empty deps = run once
+  }, []);
 
-  // ✅ FIX: Apply settings ke HTML root (bukan body)
   useEffect(() => {
     const html = document.documentElement;
 
-    // Apply CSS filters
     const filters = [];
     if (settings.invertColors) filters.push('invert(1) hue-rotate(180deg)');
     if (settings.desaturate) filters.push('grayscale(1)');
 
     html.style.filter = filters.join(' ');
 
-    // Apply highlight links
     if (settings.highlightLinks) {
       html.classList.add('accessibility-highlight-links');
     } else {
       html.classList.remove('accessibility-highlight-links');
     }
 
-    // Save to localStorage
     localStorage.setItem('accessibilitySettings', JSON.stringify(settings));
   }, [settings]);
 
-  // ✅ FIX: HANYA 1 yang bisa aktif (radio behavior)
   const toggleSetting = (key) => {
     setSettings({
       invertColors: false,
       highlightLinks: false,
       desaturate: false,
-      [key]: true, // Hanya yang diklik jadi true
+      [key]: true,
     });
   };
 
-  // Reset semua
   const resetSettings = () => {
     setSettings({
       invertColors: false,
@@ -64,11 +62,15 @@ export default function AccessibilityWidget() {
     });
   };
 
+  // Menghentikan proses render jika sedang berada di halaman chat
+  if (isChatPage) {
+    return null;
+  }
+
   const hasActiveSettings = Object.values(settings).some((v) => v === true);
 
   return (
     <>
-      {/* Toggle Button */}
       <button
         className={`accessibility-toggle ${hasActiveSettings ? 'accessibility-toggle--active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -78,10 +80,8 @@ export default function AccessibilityWidget() {
         <Accessibility size={24} strokeWidth={2} />
       </button>
 
-      {/* Widget Panel */}
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div 
             className="accessibility-backdrop"
             onClick={() => setIsOpen(false)}
@@ -100,7 +100,6 @@ export default function AccessibilityWidget() {
             </div>
 
             <div className="accessibility-options">
-              {/* Invert Colors */}
               <button
                 className={`accessibility-option ${
                   settings.invertColors ? 'active' : ''
@@ -118,7 +117,6 @@ export default function AccessibilityWidget() {
                 </div>
               </button>
 
-              {/* Highlight Links */}
               <button
                 className={`accessibility-option ${
                   settings.highlightLinks ? 'active' : ''
@@ -138,7 +136,6 @@ export default function AccessibilityWidget() {
                 </div>
               </button>
 
-              {/* Desaturate */}
               <button
                 className={`accessibility-option ${
                   settings.desaturate ? 'active' : ''
@@ -158,7 +155,6 @@ export default function AccessibilityWidget() {
                 </div>
               </button>
 
-              {/* Reset Button */}
               {hasActiveSettings && (
                 <button
                   className="accessibility-reset"

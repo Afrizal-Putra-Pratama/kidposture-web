@@ -19,6 +19,7 @@ import {
   CheckCircle,
   Trash2,
   Pencil,
+  MessageCircle, // ✅ BARU
 } from "lucide-react";
 import { fetchChildren, createChild, updateChild, deleteChild } from "../services/childService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
@@ -441,6 +442,12 @@ function ParentDashboard() {
                   )}
                 </div>
 
+                {/* ✅ BARU: Link ke Chat */}
+                <Link to="/chat" className="dashboard-header__link">
+                  <MessageCircle size={18} strokeWidth={2} />
+                  Chat
+                </Link>
+
                 <Link to="/education" className="dashboard-header__link">
                   <BookOpen size={18} strokeWidth={2} />
                   Edukasi
@@ -535,6 +542,15 @@ function ParentDashboard() {
             {/* Mobile Menu */}
             {mobileMenuOpen && (
               <div className="dashboard-header__mobile">
+                {/* ✅ BARU: Link Chat di mobile menu */}
+                <Link
+                  to="/chat"
+                  className="dashboard-header__mobile-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <MessageCircle size={18} strokeWidth={2} />
+                  Chat
+                </Link>
                 <Link
                   to="/education"
                   className="dashboard-header__mobile-link"
@@ -1047,7 +1063,6 @@ function ParentDashboard() {
               gap: "1.25rem",
             }}
           >
-            {/* Close button */}
             <button
               onClick={closeDeleteModal}
               type="button"
@@ -1070,7 +1085,6 @@ function ParentDashboard() {
               <X size={16} strokeWidth={2} />
             </button>
 
-            {/* Icon */}
             <div
               style={{
                 width: "64px",
@@ -1087,7 +1101,6 @@ function ParentDashboard() {
               <Trash2 size={28} strokeWidth={1.5} />
             </div>
 
-            {/* Title */}
             <h3
               style={{
                 margin: 0,
@@ -1100,7 +1113,6 @@ function ParentDashboard() {
               Hapus Data Anak
             </h3>
 
-            {/* Description */}
             <p
               style={{
                 margin: 0,
@@ -1122,7 +1134,6 @@ function ParentDashboard() {
               </div>
             )}
 
-            {/* Actions */}
             <div
               style={{
                 display: "flex",

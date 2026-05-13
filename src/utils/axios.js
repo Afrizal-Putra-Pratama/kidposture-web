@@ -22,12 +22,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const publicPaths = ['/', '/map', '/login', '/register','/education'];
+      const publicPaths = ['/', '/map', '/login', '/register', '/education'];
       const currentPath = window.location.pathname;
-      const isPublic = publicPaths.some(path =>
-      currentPath === path || 
-      currentPath.startsWith('/register') ||
-      currentPath.startsWith('/education') 
+      const isPublic = publicPaths.some(
+        (path) =>
+          currentPath === path ||
+          currentPath.startsWith('/register') ||
+          currentPath.startsWith('/education')
       );
       if (!isPublic) {
         localStorage.removeItem('token');
@@ -41,7 +42,7 @@ api.interceptors.response.use(
 
 export function toProxiedUrl(url) {
   if (!url) return null;
-  return url; 
+  return url;
 }
 
 export default api;

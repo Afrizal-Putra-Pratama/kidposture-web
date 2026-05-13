@@ -19,7 +19,7 @@ import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.
 // Direktori fisio (lama)
 import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
 import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
-
+import PhysioChatPage from "./pages/physio/Physiochatpage.jsx";
 // FASE 1 (baru)
 import RegisterPhysioPage from "./pages/auth/RegisterPhysioPage.jsx";
 import PhysioProfilePage from "./pages/physio/PhysioProfilePage.jsx";
@@ -36,8 +36,12 @@ import RegisterParentPage from "./pages/RegisterParentPage.jsx";
 import PhysioEducationPage from "./pages/PhysioEducationPage.jsx";
 import PhysioArticleFormPage from "./pages/PhysioArticleFormPage.jsx";
 
-// BARU: Halaman Peta Fisioterapis
+// Halaman Peta Fisioterapis
 import PhysioMapPage from "./pages/PhysioMapPage.jsx";
+
+// ✅ BARU: Payment & Chat
+import PaymentPage from "./pages/parent/PaymentPage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
 
 // Protected Route: cek token saja
 function ProtectedRoute({ children }) {
@@ -66,7 +70,7 @@ function RoleRoute({ children, allowedRoles }) {
 function App() {
   return (
     <BrowserRouter>
-    <AccessibilityWidget />
+      <AccessibilityWidget />
       <Routes>
         {/* Landing Page (Public) */}
         <Route path="/" element={<LandingPage />} />
@@ -79,16 +83,36 @@ function App() {
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
         <Route path="/register/parent" element={<RegisterParentPage />} />
 
-        {/* ✅ Education (PUBLIC - bisa diakses tanpa login) */}
+        {/* Education (PUBLIC) */}
         <Route path="/education" element={<EducationPage />} />
         <Route path="/education/:slug" element={<ArticleDetailPage />} />
 
-        {/* Protected Routes (Parent default) */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <ParentDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ Payment Page (parent only) */}
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <PaymentPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ Chat Page (premium) */}
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
             </ProtectedRoute>
           }
         />
@@ -159,11 +183,8 @@ function App() {
           }
         />
 
-        {/* Legacy route /physios redirect ke /physiotherapists */}
-        <Route
-          path="/physios"
-          element={<Navigate to="/physiotherapists" replace />}
-        />
+        {/* Legacy route /physios */}
+        <Route path="/physios" element={<Navigate to="/physiotherapists" replace />} />
 
         <Route
           path="/physios/:id"
@@ -183,7 +204,7 @@ function App() {
           }
         />
 
-        {/* Physio Routes (role: physio) */}
+        {/* Physio Routes */}
         <Route
           path="/physio/dashboard"
           element={
@@ -206,13 +227,22 @@ function App() {
           }
         />
 
-        {/* Kelola artikel fisio */}
         <Route
           path="/physio/education"
           element={
             <ProtectedRoute>
               <RoleRoute allowedRoles={["physio"]}>
                 <PhysioEducationPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/physio/chat"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={["physio"]}>
+                <PhysioChatPage />
               </RoleRoute>
             </ProtectedRoute>
           }
@@ -251,7 +281,7 @@ function App() {
           }
         />
 
-        {/* Admin Routes (role: admin) */}
+        {/* Admin Routes */}
         <Route
           path="/admin/physiotherapists"
           element={

@@ -1,0 +1,474 @@
+/* src/styles/chat.css */
+
+:root {
+  --chat-primary: #4f7aff;
+  --chat-primary-hover: #3d66e8;
+  --chat-bg: #f3f4f6;
+  --chat-sidebar-bg: #ffffff;
+  --chat-main-bg: #ffffff;
+  --chat-border: #e5e7eb;
+  --chat-text-main: #111827;
+  --chat-text-muted: #6b7280;
+}
+
+/* ── Container Utama ── */
+.chat-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--chat-bg);
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Sidebar (Daftar Chat) ── */
+.chat-sidebar {
+  width: 340px;
+  min-width: 340px;
+  background: var(--chat-sidebar-bg);
+  border-right: 1px solid var(--chat-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.chat-sidebar__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--chat-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-sidebar__back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--chat-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  font-weight: 500;
+}
+
+.chat-sidebar__back:hover {
+  color: var(--chat-primary);
+}
+
+.chat-sidebar__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-sidebar__title h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--chat-text-main);
+  margin: 0;
+}
+
+.chat-sidebar__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+}
+
+/* ── Item Daftar Chat ── */
+.chat-conv-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 4px;
+}
+
+.chat-conv-item:hover {
+  background: #f9fafb;
+}
+
+.chat-conv-item--active {
+  background: #eff6ff;
+}
+
+.chat-conv-item__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f7aff, #818cf8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.chat-conv-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-conv-item__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--chat-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-conv-item__preview {
+  font-size: 13px;
+  color: var(--chat-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.chat-conv-item__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.chat-conv-item__time {
+  font-size: 11px;
+  color: var(--chat-text-muted);
+}
+
+.chat-conv-item__unread {
+  width: 10px;
+  height: 10px;
+  background: var(--chat-primary);
+  border-radius: 50%;
+}
+
+/* ── Area Chat Utama ── */
+.chat-main {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+  background: var(--chat-main-bg);
+  min-width: 0; 
+  height: 100%;
+}
+
+/* ── Header Chat Room ── */
+.chat-header {
+  height: 70px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--chat-border);
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.chat-header__mobile-back {
+  display: none; 
+  background: none;
+  border: none;
+  color: var(--chat-text-muted);
+  cursor: pointer;
+  padding: 8px;
+  margin-left: -10px;
+}
+
+.chat-header__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f7aff, #818cf8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.chat-header__info {
+  flex: 1;
+}
+
+.chat-header__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--chat-text-main);
+}
+
+.chat-header__status {
+  font-size: 12px;
+  color: #10b981;
+}
+
+/* ── Area Pesan & Scroll ── */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f8fafc;
+}
+
+.chat-date-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.chat-date-divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--chat-border);
+}
+
+.chat-date-divider__text {
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--chat-text-muted);
+  font-weight: 500;
+}
+
+/* ── Bubble Chat ── */
+.chat-msg {
+  display: flex;
+  max-width: 85%;
+  width: fit-content;
+}
+
+@media screen and (max-width: 768px) {
+  .chat-msg {
+    max-width: 90%; 
+  }
+}
+
+.chat-msg--me {
+  align-self: flex-end;
+}
+
+.chat-msg--other {
+  align-self: flex-start;
+}
+
+.chat-msg__bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  max-width: 100%; 
+  word-break: break-word; 
+  overflow-wrap: anywhere;
+}
+
+.chat-msg--me .chat-msg__bubble {
+  background: var(--chat-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg--other .chat-msg__bubble {
+  background: #fff;
+  color: var(--chat-text-main);
+  border: 1px solid var(--chat-border);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg__meta {
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--chat-text-muted);
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* ── Area Input (Tombol Transparan) ── */
+.chat-input-area {
+  padding: 16px 20px;
+  background: #fff;
+  border-top: 1px solid var(--chat-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.chat-input-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px; 
+}
+
+.chat-attach-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: transparent; 
+  border: none;
+  color: var(--chat-primary); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-attach-btn:hover {
+  background: rgba(79, 122, 255, 0.08); 
+}
+
+.chat-input-wrap {
+  flex: 1;
+  background: #f3f4f6; 
+  border-radius: 20px; 
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.chat-input-wrap textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--chat-text-main);
+  max-height: 120px;
+}
+
+.chat-send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: transparent; 
+  color: var(--chat-primary); 
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-send-btn:hover:not(:disabled) {
+  background: rgba(79, 122, 255, 0.08); 
+  transform: scale(1.05);
+}
+
+.chat-send-btn:disabled {
+  color: #9ca3af; 
+  background: transparent;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── States & Utilities ── */
+.chat-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--chat-text-muted);
+  background: #f8fafc;
+}
+
+.chat-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--chat-text-muted);
+  gap: 8px;
+}
+
+/* ── Premium Locked ── */
+.chat-locked-overlay {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chat-bg);
+}
+
+.chat-locked-card {
+  background: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  max-width: 400px;
+}
+
+.chat-locked-card__btn {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── RESPONSIVE: Mobile WhatsApp Style ── */
+@media screen and (max-width: 768px) {
+  .chat-sidebar {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .chat-main {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .chat-header__mobile-back {
+    display: flex;
+  }
+}
+
+/* ── Memaksa Ukuran Ikon (Mengatasi konflik dengan Global CSS/Tailwind) ── */
+.chat-attach-btn svg,
+.chat-send-btn svg {
+  width: 22px !important;
+  height: 22px !important;
+  stroke-width: 2px !important;
+  flex-shrink: 0;
+}
+
+/* Memastikan tombol tidak mengecil jika ruang sempit */
+.chat-attach-btn,
+.chat-send-btn {
+  min-width: 44px;
+  min-height: 44px;
+}

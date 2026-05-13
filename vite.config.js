@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl' // Tambahkan ini
 
-// https://vite.dev/config/
 export default defineConfig({
-  
-  plugins: [react()],
+  plugins: [
+    react(),
+    basicSsl() // Tambahkan ini
+  ],
+  server: {
+  }
 })
