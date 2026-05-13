@@ -7,7 +7,7 @@ import {
   Loader2, ShieldCheck, ChevronRight,
 } from 'lucide-react';
 import { getAccessStatus } from '../services/paymentService';
-import PaymentModal from './PaymentModal';
+import PaymentModal from './TempModal';
 
 export default function ConsultationModal({ physio, onClose, onSelectFree }) {
   const navigate  = useNavigate();
