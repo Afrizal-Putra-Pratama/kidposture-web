@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import AccessibilityWidget from './components/AccessibilityWidget';
+import AccessibilityWidget from "./components/AccessibilityWidget";
 import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
 import ScreeningDetailPage from "./pages/ScreeningDetailPage.jsx";
@@ -11,39 +11,41 @@ import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/auth/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
+import TeamDetailPage from "./pages/TeamDetailPage.jsx";
+// Landing pages
+import LandingPage from "./pages/LandingPage.jsx";
+import TeamPage from "./pages/TeamPage.jsx";
+import TeamExpertPage from "./pages/TeamExpertPage.jsx";
+import TeamStaffPage from "./pages/TeamStaffPage.jsx";
 
-// Physio (lama)
+// Physio lama
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
 import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.jsx";
 
-// Direktori fisio (lama)
-import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
+// Direktori fisio lama
 import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
 import PhysioChatPage from "./pages/physio/Physiochatpage.jsx";
-// FASE 1 (baru)
+
+// FASE 1
 import RegisterPhysioPage from "./pages/auth/RegisterPhysioPage.jsx";
 import PhysioProfilePage from "./pages/physio/PhysioProfilePage.jsx";
 import PhysiotherapistListPage from "./pages/parent/PhysiotherapistListPage.jsx";
 import AdminPhysioManagementPage from "./pages/admin/AdminPhysioManagementPage.jsx";
 
-// FASE 2 (baru)
-import LandingPage from "./pages/LandingPage.jsx";
-
 // Register parent
 import RegisterParentPage from "./pages/auth/RegisterParentPage.jsx";
 
-// Physio articles (baru)
+// Physio articles
 import PhysioEducationPage from "./pages/PhysioEducationPage.jsx";
 import PhysioArticleFormPage from "./pages/PhysioArticleFormPage.jsx";
 
 // Halaman Peta Fisioterapis
 import PhysioMapPage from "./pages/PhysioMapPage.jsx";
 
-// ✅ BARU: Payment & Chat
+// Payment & Chat
 import PaymentPage from "./pages/parent/PaymentPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 
-// Protected Route: cek token saja
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
 
@@ -54,7 +56,6 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Role-based Route: cek role user
 function RoleRoute({ children, allowedRoles }) {
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
@@ -71,23 +72,28 @@ function App() {
   return (
     <BrowserRouter>
       <AccessibilityWidget />
-      <Routes>
-        {/* Landing Page (Public) */}
-        <Route path="/" element={<LandingPage />} />
 
-        {/* Halaman Peta Fisioterapis (Public) */}
+      <Routes>
+        {/* Public Landing Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/team" element={<TeamPage />} />
+        <Route path="/team/expert" element={<TeamExpertPage />} />
+        <Route path="/team/staff" element={<TeamStaffPage />} />
+        <Route path="/team/:slug" element={<TeamDetailPage />} />
+
+        {/* Halaman Peta Fisioterapis Public */}
         <Route path="/map" element={<PhysioMapPage />} />
 
-        {/* Public Routes */}
+        {/* Public Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
         <Route path="/register/parent" element={<RegisterParentPage />} />
 
-        {/* Education (PUBLIC) */}
+        {/* Education Public */}
         <Route path="/education" element={<EducationPage />} />
         <Route path="/education/:slug" element={<ArticleDetailPage />} />
 
-        {/* Protected Routes */}
+        {/* Parent Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -97,7 +103,6 @@ function App() {
           }
         />
 
-        {/* ✅ Payment Page (parent only) */}
         <Route
           path="/payment"
           element={
@@ -107,7 +112,6 @@ function App() {
           }
         />
 
-        {/* ✅ Chat Page (premium) */}
         <Route
           path="/chat"
           element={
@@ -117,7 +121,6 @@ function App() {
           }
         />
 
-        {/* Children Management */}
         <Route
           path="/children"
           element={
@@ -154,7 +157,6 @@ function App() {
           }
         />
 
-        {/* Screening Detail (Parent) */}
         <Route
           path="/screenings/:screeningId"
           element={
@@ -173,7 +175,7 @@ function App() {
           }
         />
 
-        {/* Direktori Fisioterapis (Parent) */}
+        {/* Direktori Fisioterapis Parent */}
         <Route
           path="/physiotherapists"
           element={
@@ -183,7 +185,6 @@ function App() {
           }
         />
 
-        {/* Legacy route /physios */}
         <Route path="/physios" element={<Navigate to="/physiotherapists" replace />} />
 
         <Route
@@ -237,6 +238,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/physio/chat"
           element={
@@ -293,7 +295,7 @@ function App() {
           }
         />
 
-        {/* 404 Fallback */}
+        {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

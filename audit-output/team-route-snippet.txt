@@ -1,0 +1,11 @@
+﻿Tambahkan import ini di src/App.jsx:
+
+import TeamPage from "./pages/TeamPage";
+import TeamExpertPage from "./pages/TeamExpertPage";
+import TeamStaffPage from "./pages/TeamStaffPage";
+
+Tambahkan route ini di dalam <Routes>:
+
+<Route path="/team" element={<TeamPage />} />
+<Route path="/team/expert" element={<TeamExpertPage />} />
+<Route path="/team/staff" element={<TeamStaffPage />} />
