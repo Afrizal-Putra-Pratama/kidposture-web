@@ -1,5 +1,3 @@
-// src/components/ConsultationModal.jsx
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,8 +8,8 @@ import { getAccessStatus } from '../services/paymentService';
 import PaymentModal from './PaymentModal';
 
 export default function ConsultationModal({ physio, onClose, onSelectFree }) {
-  const navigate  = useNavigate();
-  const [checking,    setChecking]    = useState(false);
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
 
   if (!physio) return null;
@@ -25,7 +23,7 @@ export default function ConsultationModal({ physio, onClose, onSelectFree }) {
   async function handlePremiumChat() {
     setChecking(true);
     try {
-      // ✅ Cek akses spesifik ke fisio ini (per-physio, bukan global)
+      // Cek akses spesifik ke fisio ini (per-physio, bukan global)
       const res = await getAccessStatus(physio.id);
       const hasAccess = res?.has_access === true || res?.is_premium === true;
       if (hasAccess) {
@@ -49,6 +47,7 @@ export default function ConsultationModal({ physio, onClose, onSelectFree }) {
     onClose();
   }
 
+  // Jika pembayaran aktif, ganti isi modal ke PaymentModal
   if (showPayment) {
     return (
       <PaymentModal
@@ -60,115 +59,110 @@ export default function ConsultationModal({ physio, onClose, onSelectFree }) {
   }
 
   return (
-    <div style={s.overlay} onClick={onClose}>
-      <div style={s.modal} onClick={(e) => e.stopPropagation()}>
-
-        <div style={s.header}>
+    <div 
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white w-full max-w-lg rounded-2xl border border-slate-100 shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="p-5 sm:p-6 border-b border-slate-50 flex items-start justify-between gap-4">
           <div>
-            <p style={s.label}>Konsultasi dengan</p>
-            <h3 style={s.physioName}>{physio.name}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Konsultasi dengan</p>
+            <h3 className="text-lg md:text-xl font-bold text-slate-900 leading-tight mb-1">{physio.name}</h3>
             {physio.clinic_name && (
-              <p style={s.physioMeta}>
+              <p className="text-xs font-medium text-slate-500">
                 {physio.clinic_name}{physio.city ? ` · ${physio.city}` : ''}
               </p>
             )}
           </div>
-          <button style={s.closeBtn} onClick={onClose}>
-            <X size={20} strokeWidth={2} />
+          <button 
+            onClick={onClose} 
+            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg transition-colors active:scale-95 shrink-0"
+          >
+            <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div style={s.divider} />
-
-        <div style={s.options}>
+        {/* Options Body */}
+        <div className="p-5 sm:p-6 flex flex-col gap-4 bg-slate-50/30">
+          
           {/* ── Chat Langsung (PREMIUM) ── */}
           <button
-            style={{ ...s.option, borderColor: '#bfdbfe', opacity: checking ? 0.7 : 1 }}
             onClick={handlePremiumChat}
             disabled={checking}
+            className="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-2xl border border-blue-200 hover:border-blue-400 bg-white hover:bg-blue-50/30 transition-all active:scale-[0.98] text-left w-full group shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <div style={{ ...s.optionIcon, background: '#dbeafe' }}>
-              {checking
-                ? <Loader2 size={22} strokeWidth={2} color="#2563eb" style={{ animation: 'spin 0.7s linear infinite' }} />
-                : <MessageCircle size={22} strokeWidth={1.75} color="#2563eb" />
-              }
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 group-hover:bg-blue-100 transition-colors">
+              {checking ? (
+                <Loader2 size={24} strokeWidth={2} className="animate-spin" />
+              ) : (
+                <MessageCircle size={24} strokeWidth={1.5} />
+              )}
             </div>
-            <div style={s.optionBody}>
-              <div style={s.titleRow}>
-                <span style={s.optionTitle}>Chat Langsung</span>
-                <span style={s.badgePremium}><Crown size={10} /> PREMIUM</span>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className="font-bold text-slate-900 text-sm sm:text-base">Chat Langsung</span>
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 flex items-center gap-1">
+                  <Crown size={10} strokeWidth={2.5} /> Premium
+                </span>
               </div>
-              <p style={s.optionDesc}>
-                Konsultasi real-time via chat. Respon lebih cepat dan langsung.
+              <p className="text-xs text-slate-500 leading-relaxed mb-2 pr-2">
+                Konsultasi real-time via chat. Respon lebih cepat dan panduan langsung.
               </p>
-              {/* ✅ Harga dinamis */}
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#2563eb', margin: 0 }}>
+              <p className="text-sm font-extrabold text-blue-600 tracking-tight">
                 {formattedFee}
               </p>
             </div>
-            <ChevronRight size={18} strokeWidth={2} color="#d1d5db" />
+            
+            <div className="hidden sm:block self-center text-slate-300 group-hover:text-blue-500 transition-colors shrink-0">
+              <ChevronRight size={20} strokeWidth={2.5} />
+            </div>
           </button>
 
           {/* ── Rujukan Gratis ── */}
           <button
-            style={{ ...s.option, borderColor: '#d1fae5' }}
             onClick={handleFreeConsultation}
+            className="flex items-start sm:items-center gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200 hover:border-emerald-400 bg-white hover:bg-emerald-50/30 transition-all active:scale-[0.98] text-left w-full group shadow-sm"
           >
-            <div style={{ ...s.optionIcon, background: '#d1fae5' }}>
-              <UserCheck size={22} strokeWidth={1.75} color="#059669" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:bg-emerald-100 transition-colors">
+              <UserCheck size={24} strokeWidth={1.5} />
             </div>
-            <div style={s.optionBody}>
-              <div style={s.titleRow}>
-                <span style={s.optionTitle}>Rujukan Fisioterapis</span>
-                <span style={s.badgeFree}>GRATIS</span>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className="font-bold text-slate-900 text-sm sm:text-base">Rujukan Fisioterapis</span>
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                  Gratis
+                </span>
               </div>
-              <p style={s.optionDesc}>
-                Kirim hasil screening. Fisioterapis akan merespons dan memberi rekomendasi.
+              <p className="text-xs text-slate-500 leading-relaxed mb-2 pr-2">
+                Kirim hasil screening postur anak Anda. Fisioterapis akan merespons & memberi rekomendasi.
               </p>
-              <p style={{ fontSize: 12, color: '#059669', margin: 0 }}>
-                Respon dalam 1–2 hari kerja
+              <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                <ShieldCheck size={14} /> Respon dalam 1–2 hari kerja
               </p>
             </div>
-            <ChevronRight size={18} strokeWidth={2} color="#d1d5db" />
+            
+            <div className="hidden sm:block self-center text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0">
+              <ChevronRight size={20} strokeWidth={2.5} />
+            </div>
           </button>
+
         </div>
 
-        <div style={s.trust}>
-          <ShieldCheck size={13} color="#9ca3af" />
-          <span style={{ fontSize: 12, color: '#9ca3af' }}>
-            Fisioterapis telah terverifikasi oleh Posturely
+        {/* Footer */}
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-2">
+          <ShieldCheck size={16} className="text-slate-400" />
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Fisioterapis Terverifikasi Posturely
           </span>
         </div>
-      </div>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes cm-slidein {
-          from { transform: translateY(40px); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-      `}</style>
+      </div>
     </div>
   );
 }
-
-const s = {
-  overlay:    { position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:1000 },
-  modal:      { background:'#fff', borderRadius:'20px 20px 0 0', width:'100%', maxWidth:480, padding:'24px 20px 32px', boxShadow:'0 -4px 40px rgba(0,0,0,0.12)', animation:'cm-slidein 0.25s cubic-bezier(0.32,0.72,0,1)' },
-  header:     { display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:16 },
-  label:      { fontSize:12, color:'#6b7280', margin:'0 0 2px' },
-  physioName: { fontSize:18, fontWeight:700, color:'#111827', margin:'0 0 2px' },
-  physioMeta: { fontSize:13, color:'#6b7280', margin:0 },
-  closeBtn:   { background:'#f3f4f6', border:'none', borderRadius:8, padding:6, cursor:'pointer', color:'#6b7280', display:'flex', alignItems:'center', flexShrink:0 },
-  divider:    { height:1, background:'#f3f4f6', marginBottom:16 },
-  options:    { display:'flex', flexDirection:'column', gap:12, marginBottom:16 },
-  option:     { display:'flex', alignItems:'center', gap:14, padding:16, borderRadius:14, border:'1.5px solid', background:'#fff', cursor:'pointer', textAlign:'left', width:'100%' },
-  optionIcon: { flexShrink:0, width:46, height:46, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center' },
-  optionBody: { flex:1, minWidth:0 },
-  titleRow:   { display:'flex', alignItems:'center', gap:8, marginBottom:4, flexWrap:'wrap' },
-  optionTitle:  { fontSize:15, fontWeight:600, color:'#111827' },
-  badgePremium: { display:'inline-flex', alignItems:'center', gap:3, fontSize:10, fontWeight:700, color:'#1d4ed8', background:'#dbeafe', borderRadius:999, padding:'2px 8px' },
-  badgeFree:    { fontSize:10, fontWeight:700, color:'#065f46', background:'#d1fae5', borderRadius:999, padding:'2px 8px' },
-  optionDesc:   { fontSize:13, color:'#6b7280', margin:'0 0 4px', lineHeight:1.5 },
-  trust:        { display:'flex', alignItems:'center', gap:6, justifyContent:'center' },
-};

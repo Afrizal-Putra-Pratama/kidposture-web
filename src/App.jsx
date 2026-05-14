@@ -9,7 +9,7 @@ import EducationPage from "./pages/EducationPage.jsx";
 import ArticleDetailPage from "./pages/ArticleDetailPage.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/auth/LoginPage.jsx";
-import NewChildPage from "./pages/NewChildPage.jsx";
+
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 
 // Physio (lama)
@@ -20,6 +20,7 @@ import PhysioScreeningDetailPage from "./pages/physio/PhysioScreeningDetailPage.
 import PhysiotherapistList from "./pages/physio/PhysiotherapistList.jsx";
 import PhysiotherapistDetail from "./pages/physio/PhysiotherapistDetail.jsx";
 import PhysioChatPage from "./pages/physio/Physiochatpage.jsx";
+
 // FASE 1 (baru)
 import RegisterPhysioPage from "./pages/auth/RegisterPhysioPage.jsx";
 import PhysioProfilePage from "./pages/physio/PhysioProfilePage.jsx";
@@ -75,8 +76,11 @@ function App() {
         {/* Landing Page (Public) */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Halaman Peta Fisioterapis (Public) */}
-        <Route path="/map" element={<PhysioMapPage />} />
+        {/* ✅ PERBAIKAN: Halaman Peta Fisioterapis ditaruh secara spesifik di sini */}
+        <Route path="/physiotherapists/map" element={<PhysioMapPage />} />
+        
+        {/* Alias /map agar tombol lama yang mengarah ke /map tetap jalan */}
+        <Route path="/map" element={<Navigate to="/physiotherapists/map" replace />} />
 
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -97,7 +101,7 @@ function App() {
           }
         />
 
-        {/* ✅ Payment Page (parent only) */}
+        {/* Payment Page (parent only) */}
         <Route
           path="/payment"
           element={
@@ -107,7 +111,7 @@ function App() {
           }
         />
 
-        {/* ✅ Chat Page (premium) */}
+        {/* Chat Page (premium) */}
         <Route
           path="/chat"
           element={
@@ -123,15 +127,6 @@ function App() {
           element={
             <ProtectedRoute>
               <ChildrenPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/children/new"
-          element={
-            <ProtectedRoute>
-              <NewChildPage />
             </ProtectedRoute>
           }
         />

@@ -1,6 +1,6 @@
-// src/components/NotificationBell.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Bell, X, Trash2, Check, Loader2, Info } from "lucide-react";
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -10,21 +10,34 @@ import {
   deleteAllNotifications,
 } from "../services/notificationService";
 
-function NotificationBell() {
+export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-
+  
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  // Polling unread count setiap 30 detik
   useEffect(() => {
     loadUnreadCount();
     const interval = setInterval(loadUnreadCount, 30000);
-    return () => clearInterval(interval);
+    
+    // Close dropdown saat klik di luar
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const loadUnreadCount = async () => {
@@ -32,7 +45,7 @@ function NotificationBell() {
       const data = await fetchUnreadCount();
       setUnreadCount(data.count ?? 0);
     } catch (err) {
-      console.error("Error loading unread count:", err);
+      console.error("Error unread count:", err);
     }
   };
 
@@ -40,7 +53,7 @@ function NotificationBell() {
     setLoading(true);
     try {
       const currentPage = reset ? 1 : page + 1;
-      const data = await fetchNotifications(currentPage, 10);
+      const data = await fetchNotifications(currentPage, 8); // per_page 8 agar tidak terlalu panjang
 
       if (reset) {
         setNotifications(data.data ?? []);
@@ -51,7 +64,7 @@ function NotificationBell() {
       setPage(currentPage);
       setHasMore(data.meta?.has_more ?? false);
     } catch (err) {
-      console.error("Error loading notifications:", err);
+      console.error("Error notifications:", err);
     } finally {
       setLoading(false);
     }
@@ -71,28 +84,25 @@ function NotificationBell() {
         setUnreadCount((prev) => Math.max(0, prev - 1));
         setNotifications((prev) =>
           prev.map((n) =>
-            n.id === notif.id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+            n.id === notif.id ? { ...n, is_read: true } : n
           )
         );
       } catch (err) {
-        console.error("Error marking notification as read:", err);
+        console.error("Error marking read:", err);
       }
     }
     setShowDropdown(false);
-    if (notif.screening_id) {
-      navigate(`/screenings/${notif.screening_id}`);
-    }
+    if (notif.screening_id) navigate(`/screenings/${notif.screening_id}`);
   };
 
-  const handleMarkAllRead = async () => {
+  const handleMarkAllRead = async (e) => {
+    e.stopPropagation();
     try {
       await markAllNotificationsAsRead();
       setUnreadCount(0);
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     } catch (err) {
-      console.error("Error marking all as read:", err);
+      console.error("Error mark all read:", err);
     }
   };
 
@@ -101,16 +111,15 @@ function NotificationBell() {
     try {
       await deleteNotification(notif.id);
       setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
-      if (!notif.is_read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
+      if (!notif.is_read) setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
-      console.error("Error deleting notification:", err);
+      console.error("Error delete notif:", err);
     }
   };
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm("Hapus semua notifikasi?")) return;
+  const handleDeleteAll = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm("Hapus semua riwayat notifikasi?")) return;
     try {
       await deleteAllNotifications();
       setNotifications([]);
@@ -118,263 +127,136 @@ function NotificationBell() {
       setPage(1);
       setHasMore(false);
     } catch (err) {
-      console.error("Error deleting all notifications:", err);
+      console.error("Error delete all:", err);
     }
   };
 
-  const handleLoadMore = () => {
-    if (!hasMore || loading) return;
-    loadNotifications(false);
-  };
-
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div className="relative inline-block" ref={dropdownRef}>
+      {/* Tombol Lonceng */}
       <button
         type="button"
         onClick={handleBellClick}
-        style={{
-          position: "relative",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: 22,
-          padding: 8,
-        }}
+        className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all active:scale-95"
       >
-        🔔
+        <Bell size={20} strokeWidth={2} />
         {unreadCount > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: 4,
-              right: 4,
-              background: "#ef4444",
-              color: "white",
-              borderRadius: "50%",
-              width: 18,
-              height: 18,
-              fontSize: 11,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
+          <span className="absolute top-1.5 right-1.5 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-red-500 text-[9px] font-bold text-white border border-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           </span>
         )}
       </button>
 
+      {/* Dropdown Panel */}
       {showDropdown && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            right: 0,
-            marginTop: 8,
-            width: 360,
-            maxHeight: 420,
-            overflow: "hidden",
-            background: "white",
-            borderRadius: 12,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            zIndex: 1000,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              padding: "12px 16px",
-              borderBottom: "1px solid #e5e7eb",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-              Notifikasi
-            </h3>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-100 rounded-lg shadow-xl z-[1000] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 duration-200">
+          
+          {/* Header */}
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-800">Notifikasi</h3>
+            <div className="flex items-center gap-2">
               {notifications.length > 0 && (
                 <button
-                  type="button"
-                  onClick={handleDeleteAll}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#ef4444",
-                    fontSize: 12,
-                    cursor: "pointer",
-                    fontWeight: 500,
-                  }}
-                >
-                  Hapus semua
-                </button>
-              )}
-              {notifications.some((n) => !n.is_read) && (
-                <button
-                  type="button"
                   onClick={handleMarkAllRead}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#3b82f6",
-                    fontSize: 12,
-                    cursor: "pointer",
-                    fontWeight: 500,
-                  }}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100 transition-colors"
                 >
-                  Tandai dibaca
+                  Tandai Dibaca
                 </button>
               )}
+              <button
+                onClick={() => setShowDropdown(false)}
+                className="text-slate-400 hover:text-slate-600 p-0.5 rounded transition-colors"
+              >
+                <X size={16} />
+              </button>
             </div>
           </div>
 
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-            }}
-          >
+          {/* List Content */}
+          <div className="max-h-[380px] overflow-y-auto hide-scrollbar">
             {loading && notifications.length === 0 ? (
-              <p
-                style={{
-                  padding: 16,
-                  textAlign: "center",
-                  color: "#6b7280",
-                  margin: 0,
-                }}
-              >
-                Memuat...
-              </p>
+              <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <Loader2 size={24} className="text-blue-500 animate-spin" />
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Memuat...</p>
+              </div>
             ) : notifications.length === 0 ? (
-              <p
-                style={{
-                  padding: 16,
-                  textAlign: "center",
-                  color: "#6b7280",
-                  margin: 0,
-                }}
-              >
-                Belum ada notifikasi
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                  <Bell size={20} className="text-slate-300" />
+                </div>
+                <p className="text-sm font-bold text-slate-800">Belum Ada Kabar</p>
+                <p className="text-xs text-slate-400 mt-1">Notifikasi aktivitas Anda akan muncul di sini.</p>
+              </div>
             ) : (
-              <div>
+              <div className="divide-y divide-slate-50">
                 {notifications.map((notif) => (
-                  <button
+                  <div
                     key={notif.id}
-                    type="button"
                     onClick={() => handleNotificationClick(notif)}
-                    style={{
-                      padding: "12px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      cursor: "pointer",
-                      background: notif.is_read ? "white" : "#eff6ff",
-                      transition: "background 0.2s",
-                      width: "100%",
-                      textAlign: "left",
-                      border: "none",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "#f9fafb")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = notif.is_read
-                        ? "white"
-                        : "#eff6ff")
-                    }
+                    className={`relative p-4 cursor-pointer transition-colors group flex gap-3 ${
+                      notif.is_read ? "bg-white hover:bg-slate-50" : "bg-blue-50/40 hover:bg-blue-50"
+                    }`}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <strong
-                          style={{ fontSize: 14, color: "#111827" }}
-                        >
+                    {/* Unread Dot */}
+                    {!notif.is_read && (
+                      <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                    )}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2 mb-1">
+                        <p className={`text-sm leading-tight truncate ${notif.is_read ? "text-slate-700 font-medium" : "text-slate-900 font-bold"}`}>
                           {notif.title}
-                        </strong>
-                        {!notif.is_read && (
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              background: "#3b82f6",
-                              marginTop: 2,
-                            }}
-                          />
-                        )}
+                        </p>
+                        <button
+                          onClick={(e) => handleDeleteNotification(notif, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all shrink-0"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteNotification(notif, e)}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "#9ca3af",
-                          cursor: "pointer",
-                          fontSize: 16,
-                          padding: "2px 6px",
-                          lineHeight: 1,
-                        }}
-                        title="Hapus notifikasi"
-                      >
-                        ✕
-                      </button>
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-2">
+                        {notif.message}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                        <Info size={10} />
+                        <span>
+                          {new Date(notif.created_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
                     </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13,
-                        color: "#6b7280",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {notif.message}
-                    </p>
-                    <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                      {new Date(notif.created_at).toLocaleString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
           </div>
 
+          {/* Footer / Load More */}
           {hasMore && (
             <button
               type="button"
-              onClick={handleLoadMore}
+              onClick={(e) => { e.stopPropagation(); loadNotifications(false); }}
               disabled={loading}
-              style={{
-                padding: "8px 16px",
-                borderTop: "1px solid #e5e7eb",
-                background: "white",
-                border: "none",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#3b82f6",
-              }}
+              className="w-full py-2.5 bg-slate-50 border-t border-slate-100 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? "Memuat..." : "Muat lebih banyak"}
+              {loading && <Loader2 size={12} className="animate-spin" />}
+              LIHAT NOTIFIKASI SEBELUMNYA
+            </button>
+          )}
+
+          {notifications.length > 0 && !hasMore && (
+            <button
+              onClick={handleDeleteAll}
+              className="w-full py-2.5 bg-white border-t border-slate-50 text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+            >
+              Bersihkan Semua Notifikasi
             </button>
           )}
         </div>
@@ -382,5 +264,3 @@ function NotificationBell() {
     </div>
   );
 }
-
-export default NotificationBell;
