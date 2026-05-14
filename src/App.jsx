@@ -8,7 +8,7 @@ import NewScreeningPage from "./pages/NewScreeningPage.jsx";
 import EducationPage from "./pages/EducationPage.jsx";
 import ArticleDetailPage from "./pages/ArticleDetailPage.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
+import LoginPage from "./pages/auth/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 
@@ -30,7 +30,7 @@ import AdminPhysioManagementPage from "./pages/admin/AdminPhysioManagementPage.j
 import LandingPage from "./pages/LandingPage.jsx";
 
 // Register parent
-import RegisterParentPage from "./pages/RegisterParentPage.jsx";
+import RegisterParentPage from "./pages/auth/RegisterParentPage.jsx";
 
 // Physio articles (baru)
 import PhysioEducationPage from "./pages/PhysioEducationPage.jsx";

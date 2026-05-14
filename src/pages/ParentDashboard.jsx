@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Users,
   Activity,
@@ -19,1391 +19,693 @@ import {
   CheckCircle,
   Trash2,
   Pencil,
-  MessageCircle, // ✅ BARU
+  MessageCircle,
+  LayoutDashboard,
+  Filter,
 } from "lucide-react";
 import { fetchChildren, createChild, updateChild, deleteChild } from "../services/childService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
 import { useNotifications } from "../hooks/useNotification.jsx";
-import "../styles/dashboard.css";
 
-function ParentDashboard() {
+export default function ParentDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
   const [children, setChildren] = useState([]);
   const [filteredChildren, setFilteredChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // UI States
+  const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false); // Sidebar Hover State Desktop
   const [notifOpen, setNotifOpen] = useState(false);
-  const [actionMenuOpen, setActionMenuOpen] = useState(null);
 
-  // Modal tambah anak
+  // Modal States
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({
-    name: "",
-    birth_date: "",
-    gender: "",
-    weight: "",
-    height: "",
-  });
+  const [addForm, setAddForm] = useState({ name: "", birth_date: "", gender: "", weight: "", height: "" });
   const [addError, setAddError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [maxDate, setMaxDate] = useState("");
 
-  // Modal edit anak
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    birth_date: "",
-    gender: "",
-    weight: "",
-    height: "",
-  });
+  const [editForm, setEditForm] = useState({ name: "", birth_date: "", gender: "", weight: "", height: "" });
   const [editChildId, setEditChildId] = useState(null);
   const [editError, setEditError] = useState(null);
   const [editFieldErrors, setEditFieldErrors] = useState({});
   const [editSaving, setEditSaving] = useState(false);
 
-  // Modal delete anak
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteChildData, setDeleteChildData] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
 
-  // Filter states
+  // Filter & Search States
   const [searchName, setSearchName] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState([]);
 
-  // Notifications hook
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
+  // --- INITIAL LOAD ---
   useEffect(() => {
     const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
+    if (currentUser) setUser(currentUser);
     loadData();
 
     const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    setMaxDate(`${year}-${month}-${day}`);
+    setMaxDate(today.toISOString().split('T')[0]);
   }, []);
 
-  // Block body scroll when modal open
   useEffect(() => {
     const anyModalOpen = showAddModal || showEditModal || showDeleteModal;
-    if (anyModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = anyModalOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
   }, [showAddModal, showEditModal, showDeleteModal]);
 
+  // --- FILTERING LOGIC ---
   const applyFilters = useCallback(() => {
     let filtered = [...children];
-
+    
     if (searchName) {
-      filtered = filtered.filter((child) =>
-        child.name.toLowerCase().includes(searchName.toLowerCase())
-      );
+      filtered = filtered.filter((child) => child.name.toLowerCase().includes(searchName.toLowerCase()));
     }
-
-    if (filterCategory) {
+    
+    if (activeFilters.length > 0) {
       filtered = filtered.filter((child) => {
         const cat = child.latest_screening?.category?.toLowerCase() || "";
-        if (filterCategory === "baik") {
-          return cat.includes("good") || cat.includes("baik");
-        } else if (filterCategory === "cukup") {
-          return cat.includes("fair") || cat.includes("cukup");
-        } else if (filterCategory === "attention") {
-          return cat.includes("attention") || cat.includes("perhatian");
-        }
-        return false;
+        return activeFilters.some(f => {
+          if (f === "baik") return cat.includes("good") || cat.includes("baik");
+          if (f === "cukup") return cat.includes("fair") || cat.includes("cukup");
+          if (f === "attention") return cat.includes("attention") || cat.includes("perhatian");
+          return false;
+        });
       });
     }
-
     setFilteredChildren(filtered);
-  }, [children, searchName, filterCategory]);
+  }, [children, searchName, activeFilters]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  useEffect(() => { applyFilters(); }, [applyFilters]);
 
+  const toggleFilter = (val) => {
+    setActiveFilters(prev => 
+      prev.includes(val) ? prev.filter(f => f !== val) : [...prev, val]
+    );
+  };
+
+  // --- FETCH DATA ---
   const loadData = async () => {
     setLoading(true);
     try {
       const data = await fetchChildren();
-
-      if (data.success) {
-        setChildren(data.data);
-      } else if (Array.isArray(data)) {
-        setChildren(data);
-      } else {
-        setChildren([]);
-      }
+      setChildren(data.success ? data.data : (Array.isArray(data) ? data : []));
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
-      console.error("Error loading dashboard:", err);
       setError("Gagal memuat data dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
-
-  const totalScreenings = children.reduce(
-    (sum, child) => sum + (child.screenings_count || 0),
-    0
-  );
-
-  const childrenNeedingAttention = children.filter(
-    (child) =>
-      child.latest_screening &&
-      child.latest_screening.category &&
-      (child.latest_screening.category.toLowerCase().includes("attention") ||
-        child.latest_screening.category.toLowerCase().includes("perhatian"))
-  );
+  const handleLogout = async () => { await logout(); navigate("/login"); };
 
   const handleNotifClick = (notif) => {
-    if (!notif.is_read) {
-      markAsRead(notif.id);
-    }
+    if (!notif.is_read) markAsRead(notif.id);
     if (notif.screening_id) {
       navigate(`/screenings/${notif.screening_id}`);
       setNotifOpen(false);
     }
   };
 
-  // =====================
-  // Modal Add Child
-  // =====================
-  const openAddModal = () => {
-    setShowAddModal(true);
-    setAddForm({ name: "", birth_date: "", gender: "", weight: "", height: "" });
-    setAddError(null);
-    setFieldErrors({});
-  };
-
-  const closeAddModal = () => {
-    setShowAddModal(false);
-    setSaving(false);
-    setAddError(null);
-    setFieldErrors({});
-  };
-
-  const handleAddChange = (e) => {
-    setAddForm({ ...addForm, [e.target.name]: e.target.value });
-    setAddError(null);
-    setFieldErrors({});
-  };
-
+  // --- HANDLERS: TAMBAH ANAK ---
+  const openAddModal = () => { setShowAddModal(true); setAddForm({ name: "", birth_date: "", gender: "", weight: "", height: "" }); setAddError(null); setFieldErrors({}); };
+  const closeAddModal = () => { setShowAddModal(false); setSaving(false); setAddError(null); setFieldErrors({}); };
+  const handleAddChange = (e) => { setAddForm({ ...addForm, [e.target.name]: e.target.value }); setAddError(null); setFieldErrors({}); };
   const handleAddSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setAddError(null);
-    setFieldErrors({});
-
+    e.preventDefault(); setSaving(true); setAddError(null); setFieldErrors({});
     try {
-      const payload = {
-        name: addForm.name,
-        birth_date: addForm.birth_date,
-        gender: addForm.gender,
-        weight: addForm.weight ? Number(addForm.weight) : null,
-        height: addForm.height ? Number(addForm.height) : null,
-      };
-
-      await createChild(payload);
-      await loadData();
-      closeAddModal();
+      await createChild({ ...addForm, weight: addForm.weight ? Number(addForm.weight) : null, height: addForm.height ? Number(addForm.height) : null });
+      await loadData(); closeAddModal();
     } catch (err) {
-      console.error("Create child error:", err);
       let msg = "Gagal menyimpan data anak. Coba lagi.";
-      if (err.response?.status === 422 && err.response.data?.errors) {
-        setFieldErrors(err.response.data.errors);
-      } else if (err.response?.data?.message) {
-        msg = err.response.data.message;
-      }
+      if (err.response?.status === 422 && err.response.data?.errors) setFieldErrors(err.response.data.errors);
+      else if (err.response?.data?.message) msg = err.response.data.message;
       setAddError(msg);
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // =====================
-  // Modal Edit Child
-  // =====================
-  const openEditModal = (child) => {
-    setEditChildId(child.id);
-    setEditForm({
-      name: child.name || "",
-      birth_date: child.birth_date || "",
-      gender: child.gender || "",
-      weight: child.weight || "",
-      height: child.height || "",
-    });
-    setEditError(null);
-    setEditFieldErrors({});
-    setShowEditModal(true);
-  };
-
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    setEditSaving(false);
-    setEditError(null);
-    setEditFieldErrors({});
-    setEditChildId(null);
-  };
-
-  const handleEditChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
-    setEditError(null);
-    setEditFieldErrors({});
-  };
-
+  // --- HANDLERS: EDIT ANAK ---
+  const openEditModal = (child) => { setEditChildId(child.id); setEditForm({ name: child.name || "", birth_date: child.birth_date || "", gender: child.gender || "", weight: child.weight || "", height: child.height || "" }); setEditError(null); setEditFieldErrors({}); setShowEditModal(true); };
+  const closeEditModal = () => { setShowEditModal(false); setEditSaving(false); setEditError(null); setEditFieldErrors({}); setEditChildId(null); };
+  const handleEditChange = (e) => { setEditForm({ ...editForm, [e.target.name]: e.target.value }); setEditError(null); setEditFieldErrors({}); };
   const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    setEditSaving(true);
-    setEditError(null);
-    setEditFieldErrors({});
-
+    e.preventDefault(); setEditSaving(true); setEditError(null); setEditFieldErrors({});
     try {
-      const payload = {
-        name: editForm.name,
-        birth_date: editForm.birth_date,
-        gender: editForm.gender,
-        weight: editForm.weight ? Number(editForm.weight) : null,
-        height: editForm.height ? Number(editForm.height) : null,
-      };
-
-      await updateChild(editChildId, payload);
-      await loadData();
-      closeEditModal();
+      await updateChild(editChildId, { ...editForm, weight: editForm.weight ? Number(editForm.weight) : null, height: editForm.height ? Number(editForm.height) : null });
+      await loadData(); closeEditModal();
     } catch (err) {
-      console.error("Update child error:", err);
-      let msg = "Gagal memperbarui data anak. Coba lagi.";
-      if (err.response?.status === 422 && err.response.data?.errors) {
-        setEditFieldErrors(err.response.data.errors);
-      } else if (err.response?.data?.message) {
-        msg = err.response.data.message;
-      }
+      let msg = "Gagal memperbarui data. Coba lagi.";
+      if (err.response?.status === 422 && err.response.data?.errors) setEditFieldErrors(err.response.data.errors);
+      else if (err.response?.data?.message) msg = err.response.data.message;
       setEditError(msg);
-    } finally {
-      setEditSaving(false);
-    }
+    } finally { setEditSaving(false); }
   };
 
-  // =====================
-  // Modal Delete Child
-  // =====================
-  const openDeleteModal = (child) => {
-    setDeleteChildData(child);
-    setDeleteError(null);
-    setShowDeleteModal(true);
-  };
-
-  const closeDeleteModal = () => {
-    setShowDeleteModal(false);
-    setDeleting(false);
-    setDeleteError(null);
-    setDeleteChildData(null);
-  };
-
+  // --- HANDLERS: HAPUS ANAK ---
+  const openDeleteModal = (child) => { setDeleteChildData(child); setDeleteError(null); setShowDeleteModal(true); };
+  const closeDeleteModal = () => { setShowDeleteModal(false); setDeleting(false); setDeleteError(null); setDeleteChildData(null); };
   const handleDeleteConfirm = async () => {
     if (!deleteChildData) return;
-    setDeleting(true);
-    setDeleteError(null);
-
+    setDeleting(true); setDeleteError(null);
     try {
-      await deleteChild(deleteChildData.id);
-      await loadData();
-      closeDeleteModal();
+      await deleteChild(deleteChildData.id); await loadData(); closeDeleteModal();
     } catch (err) {
-      console.error("Delete child error:", err);
-      const msg = err.response?.data?.message || "Gagal menghapus data anak. Coba lagi.";
-      setDeleteError(msg);
-    } finally {
-      setDeleting(false);
-    }
+      setDeleteError(err.response?.data?.message || "Gagal menghapus data anak. Coba lagi.");
+    } finally { setDeleting(false); }
   };
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  const totalScreenings = children.reduce((sum, child) => sum + (child.screenings_count || 0), 0);
+  const attentionCount = children.filter((child) => 
+    child.latest_screening?.category?.toLowerCase().includes("attention") || 
+    child.latest_screening?.category?.toLowerCase().includes("perhatian")
+  ).length;
+
+  if (loading) return <DashboardSkeleton />;
 
   if (error) {
     return (
-      <div className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-error">
-            <div className="dashboard-error__icon">
-              <AlertCircle size={48} strokeWidth={1.5} />
-            </div>
-            <h2>Gagal Memuat Data</h2>
-            <p>{error}</p>
-            <button onClick={loadData} className="dashboard-btn dashboard-btn--primary">
-              Coba Lagi
-            </button>
+      <div className="h-screen overflow-hidden bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white p-8 rounded-xl border border-red-200 text-center max-w-md w-full">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+            <AlertCircle size={32} />
           </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Gagal Memuat</h2>
+          <p className="text-slate-500 mb-6">{error}</p>
+          <button onClick={loadData} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl">Coba Lagi</button>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="dashboard-page">
-        <div className="dashboard-container">
-          {/* Header */}
-          <div className="dashboard-header">
-            <div className="dashboard-header__content">
-              <div className="dashboard-header__logo" onClick={() => navigate("/")}>
-                <span className="dashboard-logo__dot" />
-                <span>Posturely</span>
-              </div>
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+      
+      {/* === SIDEBAR (DESKTOP) WITH HOVER EXPAND === */}
+      <aside 
+        className={`hidden lg:flex flex-col bg-white border-r border-slate-200 sticky top-0 h-screen shrink-0 transition-all duration-300 z-50 ${isSidebarExpanded ? 'w-64' : 'w-[80px]'}`}
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+      >
+        <div className={`p-6 flex items-center ${isSidebarExpanded ? 'justify-start px-6' : 'justify-center px-0'} h-20`}>
+          <img src="/logo-favicon-posturely.svg" alt="Logo" className="w-8 h-8 shrink-0 object-contain" />
+          {isSidebarExpanded && <span className="font-bold text-xl text-slate-800 ml-3 truncate">Posturely</span>}
+        </div>
 
-              {/* Desktop Actions */}
-              <div className="dashboard-header__actions dashboard-header__actions--desktop">
-                <div className="notif-wrapper">
-                  <button
-                    className="dashboard-header__link dashboard-header__link--icon"
-                    onClick={() => setNotifOpen(!notifOpen)}
-                  >
-                    <Bell size={18} strokeWidth={2} />
-                    {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-                  </button>
+        <nav className="flex-1 px-3 space-y-2 mt-4 hide-scrollbar overflow-y-auto overflow-x-hidden">
+          <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/dashboard'} expanded={isSidebarExpanded} />
+          <SidebarLink to="/chat" icon={MessageCircle} label="Konsultasi" active={location.pathname === '/chat'} expanded={isSidebarExpanded} />
+          <SidebarLink to="/education" icon={BookOpen} label="Edukasi" active={location.pathname === '/education'} expanded={isSidebarExpanded} />
+          <SidebarLink to="/profile" icon={User} label="Profil Saya" active={location.pathname === '/profile'} expanded={isSidebarExpanded} />
+        </nav>
 
-                  {notifOpen && (
-                    <div className="notif-dropdown">
-                      <div className="notif-dropdown__header">
-                        <h4>Notifikasi</h4>
-                        <div className="notif-dropdown__actions">
-                          {unreadCount > 0 && (
-                            <button onClick={markAllAsRead} title="Tandai semua dibaca">
-                              <CheckCircle size={16} />
-                            </button>
-                          )}
-                          <button onClick={() => setNotifOpen(false)}>
-                            <X size={16} />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="notif-dropdown__body">
-                        {notifications.length === 0 ? (
-                          <div className="notif-empty">
-                            <Bell size={32} strokeWidth={1.5} />
-                            <p>Belum ada notifikasi</p>
-                          </div>
-                        ) : (
-                          notifications.map((notif) => (
-                            <div
-                              key={notif.id}
-                              className={`notif-item ${!notif.is_read ? "notif-item--unread" : ""}`}
-                              onClick={() => handleNotifClick(notif)}
-                            >
-                              <div className="notif-item__icon">
-                                {getNotifIcon(notif.type)}
-                              </div>
-                              <div className="notif-item__content">
-                                <p className="notif-item__title">{notif.title}</p>
-                                <p className="notif-item__message">{notif.message}</p>
-                                <span className="notif-item__time">
-                                  {formatNotifTime(notif.created_at)}
-                                </span>
-                              </div>
-                              <button
-                                className="notif-item__delete"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteNotification(notif.id);
-                                }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+        <div className="p-4 border-t border-slate-100 mt-auto">
+          <button onClick={handleLogout} className={`flex items-center w-full rounded-xl transition-all font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 ${isSidebarExpanded ? 'justify-start px-4 py-3 gap-3' : 'justify-center p-3'}`}>
+            <LogOut size={22} className="shrink-0" /> 
+            {isSidebarExpanded && <span className="truncate">Keluar</span>}
+          </button>
+        </div>
+      </aside>
 
-                {/* ✅ BARU: Link ke Chat */}
-                <Link to="/chat" className="dashboard-header__link">
-                  <MessageCircle size={18} strokeWidth={2} />
-                  Chat
-                </Link>
-
-                <Link to="/education" className="dashboard-header__link">
-                  <BookOpen size={18} strokeWidth={2} />
-                  Edukasi
-                </Link>
-
-                <Link to="/profile" className="dashboard-header__link">
-                  <User size={18} strokeWidth={2} />
-                  Profil
-                </Link>
-
-                <button onClick={handleLogout} className="dashboard-header__logout">
-                  <LogOut size={18} strokeWidth={2} />
-                  Keluar
-                </button>
-              </div>
-
-              {/* Mobile: Notif + Hamburger */}
-              <div className="dashboard-header__mobile-actions">
-                <div className="notif-wrapper">
-                  <button
-                    className="dashboard-header__link dashboard-header__link--icon"
-                    onClick={() => setNotifOpen(!notifOpen)}
-                  >
-                    <Bell size={18} strokeWidth={2} />
-                    {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-                  </button>
-
-                  {notifOpen && (
-                    <div className="notif-dropdown notif-dropdown--mobile">
-                      <div className="notif-dropdown__header">
-                        <h4>Notifikasi</h4>
-                        <div className="notif-dropdown__actions">
-                          {unreadCount > 0 && (
-                            <button onClick={markAllAsRead} title="Tandai semua dibaca">
-                              <CheckCircle size={16} />
-                            </button>
-                          )}
-                          <button onClick={() => setNotifOpen(false)}>
-                            <X size={16} />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="notif-dropdown__body">
-                        {notifications.length === 0 ? (
-                          <div className="notif-empty">
-                            <Bell size={32} strokeWidth={1.5} />
-                            <p>Belum ada notifikasi</p>
-                          </div>
-                        ) : (
-                          notifications.map((notif) => (
-                            <div
-                              key={notif.id}
-                              className={`notif-item ${!notif.is_read ? "notif-item--unread" : ""}`}
-                              onClick={() => handleNotifClick(notif)}
-                            >
-                              <div className="notif-item__icon">
-                                {getNotifIcon(notif.type)}
-                              </div>
-                              <div className="notif-item__content">
-                                <p className="notif-item__title">{notif.title}</p>
-                                <p className="notif-item__message">{notif.message}</p>
-                                <span className="notif-item__time">
-                                  {formatNotifTime(notif.created_at)}
-                                </span>
-                              </div>
-                              <button
-                                className="notif-item__delete"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteNotification(notif.id);
-                                }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  className="dashboard-header__hamburger"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-                </button>
-              </div>
+      {/* === MOBILE SIDEBAR (DRAWER) === */}
+      {isSidebarOpenMobile && (
+        <div className="fixed inset-0 z-[100] lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsSidebarOpenMobile(false)}></div>
+          <div className="absolute inset-y-0 left-0 w-72 bg-white border-r border-slate-200 flex flex-col animate-in slide-in-from-left duration-300">
+            <div className="p-6 flex items-center justify-between border-b border-slate-100">
+               <div className="flex items-center gap-3">
+                  <img src="/logo-favicon-posturely.svg" alt="Logo" className="w-8 h-8 shrink-0" />
+                  <span className="font-bold text-lg text-slate-800">Posturely</span>
+               </div>
+               <button onClick={() => setIsSidebarOpenMobile(false)} className="text-slate-500 p-1 rounded-md hover:bg-slate-100"><X size={24}/></button>
             </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="dashboard-header__mobile">
-                {/* ✅ BARU: Link Chat di mobile menu */}
-                <Link
-                  to="/chat"
-                  className="dashboard-header__mobile-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <MessageCircle size={18} strokeWidth={2} />
-                  Chat
-                </Link>
-                <Link
-                  to="/education"
-                  className="dashboard-header__mobile-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <BookOpen size={18} strokeWidth={2} />
-                  Edukasi
-                </Link>
-                <Link
-                  to="/profile"
-                  className="dashboard-header__mobile-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <User size={18} strokeWidth={2} />
-                  Profil
-                </Link>
-                <hr className="dashboard-header__divider" />
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="dashboard-header__mobile-logout"
-                >
-                  <LogOut size={18} strokeWidth={2} />
-                  Keluar
-                </button>
-              </div>
-            )}
-
-            <div className="dashboard-welcome">
-              <h1>Halo, {user?.name || "Orang Tua"}!</h1>
-              <p>Ringkasan postur dan perkembangan anak berdasarkan hasil screening</p>
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto hide-scrollbar">
+              <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/dashboard'} expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/chat" icon={MessageCircle} label="Konsultasi" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/education" icon={BookOpen} label="Edukasi" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/profile" icon={User} label="Profil Saya" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+            </nav>
+            <div className="p-4 border-t border-slate-100 mt-auto">
+               <button onClick={handleLogout} className="flex items-center gap-3 w-full p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"><LogOut size={20}/> Keluar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* === MAIN CONTENT === */}
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50">
+        
+        {/* Top Header */}
+        <header className="h-16 lg:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40 shrink-0">
+          <button className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-md" onClick={() => setIsSidebarOpenMobile(true)}>
+            <Menu size={24} />
+          </button>
+
+          <div className="hidden lg:block text-slate-500 text-sm font-medium">
+            Selamat datang, <span className="text-slate-900 font-bold">{user?.name}</span>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4 ml-auto lg:ml-0">
+            {/* Notifications Icon */}
+            <div className="relative flex items-center">
+              <button onClick={() => setNotifOpen(!notifOpen)} className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-full relative transition-colors flex items-center justify-center">
+                <Bell size={22} strokeWidth={2} />
+                {unreadCount > 0 && <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}
+              </button>
+              {/* Desktop: absolute panel */}
+              {notifOpen && (
+                <div className="hidden lg:block">
+                  <NotificationPanel notifications={notifications} close={() => setNotifOpen(false)} handleNotifClick={handleNotifClick} markAllAsRead={markAllAsRead} deleteNotification={deleteNotification} unreadCount={unreadCount} />
+                </div>
+              )}
+            </div>
+            
+            {/* Profile Mobile */}
+            <Link to="/profile" className="flex items-center md:gap-3 hover:bg-slate-50 p-1 md:pr-4 rounded-full border border-transparent md:border-slate-200 transition-colors ml-1 shrink-0">
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
+                <User size={18} />
+              </div>
+              <span className="hidden md:block text-sm font-semibold text-slate-700 whitespace-nowrap">{user?.name || 'Profil'}</span>
+            </Link>
+          </div>
+        </header>
+
+        <div className="flex-1 p-4 lg:p-8 overflow-y-auto hide-scrollbar">
+          {/* Welcome Info */}
+          <div className="mb-6 lg:mb-8">
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Data & Screening Anak</h1>
+            <p className="text-slate-500 mt-1 text-sm lg:text-base">Pantau perkembangan postur tubuh buah hati Anda secara berkala.</p>
           </div>
 
           {/* Stats Grid */}
-          <div className="dashboard-stats">
-            <StatCard label="Total Anak" value={children.length} color="primary">
-              <Users size={28} strokeWidth={1.5} />
-            </StatCard>
-            <StatCard label="Total Screening" value={totalScreenings} color="success">
-              <Activity size={28} strokeWidth={1.5} />
-            </StatCard>
-            <StatCard
-              label="Perlu Perhatian"
-              value={childrenNeedingAttention.length}
-              color="warning"
-            >
-              <AlertCircle size={28} strokeWidth={1.5} />
-            </StatCard>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-8">
+            <StatCard label="Jumlah Anak" value={children.length} icon={Users} color="blue" />
+            <StatCard label="Total Screening" value={totalScreenings} icon={Activity} color="emerald" />
+            <StatCard label="Perlu Perhatian" value={attentionCount} icon={AlertCircle} color="amber" />
           </div>
 
-          {/* Children Section */}
-          <div className="dashboard-section">
-            <div className="dashboard-section__header">
-              <h2>Data Anak & Hasil Screening</h2>
-              <button onClick={openAddModal} className="dashboard-section__action">
-                <Plus size={18} strokeWidth={2} />
-                Tambah Data Anak
-              </button>
-            </div>
-
-            {/* Filters */}
-            {children.length > 0 && (
-              <div className="dashboard-filters">
-                <div className="dashboard-filters__search">
-                  <Search size={18} strokeWidth={2} />
-                  <input
-                    type="text"
-                    placeholder="Cari nama anak..."
+          {/* Table Section */}
+          <section className="bg-white rounded-2xl border border-slate-200 overflow-visible relative mb-8">
+            <div className="p-4 lg:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 rounded-t-2xl">
+              <div className="flex flex-1 items-center gap-3">
+                {/* Search Input */}
+                <div className="relative w-full sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Cari nama anak..." 
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:border-blue-500 outline-none transition-all shadow-sm"
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
                   />
                 </div>
 
-                <div className="dashboard-filters__select-wrap">
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="dashboard-filters__select"
-                  >
-                    <option value="">Semua Kategori</option>
-                    <option value="baik">Baik</option>
-                    <option value="cukup">Cukup</option>
-                    <option value="attention">Perlu Perhatian</option>
-                  </select>
-                  <ChevronDown size={16} strokeWidth={2} className="dashboard-filters__icon" />
-                </div>
-              </div>
-            )}
-
-            {filteredChildren.length === 0 && children.length > 0 ? (
-              <div className="dashboard-empty">
-                <div className="dashboard-empty__icon">
-                  <Search size={48} strokeWidth={1.5} />
-                </div>
-                <h3>Tidak Ada Hasil</h3>
-                <p>Tidak ditemukan anak dengan kriteria filter yang dipilih.</p>
-              </div>
-            ) : children.length === 0 ? (
-              <EmptyStateComp
-                title="Belum ada data anak"
-                description="Tambahkan data anak terlebih dahulu untuk mulai screening postur."
-                actionLabel="Tambah Data Anak"
-                onAction={openAddModal}
-              >
-                <Users size={48} strokeWidth={1.5} />
-              </EmptyStateComp>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="dashboard-table-wrapper dashboard-table-wrapper--desktop">
-                  <table className="dashboard-table">
-                    <thead>
-                      <tr>
-                        <th>Nama Anak</th>
-                        <th>BB / TB</th>
-                        <th>Hasil Screening Terakhir</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredChildren.map((child) => (
-                        <ChildRowDesktop
-                          key={child.id}
-                          child={child}
-                          onScreeningClick={() =>
-                            navigate(`/children/${child.id}/screenings/new`)
-                          }
-                          onHistoryClick={() =>
-                            navigate(`/children/${child.id}/screenings`)
-                          }
-                          onEditClick={() => openEditModal(child)}
-                          onDeleteClick={() => openDeleteModal(child)}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Table */}
-                <div className="dashboard-table-wrapper dashboard-table-wrapper--mobile">
-                  <table className="dashboard-table">
-                    <thead>
-                      <tr>
-                        <th>Nama Anak</th>
-                        <th>Hasil Screening</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredChildren.map((child) => (
-                        <ChildRowMobile
-                          key={child.id}
-                          child={child}
-                          actionMenuOpen={actionMenuOpen}
-                          setActionMenuOpen={setActionMenuOpen}
-                          onScreeningClick={() =>
-                            navigate(`/children/${child.id}/screenings/new`)
-                          }
-                          onHistoryClick={() =>
-                            navigate(`/children/${child.id}/screenings`)
-                          }
-                          onEditClick={() => {
-                            openEditModal(child);
-                            setActionMenuOpen(null);
-                          }}
-                          onDeleteClick={() => {
-                            openDeleteModal(child);
-                            setActionMenuOpen(null);
-                          }}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ===================== */}
-      {/* Modal Add Child       */}
-      {/* ===================== */}
-      {showAddModal && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) closeAddModal(); }}
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Tambah Data Anak</h3>
-              <button onClick={closeAddModal} className="modal-close" type="button">
-                <X size={20} strokeWidth={2} />
-              </button>
-            </div>
-
-            {addError && (
-              <div className="modal-error">
-                <AlertCircle size={16} strokeWidth={2} />
-                {addError}
-              </div>
-            )}
-
-            <form onSubmit={handleAddSubmit}>
-              <div className="form-group">
-                <label htmlFor="add-name">
-                  Nama Anak <span className="required">*</span>
-                </label>
-                <input
-                  id="add-name"
-                  name="name"
-                  type="text"
-                  value={addForm.name}
-                  onChange={handleAddChange}
-                  placeholder="Misal: Aisyah"
-                  required
-                  className={fieldErrors.name ? "input-error" : ""}
-                />
-                {fieldErrors.name && (
-                  <div className="field-error">{fieldErrors.name[0]}</div>
+                {/* Filter Button */}
+                {children.length > 0 && (
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsFilterOpen(!isFilterOpen)} 
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${activeFilters.length > 0 ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <Filter size={16} /> 
+                      <span className="hidden sm:inline text-sm">Filter</span>
+                      {activeFilters.length > 0 && <span className="bg-blue-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full ml-1 font-bold">{activeFilters.length}</span>}
+                    </button>
+                    
+                    {/* Dropdown Filter */}
+                    {isFilterOpen && (
+                      <div className="absolute top-[110%] right-0 md:right-auto md:left-0 w-60 bg-white border border-slate-200 rounded-xl p-3 z-[60] shadow-xl animate-in slide-in-from-top-2">
+                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Kategori Kondisi</span>
+                          <button onClick={() => setIsFilterOpen(false)} className="text-slate-400 p-1 rounded hover:bg-slate-100"><X size={16}/></button>
+                        </div>
+                        <div className="space-y-1.5">
+                          <FilterCheckbox label="Kondisi Baik" value="baik" activeFilters={activeFilters} toggleFilter={toggleFilter} />
+                          <FilterCheckbox label="Cukup" value="cukup" activeFilters={activeFilters} toggleFilter={toggleFilter} />
+                          <FilterCheckbox label="Perlu Perhatian" value="attention" activeFilters={activeFilters} toggleFilter={toggleFilter} />
+                        </div>
+                        {activeFilters.length > 0 && (
+                          <button onClick={() => setActiveFilters([])} className="mt-3 w-full text-xs text-center py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium border border-red-100">Reset Filter</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="add-birth">
-                    Tanggal Lahir <span className="required">*</span>
-                  </label>
-                  <input
-                    id="add-birth"
-                    name="birth_date"
-                    type="date"
-                    value={addForm.birth_date}
-                    onChange={handleAddChange}
-                    max={maxDate}
-                    required
-                    className={fieldErrors.birth_date ? "input-error" : ""}
-                  />
-                  {fieldErrors.birth_date && (
-                    <div className="field-error">{fieldErrors.birth_date[0]}</div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="add-gender">
-                    Jenis Kelamin <span className="required">*</span>
-                  </label>
-                  <div className="select-wrapper">
-                    <select
-                      id="add-gender"
-                      name="gender"
-                      value={addForm.gender}
-                      onChange={handleAddChange}
-                      required
-                      className={fieldErrors.gender ? "input-error" : ""}
-                    >
-                      <option value="">Pilih</option>
-                      <option value="M">Laki-laki</option>
-                      <option value="F">Perempuan</option>
-                    </select>
-                    <ChevronDown size={16} className="select-icon" />
-                  </div>
-                  {fieldErrors.gender && (
-                    <div className="field-error">{fieldErrors.gender[0]}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="add-weight">Berat Badan (kg)</label>
-                  <input
-                    id="add-weight"
-                    name="weight"
-                    type="number"
-                    min="1"
-                    max="200"
-                    step="0.1"
-                    value={addForm.weight}
-                    onChange={handleAddChange}
-                    placeholder="20"
-                    className={fieldErrors.weight ? "input-error" : ""}
-                  />
-                  {fieldErrors.weight && (
-                    <div className="field-error">{fieldErrors.weight[0]}</div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="add-height">Tinggi Badan (cm)</label>
-                  <input
-                    id="add-height"
-                    name="height"
-                    type="number"
-                    min="30"
-                    max="220"
-                    step="0.1"
-                    value={addForm.height}
-                    onChange={handleAddChange}
-                    placeholder="115"
-                    className={fieldErrors.height ? "input-error" : ""}
-                  />
-                  {fieldErrors.height && (
-                    <div className="field-error">{fieldErrors.height[0]}</div>
-                  )}
-                </div>
-              </div>
-
-              <p className="form-help">
-                Data BB dan TB opsional, tapi membantu akurasi analisis postur.
-              </p>
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  onClick={closeAddModal}
-                  className="dashboard-btn dashboard-btn--secondary"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="dashboard-btn dashboard-btn--primary"
-                >
-                  {saving ? "Menyimpan..." : "Simpan"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ===================== */}
-      {/* Modal Edit Child      */}
-      {/* ===================== */}
-      {showEditModal && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) closeEditModal(); }}
-        >
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Edit Data Anak</h3>
-              <button onClick={closeEditModal} className="modal-close" type="button">
-                <X size={20} strokeWidth={2} />
+              {/* Add Button */}
+              <button onClick={() => openAddModal()} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow shrink-0">
+                <Plus size={18} /> Tambah Anak
               </button>
             </div>
 
-            {editError && (
-              <div className="modal-error">
-                <AlertCircle size={16} strokeWidth={2} />
-                {editError}
-              </div>
-            )}
+            {/* Table (Desktop) */}
+            <div className="hidden md:block overflow-x-auto hide-scrollbar">
+              {filteredChildren.length === 0 ? (
+                <EmptyState onAction={openAddModal} hasData={children.length > 0} />
+              ) : (
+                <table className="w-full text-left border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase font-bold tracking-wider">
+                      <th className="px-6 py-4">Nama Anak</th>
+                      <th className="px-6 py-4">Umur / Gender</th>
+                      <th className="px-6 py-4">Status Terakhir</th>
+                      <th className="px-6 py-4 text-right">Tindakan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredChildren.map(child => (
+                      <tr key={child.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-slate-800 whitespace-nowrap">{child.name}</td>
+                        <td className="px-6 py-4 text-slate-600 text-sm whitespace-nowrap">
+                          {child.age_years || '0'} Thn <span className="text-slate-300 mx-1">•</span> {child.gender === 'M' ? 'L' : 'P'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <StatusBadge category={child.latest_screening?.category} score={child.latest_screening?.score} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => navigate(`/children/${child.id}/screenings/new`)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100" title="Screening Baru"><Camera size={18}/></button>
+                            <button onClick={() => navigate(`/children/${child.id}/screenings`)} className="p-2 text-slate-500 border border-slate-200 hover:bg-slate-100 rounded-lg transition-colors" title="Riwayat Screening"><History size={18}/></button>
+                            <button onClick={() => openEditModal(child)} className="p-2 text-slate-500 border border-slate-200 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Profil"><Pencil size={18}/></button>
+                            <button onClick={() => openDeleteModal(child)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100" title="Hapus"><Trash2 size={18}/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
-            <form onSubmit={handleEditSubmit}>
-              <div className="form-group">
-                <label htmlFor="edit-name">
-                  Nama Anak <span className="required">*</span>
-                </label>
-                <input
-                  id="edit-name"
-                  name="name"
-                  type="text"
-                  value={editForm.name}
-                  onChange={handleEditChange}
-                  placeholder="Misal: Aisyah"
-                  required
-                  className={editFieldErrors.name ? "input-error" : ""}
-                />
-                {editFieldErrors.name && (
-                  <div className="field-error">{editFieldErrors.name[0]}</div>
-                )}
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="edit-birth">
-                    Tanggal Lahir <span className="required">*</span>
-                  </label>
-                  <input
-                    id="edit-birth"
-                    name="birth_date"
-                    type="date"
-                    value={editForm.birth_date}
-                    onChange={handleEditChange}
-                    max={maxDate}
-                    required
-                    className={editFieldErrors.birth_date ? "input-error" : ""}
-                  />
-                  {editFieldErrors.birth_date && (
-                    <div className="field-error">{editFieldErrors.birth_date[0]}</div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="edit-gender">
-                    Jenis Kelamin <span className="required">*</span>
-                  </label>
-                  <div className="select-wrapper">
-                    <select
-                      id="edit-gender"
-                      name="gender"
-                      value={editForm.gender}
-                      onChange={handleEditChange}
-                      required
-                      className={editFieldErrors.gender ? "input-error" : ""}
-                    >
-                      <option value="">Pilih</option>
-                      <option value="M">Laki-laki</option>
-                      <option value="F">Perempuan</option>
-                    </select>
-                    <ChevronDown size={16} className="select-icon" />
+            {/* List (Mobile) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredChildren.length === 0 ? (
+                 <EmptyState onAction={openAddModal} hasData={children.length > 0} />
+              ) : (
+                filteredChildren.map(child => (
+                  <div key={child.id} className="p-4 space-y-4 bg-white hover:bg-slate-50/50 transition-colors">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-800 text-lg truncate">{child.name}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">{child.age_years || 0} Thn • {child.gender === 'M' ? 'Laki-laki' : 'Perempuan'}</p>
+                      </div>
+                      <StatusBadge category={child.latest_screening?.category} score={child.latest_screening?.score} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => navigate(`/children/${child.id}/screenings/new`)} className="bg-blue-50 text-blue-600 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-blue-100 active:scale-95 transition-transform"><Camera size={14}/> Screening Baru</button>
+                      <button onClick={() => navigate(`/children/${child.id}/screenings`)} className="border border-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-50 active:scale-95 transition-transform"><History size={14}/> Riwayat</button>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-2">
+                       <button onClick={() => openEditModal(child)} className="text-slate-500 hover:text-slate-800 text-sm font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"><Pencil size={14}/> Edit</button>
+                       <button onClick={() => openDeleteModal(child)} className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14}/> Hapus</button>
+                    </div>
                   </div>
-                  {editFieldErrors.gender && (
-                    <div className="field-error">{editFieldErrors.gender[0]}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="edit-weight">Berat Badan (kg)</label>
-                  <input
-                    id="edit-weight"
-                    name="weight"
-                    type="number"
-                    min="1"
-                    max="200"
-                    step="0.1"
-                    value={editForm.weight}
-                    onChange={handleEditChange}
-                    placeholder="20"
-                    className={editFieldErrors.weight ? "input-error" : ""}
-                  />
-                  {editFieldErrors.weight && (
-                    <div className="field-error">{editFieldErrors.weight[0]}</div>
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="edit-height">Tinggi Badan (cm)</label>
-                  <input
-                    id="edit-height"
-                    name="height"
-                    type="number"
-                    min="30"
-                    max="220"
-                    step="0.1"
-                    value={editForm.height}
-                    onChange={handleEditChange}
-                    placeholder="115"
-                    className={editFieldErrors.height ? "input-error" : ""}
-                  />
-                  {editFieldErrors.height && (
-                    <div className="field-error">{editFieldErrors.height[0]}</div>
-                  )}
-                </div>
-              </div>
-
-              <p className="form-help">
-                Data BB dan TB opsional, tapi membantu akurasi analisis postur.
-              </p>
-
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  className="dashboard-btn dashboard-btn--secondary"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={editSaving}
-                  className="dashboard-btn dashboard-btn--primary"
-                >
-                  {editSaving ? "Menyimpan..." : "Simpan Perubahan"}
-                </button>
-              </div>
-            </form>
-          </div>
+                ))
+              )}
+            </div>
+          </section>
         </div>
-      )}
+      </main>
 
-      {/* ===================== */}
-      {/* Modal Delete Child    */}
-      {/* ===================== */}
-      {showDeleteModal && deleteChildData && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) closeDeleteModal(); }}
-        >
+      {/* === MOBILE: Notifikasi — Fixed overlay, tidak out-of-frame === */}
+      {notifOpen && (
+        <div className="fixed inset-0 z-[90] lg:hidden" onClick={() => setNotifOpen(false)}>
+          <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"></div>
           <div
-            style={{
-              background: "#fff",
-              borderRadius: "16px",
-              width: "90%",
-              maxWidth: "400px",
-              padding: "2rem 2rem 2rem",
-              position: "relative",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "1.25rem",
-            }}
+            className="absolute top-16 left-4 right-4 bg-white border border-slate-200 rounded-2xl overflow-hidden animate-in slide-in-from-top-2 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={closeDeleteModal}
-              type="button"
-              style={{
-                position: "absolute",
-                top: "1rem",
-                right: "1rem",
-                background: "#f3f4f6",
-                border: "none",
-                borderRadius: "8px",
-                width: "32px",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "#6b7280",
-              }}
-            >
-              <X size={16} strokeWidth={2} />
-            </button>
+            <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+              <span className="text-sm font-bold text-slate-800">Notifikasi</span>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-100/50 px-2 py-1 rounded border border-blue-100 shadow-sm">Dibaca</button>
+                )}
+                <button onClick={() => setNotifOpen(false)} className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100"><X size={18}/></button>
+              </div>
+            </div>
+            <div className="max-h-72 overflow-y-auto hide-scrollbar">
+              {notifications.length === 0 ? (
+                <div className="p-10 text-center text-slate-400 bg-slate-50/50">
+                  <Bell size={28} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Belum ada notifikasi</p>
+                </div>
+              ) : (
+                notifications.map(n => (
+                  <div key={n.id} onClick={() => handleNotifClick(n)} className={`p-4 border-b border-slate-50 transition-colors cursor-pointer flex gap-3 group ${!n.is_read ? 'bg-blue-50/30 hover:bg-blue-50' : 'hover:bg-slate-50'}`}>
+                    <div className={`mt-0.5 shrink-0 ${!n.is_read ? 'text-blue-500' : 'text-slate-400'}`}><Bell size={16} /></div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${!n.is_read ? 'font-bold text-slate-800' : 'font-medium text-slate-600'} truncate`}>{n.title}</p>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{n.message}</p>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded hover:bg-slate-100 shrink-0"><Trash2 size={16}/></button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div
-              style={{
-                width: "64px",
-                height: "64px",
-                borderRadius: "50%",
-                background: "#fef2f2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#ef4444",
-                marginTop: "0.5rem",
-              }}
-            >
+      {/* ===================== */}
+      {/* MODAL: ADD & EDIT     */}
+      {/* ===================== */}
+      {(showAddModal || showEditModal) && (
+        <Modal title={showAddModal ? "Tambah Data Anak" : "Edit Data Anak"} close={showAddModal ? closeAddModal : closeEditModal}>
+           <form onSubmit={showAddModal ? handleAddSubmit : handleEditSubmit} className="space-y-4">
+              {(addError || editError) && (
+                <div className="p-3.5 bg-red-50 text-red-600 rounded-xl flex items-center gap-2.5 text-sm border border-red-100 shadow-inner">
+                  <AlertCircle size={18} className="shrink-0"/> {addError || editError}
+                </div>
+              )}
+
+              <Input label="Nama Lengkap" name="name" value={showAddModal ? addForm.name : editForm.name} onChange={showAddModal ? handleAddChange : handleEditChange} required error={(showAddModal ? fieldErrors : editFieldErrors).name?.[0]} placeholder="Masukkan nama anak" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Tgl Lahir" name="birth_date" type="date" value={showAddModal ? addForm.birth_date : editForm.birth_date} onChange={showAddModal ? handleAddChange : handleEditChange} required max={maxDate} error={(showAddModal ? fieldErrors : editFieldErrors).birth_date?.[0]} />
+                <Select label="Gender" name="gender" value={showAddModal ? addForm.gender : editForm.gender} onChange={showAddModal ? handleAddChange : handleEditChange} options={[{v:'M', l:'Laki-laki'}, {v:'F', l:'Perempuan'}]} required error={(showAddModal ? fieldErrors : editFieldErrors).gender?.[0]} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Berat (kg)" name="weight" type="number" step="0.1" placeholder="Opsional" value={showAddModal ? addForm.weight : editForm.weight} onChange={showAddModal ? handleAddChange : handleEditChange} error={(showAddModal ? fieldErrors : editFieldErrors).weight?.[0]} />
+                <Input label="Tinggi (cm)" name="height" type="number" step="0.1" placeholder="Opsional" value={showAddModal ? addForm.height : editForm.height} onChange={showAddModal ? handleAddChange : handleEditChange} error={(showAddModal ? fieldErrors : editFieldErrors).height?.[0]} />
+              </div>
+
+              <div className="flex gap-3 mt-8 pt-5 border-t border-slate-100">
+                <button type="button" onClick={showAddModal ? closeAddModal : closeEditModal} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-medium transition-colors border border-slate-200">Batal</button>
+                <button type="submit" disabled={showAddModal ? saving : editSaving} className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold disabled:opacity-50 transition-colors shadow-lg active:scale-[0.98]">{(showAddModal ? saving : editSaving) ? "Menyimpan..." : "Simpan"}</button>
+              </div>
+           </form>
+        </Modal>
+      )}
+
+      {/* ===================== */}
+      {/* MODAL: DELETE         */}
+      {/* ===================== */}
+      {showDeleteModal && (
+        <Modal title="Hapus Data Anak" close={closeDeleteModal}>
+          <div className="text-center pb-2">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100 shadow-inner">
               <Trash2 size={28} strokeWidth={1.5} />
             </div>
-
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "1.1rem",
-                fontWeight: 600,
-                color: "#111827",
-                textAlign: "center",
-              }}
-            >
-              Hapus Data Anak
-            </h3>
-
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                textAlign: "center",
-                lineHeight: 1.6,
-              }}
-            >
-              Kamu yakin ingin menghapus data{" "}
-              <strong style={{ color: "#111827" }}>{deleteChildData.name}</strong>?{" "}
-              Semua riwayat screening terkait juga akan terhapus dan tidak dapat dikembalikan.
-            </p>
-
-            {deleteError && (
-              <div className="modal-error" style={{ width: "100%" }}>
-                <AlertCircle size={16} strokeWidth={2} />
-                {deleteError}
-              </div>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                width: "100%",
-                marginTop: "0.25rem",
-              }}
-            >
-              <button
-                type="button"
-                onClick={closeDeleteModal}
-                disabled={deleting}
-                className="dashboard-btn dashboard-btn--secondary"
-                style={{ flex: 1 }}
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="dashboard-btn dashboard-btn--danger"
-                style={{ flex: 1 }}
-              >
-                {deleting ? "Menghapus..." : "Ya, Hapus"}
-              </button>
+            <p className="text-slate-600 mb-6 leading-relaxed">Apakah Anda yakin ingin menghapus profil <strong className="text-slate-800">{deleteChildData?.name}</strong>? Semua riwayat screening akan terhapus permanen.</p>
+            {deleteError && <p className="text-red-500 text-sm mb-4 bg-red-50 p-2 rounded-xl border border-red-100 font-medium">{deleteError}</p>}
+            
+            <div className="flex gap-3">
+              <button onClick={closeDeleteModal} disabled={deleting} className="flex-1 py-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-medium transition-colors border border-slate-200">Batal</button>
+              <button onClick={handleDeleteConfirm} disabled={deleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-500/20 active:scale-[0.98]">{deleting ? "Memproses..." : "Ya, Hapus"}</button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
-    </>
+    </div>
   );
 }
 
-// === Components ===
+// =====================================
+// KOMPONEN PENDUKUNG (HELPERS)
+// =====================================
 
-function StatCard({ label, value, color, children }) {
+// eslint-disable-next-line no-unused-vars
+function SidebarLink({ to, icon: Icon, label, active, expanded, onClick }) {
   return (
-    <div className={`stat-card stat-card--${color}`}>
-      <div className="stat-card__left">
-        <div className="stat-card__icon">{children}</div>
-        <div className="stat-card__label">{label}</div>
+    <Link 
+      to={to} 
+      onClick={onClick} 
+      className={`flex items-center rounded-xl font-medium transition-all duration-200 ${expanded ? 'px-4 py-3 justify-start gap-3' : 'p-3 justify-center'} ${active ? 'bg-slate-100 text-slate-900 border border-slate-200 shadow-inner' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent'}`}
+    >
+      <Icon size={22} className={`shrink-0 ${active ? 'text-blue-600' : ''}`} />
+      {expanded && <span className="truncate flex-1">{label}</span>}
+    </Link>
+  );
+}
+
+function FilterCheckbox({ label, value, activeFilters, toggleFilter }) {
+  const isActive = activeFilters.includes(value);
+  return (
+    <label className={`flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border ${isActive ? 'border-blue-100 bg-blue-50/50' : 'border-transparent'}`}>
+      <input 
+        type="checkbox" 
+        checked={isActive} 
+        onChange={() => toggleFilter(value)}
+        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer shadow-inner"
+      />
+      <span className={`text-sm ${isActive ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>{label}</span>
+    </label>
+  );
+}
+
+// eslint-disable-next-line no-unused-vars
+function StatCard({ label, value, icon: Icon, color }) {
+  const colors = {
+    blue: 'bg-blue-50 text-blue-600 border-blue-100',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100'
+  };
+  return (
+    <div className="p-5 rounded-2xl bg-white border border-slate-200 flex items-center gap-4 transition-colors hover:border-slate-300 hover:bg-slate-50/50">
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${colors[color]} border shadow-inner`}>
+        <Icon size={28} />
       </div>
-      <div className="stat-card__right">
-        <div className="stat-card__value">{value}</div>
+      <div className="flex flex-col justify-center min-w-0">
+        <span className="text-2xl font-bold text-slate-900 leading-none">{value}</span>
+        <span className="text-sm font-medium text-slate-500 mt-1.5 truncate">{label}</span>
       </div>
     </div>
   );
 }
 
-function ChildRowDesktop({ child, onScreeningClick, onHistoryClick, onEditClick, onDeleteClick }) {
-  const latest = child.latest_screening;
-  const badge = latest?.category ? getBadgeConfig(latest.category) : null;
-
-  return (
-    <tr>
-      <td>
-        <div className="table-name">{child.name}</div>
-        <div className="table-meta">
-          {child.age_years ? `${child.age_years} thn` : ""}
-          {child.gender === "M" ? " • L" : child.gender === "F" ? " • P" : ""}
-        </div>
-      </td>
-      <td>
-        <div className="table-cell-metrics">
-          {child.weight && child.height ? (
-            <>{child.weight} kg / {child.height} cm</>
-          ) : (
-            <span className="table-empty">-</span>
-          )}
-        </div>
-      </td>
-      <td>
-        {latest ? (
-          <div className="table-cell-result">
-            <span className="table-score">Skor {latest.score ?? "-"}</span>
-            {badge && (
-              <span className={`table-badge table-badge--${badge.type}`}>{badge.text}</span>
-            )}
-          </div>
-        ) : (
-          <span className="table-empty">Belum screening</span>
-        )}
-      </td>
-      <td>
-        <div className="table-cell-actions table-cell-actions--desktop">
-          <button
-            className="dashboard-btn dashboard-btn--secondary dashboard-btn--sm"
-            onClick={onHistoryClick}
-          >
-            <History size={14} strokeWidth={2} />
-            Riwayat
-          </button>
-          <button
-            className="dashboard-btn dashboard-btn--primary dashboard-btn--sm"
-            onClick={onScreeningClick}
-          >
-            <Camera size={14} strokeWidth={2} />
-            Screening
-          </button>
-          <button
-            className="dashboard-btn dashboard-btn--secondary dashboard-btn--sm"
-            onClick={onEditClick}
-            title="Edit data anak"
-          >
-            <Pencil size={14} strokeWidth={2} />
-          </button>
-          <button
-            className="dashboard-btn dashboard-btn--danger dashboard-btn--sm"
-            onClick={onDeleteClick}
-            title="Hapus data anak"
-          >
-            <Trash2 size={14} strokeWidth={2} />
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function ChildRowMobile({
-  child,
-  actionMenuOpen,
-  setActionMenuOpen,
-  onScreeningClick,
-  onHistoryClick,
-  onEditClick,
-  onDeleteClick,
-}) {
-  const latest = child.latest_screening;
-  const badge = latest?.category ? getBadgeConfig(latest.category) : null;
-  const isOpen = actionMenuOpen === child.id;
-
-  return (
-    <tr>
-      <td>
-        <div className="table-name">{child.name}</div>
-        <div className="table-meta">
-          {child.weight && child.height && (
-            <>{child.weight}kg / {child.height}cm</>
-          )}
-        </div>
-      </td>
-      <td>
-        {latest ? (
-          <div className="table-cell-result">
-            <span className="table-score">Skor {latest.score ?? "-"}</span>
-            {badge && (
-              <span className={`table-badge table-badge--${badge.type}`}>{badge.text}</span>
-            )}
-          </div>
-        ) : (
-          <span className="table-empty">Belum</span>
-        )}
-      </td>
-      <td>
-        <div className="table-cell-actions">
-          <div className="action-menu-wrapper">
-            <button
-              className="action-menu-btn"
-              onClick={() => setActionMenuOpen(isOpen ? null : child.id)}
-            >
-              <MoreVertical size={18} strokeWidth={2} />
-            </button>
-
-            {isOpen && (
-              <div className="action-menu-dropdown">
-                <button
-                  onClick={() => {
-                    onScreeningClick();
-                    setActionMenuOpen(null);
-                  }}
-                >
-                  <Camera size={16} strokeWidth={2} />
-                  Screening Baru
-                </button>
-                <button
-                  onClick={() => {
-                    onHistoryClick();
-                    setActionMenuOpen(null);
-                  }}
-                >
-                  <History size={16} strokeWidth={2} />
-                  Riwayat
-                </button>
-                <button onClick={onEditClick}>
-                  <Pencil size={16} strokeWidth={2} />
-                  Edit Data
-                </button>
-                <button
-                  className="action-menu-dropdown__danger"
-                  onClick={onDeleteClick}
-                >
-                  <Trash2 size={16} strokeWidth={2} />
-                  Hapus
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function getBadgeConfig(category) {
+function StatusBadge({ category, score }) {
+  if (!category) return <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Belum screening</span>;
   const cat = category.toLowerCase();
-  if (cat.includes("good") || cat.includes("baik")) {
-    return { text: "Baik", type: "success" };
-  } else if (cat.includes("fair") || cat.includes("cukup")) {
-    return { text: "Cukup", type: "warning" };
-  } else {
-    return { text: "Perhatian", type: "danger" };
-  }
-}
+  let style = "bg-slate-100 text-slate-600 border-slate-200";
+  let label = "Tidak Diketahui";
 
-function getNotifIcon(type) {
-  switch (type) {
-    case "referral_accepted":
-      return <CheckCircle size={16} strokeWidth={1.5} />;
-    case "referral_completed":
-      return <Activity size={16} strokeWidth={1.5} />;
-    case "new_recommendation":
-      return <BookOpen size={16} strokeWidth={1.5} />;
-    default:
-      return <Bell size={16} strokeWidth={1.5} />;
-  }
-}
+  if (cat.includes('baik') || cat.includes('good')) { style = "bg-emerald-50 text-emerald-700 border-emerald-200"; label = "Kondisi Baik"; }
+  if (cat.includes('cukup') || cat.includes('fair')) { style = "bg-amber-50 text-amber-700 border-amber-200"; label = "Kondisi Cukup"; }
+  if (cat.includes('attention') || cat.includes('perhatian')) { style = "bg-red-50 text-red-700 border-red-200"; label = "Perlu Perhatian"; }
 
-function formatNotifTime(timestamp) {
-  const now = new Date();
-  const date = new Date(timestamp);
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Baru saja";
-  if (diffMins < 60) return `${diffMins} menit yang lalu`;
-  if (diffHours < 24) return `${diffHours} jam yang lalu`;
-  if (diffDays < 7) return `${diffDays} hari yang lalu`;
-  return date.toLocaleDateString("id-ID");
-}
-
-function EmptyStateComp({ title, description, actionLabel, onAction, children }) {
   return (
-    <div className="dashboard-empty">
-      <div className="dashboard-empty__icon">{children}</div>
-      <h3>{title}</h3>
-      <p>{description}</p>
-      {actionLabel && onAction && (
-        <button className="dashboard-btn dashboard-btn--primary" onClick={onAction}>
-          {actionLabel}
+    <div className="flex flex-col items-start gap-1">
+      <span className="font-bold text-slate-800 text-sm leading-tight">Skor {score ?? '-'}</span>
+      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${style}`}>{label}</span>
+    </div>
+  );
+}
+
+function EmptyState({ onAction, hasData }) {
+  return (
+    <div className="p-12 text-center flex flex-col items-center justify-center bg-white border-b border-slate-200">
+      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4 border border-slate-100 shadow-inner">
+        {hasData ? <Search size={24} /> : <Users size={24} />}
+      </div>
+      <h3 className="text-lg font-bold text-slate-800 mb-1">{hasData ? "Tidak Ada Hasil" : "Belum Ada Data Anak"}</h3>
+      <p className="text-slate-500 text-sm mb-6 max-w-sm">{hasData ? "Coba sesuaikan kata kunci atau filter pencarian Anda." : "Silakan tambahkan profil anak Anda untuk mulai menggunakan fitur screening."}</p>
+      {!hasData && (
+        <button onClick={onAction} className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow active:scale-95">
+          <Plus size={18} /> Tambah Data Anak
         </button>
       )}
     </div>
   );
 }
 
-function DashboardSkeleton() {
+function Modal({ title, close, children }) {
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-container">
-        <div className="dashboard-skeleton">
-          <Activity size={48} strokeWidth={1.5} />
-          <p>Memuat dashboard...</p>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={close}></div>
+      <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 relative animate-in zoom-in-95 duration-200 shadow-2xl">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center rounded-t-2xl bg-slate-50/50">
+          <h3 className="font-bold text-lg text-slate-800 tracking-tight">{title}</h3>
+          <button type="button" onClick={close} className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 p-1.5 rounded-lg transition-colors border border-slate-200 shadow-sm"><X size={18}/></button>
         </div>
+        <div className="p-6 bg-white rounded-b-2xl">{children}</div>
       </div>
     </div>
   );
 }
 
-export default ParentDashboard;
+function Input({ label, error, ...props }) {
+  return (
+    <div className="space-y-1.5 min-w-0">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <input {...props} className={`w-full px-4 py-2.5 bg-slate-50 border ${error ? 'border-red-300 focus:border-red-500' : 'border-slate-200 focus:border-slate-500'} rounded-xl text-sm outline-none transition-all shadow-inner placeholder:text-slate-400`} />
+      {error && <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
+    </div>
+  );
+}
+
+function Select({ label, options, error, ...props }) {
+  return (
+    <div className="space-y-1.5 relative min-w-0">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <select {...props} className={`w-full px-4 py-2.5 bg-slate-50 border ${error ? 'border-red-300' : 'border-slate-200 focus:border-slate-500'} rounded-xl text-sm outline-none appearance-none cursor-pointer transition-all shadow-inner`}>
+        <option value="">Pilih</option>
+        {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+      </select>
+      <div className="absolute right-4 bottom-3 text-slate-400 pointer-events-none"><Menu size={14} /></div>
+      {error && <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
+    </div>
+  );
+}
+
+function NotificationPanel({ notifications, close, unreadCount, markAllAsRead, handleNotifClick, deleteNotification }) {
+  return (
+    <div className="absolute top-12 right-0 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 shadow-2xl">
+      <div className="p-4 bg-white border-b border-slate-100 font-bold text-sm flex justify-between items-center bg-slate-50/50">
+        <span className="text-slate-800">Notifikasi</span>
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && <button onClick={markAllAsRead} className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-100/50 px-2 py-1 rounded border border-blue-100 shadow-sm">Dibaca</button>}
+          <button onClick={close} className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100"><X size={18}/></button>
+        </div>
+      </div>
+      <div className="max-h-80 overflow-y-auto hide-scrollbar">
+        {notifications.length === 0 ? (
+          <div className="p-10 text-center text-slate-400 bg-slate-50/50">
+            <Bell size={28} className="mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">Belum ada notifikasi</p>
+          </div>
+        ) : (
+          notifications.map(n => (
+            <div key={n.id} onClick={() => handleNotifClick(n)} className={`p-4 border-b border-slate-50 transition-colors cursor-pointer flex gap-3 group ${!n.is_read ? 'bg-blue-50/30 hover:bg-blue-50' : 'hover:bg-slate-50'}`}>
+              <div className={`mt-0.5 shrink-0 ${!n.is_read ? 'text-blue-500' : 'text-slate-400'}`}><Bell size={16} /></div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm ${!n.is_read ? 'font-bold text-slate-800' : 'font-medium text-slate-600'} truncate`}>{n.title}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{n.message}</p>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded hover:bg-slate-100 shrink-0"><Trash2 size={16}/></button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="flex h-screen bg-slate-50 animate-pulse overflow-hidden">
+      <div className="w-20 lg:w-64 bg-white border-r border-slate-200 hidden lg:block shrink-0"></div>
+      <div className="flex-1 min-w-0 h-full flex flex-col">
+        <div className="h-16 lg:h-20 bg-white border-b border-slate-200 shrink-0"></div>
+        <div className="flex-1 p-4 lg:p-8 space-y-8 overflow-y-auto hide-scrollbar">
+          <div className="space-y-3"><div className="h-8 bg-slate-200 rounded-lg w-64"></div><div className="h-4 bg-slate-200 rounded w-96"></div></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0"><div className="h-28 bg-white rounded-xl border border-slate-200"></div><div className="h-28 bg-white rounded-xl border border-slate-200"></div><div className="h-28 bg-white rounded-xl border border-slate-200"></div></div>
+          <div className="h-96 bg-white rounded-xl border border-slate-200 shrink-0"></div>
+        </div>
+      </div>
+    </div>
+  );
+}

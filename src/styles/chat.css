@@ -35,24 +35,62 @@
 }
 
 .chat-sidebar__header {
-  padding: 16px 20px;
+  padding: 20px;
   border-bottom: 1px solid var(--chat-border);
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  justify-content: center; /* Untuk Desktop agar di tengah */
+  position: relative; /* Sangat penting untuk layout mobile nanti */
 }
 
-.chat-sidebar__back {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--chat-text-muted);
+/* Tombol back versi mobile (hanya ikon) */
+.chat-sidebar__back-mobile {
+  display: none; /* Sembunyikan secara default di desktop */
   background: none;
   border: none;
+  color: var(--chat-text-muted);
   cursor: pointer;
-  font-size: 13px;
   padding: 0;
-  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.chat-sidebar__back-mobile:hover {
+  color: var(--chat-primary);
+}
+
+.chat-sidebar__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* ── Sidebar Footer (Tombol Kiri Bawah) ── */
+.chat-sidebar__footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-sidebar-bg);
+}
+
+.chat-sidebar__back-desktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--chat-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+/* Efek Hover warna merah menyala */
+.chat-sidebar__back-desktop:hover {
+  background-color: #fee2e2; /* Latar merah muda */
+  color: #ef4444; /* Teks merah tegas */
+  transform: translateX(4px); /* Animasi bergeser sedikit ke kanan */
 }
 
 .chat-sidebar__back:hover {
@@ -244,16 +282,34 @@
   font-weight: 500;
 }
 
-/* ── Bubble Chat ── */
 .chat-msg {
   display: flex;
   max-width: 85%;
   width: fit-content;
+  min-width: 0; /* PENTING: Mencegah error layout terdorong / teks vertikal */
 }
 
 @media screen and (max-width: 768px) {
   .chat-msg {
     max-width: 90%; 
+  }
+  .chat-sidebar__header {
+    justify-content: flex-start; /* Kembalikan panah ke kiri */
+  }
+  .chat-sidebar__back-mobile {
+    display: block; 
+    position: relative;
+    z-index: 10; /* Pastikan tombol panah bisa diklik */
+  }
+  .chat-sidebar__title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max-content;
+  }
+  .chat-sidebar__footer {
+    display: none; /* Sembunyikan tombol kembali yang di bawah pada mobile */
   }
 }
 
@@ -274,12 +330,38 @@
   max-width: 100%; 
   word-break: break-word; 
   overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
-
 .chat-msg--me .chat-msg__bubble {
   background: var(--chat-primary);
   color: #fff;
   border-bottom-right-radius: 4px;
+}
+
+.chat-msg--other .chat-msg__bubble {
+  background: #fff;
+  color: var(--chat-text-main);
+  border: 1px solid var(--chat-border);
+  border-bottom-left-radius: 4px;
+}
+/* Mengatur gambar di dalam chat agar proporsional dan tidak gepeng */
+.chat-msg__media {
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chat-msg__media img,
+.chat-msg__media video {
+  max-width: 260px;
+  width: 100%;
+  height: auto !important; /* Mencegah gambar memanjang/gepeng */
+  max-height: 280px;
+  object-fit: cover;
+  display: block;
 }
 
 .chat-msg--other .chat-msg__bubble {
@@ -471,4 +553,90 @@
 .chat-send-btn {
   min-width: 44px;
   min-height: 44px;
+}
+.chat-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.chat-lightbox__close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  transition: background 0.2s;
+}
+
+.chat-lightbox__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.6); /* Latar belakang digelapkan agar kontras dengan foto putih */
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 56px;  /* Diperbesar dari 44px */
+  height: 56px; /* Diperbesar dari 44px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.chat-lightbox__close:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+}
+
+/* Memaksa ukuran ikon X di dalam tombol ini agar jauh lebih besar */
+.chat-lightbox__close svg {
+  width: 32px !important;
+  height: 32px !important;
+  stroke-width: 2.5 !important;
+}
+
+/* Penyesuaian khusus untuk layar HP agar posisinya pas */
+@media screen and (max-width: 768px) {
+  .chat-lightbox__close {
+    top: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+  .chat-lightbox__close svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+.chat-lightbox__img {
+  max-width: 95%;
+  max-height: 90vh;
+  object-fit: contain; /* Memastikan gambar full tidak terpotong */
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
