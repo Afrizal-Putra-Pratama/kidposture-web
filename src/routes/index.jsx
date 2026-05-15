@@ -4,7 +4,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import ParentDashboard from '../pages/ParentDashboard.jsx';
 import ChildrenPage from '../pages/ChildrenPage.jsx';
 import ChildScreeningsPage from '../pages/ChildScreeningsPage.jsx';
-import NewChildPage from '../pages/NewChildPage.jsx';
+
 import NewScreeningPage from '../pages/NewScreeningPage.jsx';
 import ScreeningDetailPage from '../pages/ScreeningDetailPage.jsx';
 import EducationPage from '../pages/EducationPage.jsx';
@@ -22,7 +22,6 @@ export const router = createBrowserRouter([
   // Parent
   { path: '/', element: <ParentDashboard /> },
   { path: '/children', element: <ChildrenPage /> },
-  { path: '/children/new', element: <NewChildPage /> },
   { path: '/children/:childId/screenings', element: <ChildScreeningsPage /> },
   { path: '/children/:childId/screenings/new', element: <NewScreeningPage /> },
   { path: '/screenings/:screeningId', element: <ScreeningDetailPage /> },

@@ -9,7 +9,7 @@ import EducationPage from "./pages/EducationPage.jsx";
 import ArticleDetailPage from "./pages/ArticleDetailPage.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/auth/LoginPage.jsx";
-import NewChildPage from "./pages/NewChildPage.jsx";
+
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 
 // Landing pages
@@ -132,15 +132,6 @@ function App() {
           element={
             <ProtectedRoute>
               <ChildrenPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/children/new"
-          element={
-            <ProtectedRoute>
-              <NewChildPage />
             </ProtectedRoute>
           }
         />
