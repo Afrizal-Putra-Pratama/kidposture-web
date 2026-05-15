@@ -17,7 +17,7 @@ const tabs = [
     value: "expert",
   },
   {
-    label: "Staff Team",
+    label: "Staff Mahasiswa",
     href: "/team/staff",
     value: "staff",
   },

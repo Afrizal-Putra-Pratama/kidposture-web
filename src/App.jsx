@@ -14,6 +14,8 @@ import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 
 // Landing pages
 import LandingPage from "./pages/LandingPage.jsx";
+
+// Team pages
 import TeamPage from "./pages/TeamPage.jsx";
 import TeamExpertPage from "./pages/TeamExpertPage.jsx";
 import TeamStaffPage from "./pages/TeamStaffPage.jsx";

@@ -12,12 +12,10 @@ import {
   X,
   Search,
   Map,
-  ExternalLink,
   Sparkles,
 } from "lucide-react";
 
 import api from "../utils/axios";
-import "../styles/landing.css";
 
 function useInView(options = {}) {
   const ref = useRef(null);
@@ -108,6 +106,76 @@ export default function LandingPage() {
     },
   ];
 
+  const fallbackPhysios = [
+    {
+      id: "demo-physio-1",
+      name: "Arif Kurniawan, SST. FT, Ftr.",
+      city: "Surakarta",
+      specialty: "Pediatrik dan Neurodevelopmental",
+      is_verified: true,
+      consultation_fee: 10000,
+    },
+    {
+      id: "demo-physio-2",
+      name: "Fisio Anak A",
+      city: "Pontianak",
+      specialty: "Fisioterapi Anak",
+      is_verified: true,
+      consultation_fee: null,
+    },
+    {
+      id: "demo-physio-3",
+      name: "Taqiyyah Nurul 'Azzah",
+      city: "Surakarta",
+      specialty: "Fisioterapi Anak",
+      is_verified: true,
+      consultation_fee: 100000,
+    },
+  ];
+
+  const fallbackArticles = [
+    {
+      id: "demo-article-1",
+      slug: "mengenalkan-pentingnya-menjaga-postur-tubuh-anak",
+      title: "Mengenalkan Pentingnya Menjaga Postur Tubuh pada Anak",
+      excerpt:
+        "Menjaga postur tubuh harus dilakukan sejak belia. Kebiasaan buruk seperti bermain gawai terlalu lama dapat memengaruhi postur anak.",
+      category: { name: "Pentingnya Postur Tubuh" },
+    },
+    {
+      id: "demo-article-2",
+      slug: "prosedur-pemeriksaan-postur-anak",
+      title: "Prosedur Pemeriksaan CT Scan",
+      excerpt:
+        "Pemeriksaan dapat membantu memahami kondisi tubuh dan menentukan langkah pencegahan yang tepat.",
+      category: { name: "Latihan Postur" },
+    },
+    {
+      id: "demo-article-3",
+      slug: "kebiasaan-penyebab-radang-sendi",
+      title: "5 Kebiasaan Penyebab Radang Sendi yang Perlu Diwaspadai",
+      excerpt:
+        "Kebiasaan sehari-hari dapat memengaruhi kesehatan muskuloskeletal anak jika tidak diperhatikan sejak dini.",
+      category: { name: "Informasi Kesehatan" },
+    },
+    {
+      id: "demo-article-4",
+      slug: "waspadai-kelainan-tulang",
+      title: "Waspadai 4 Kelainan Tulang yang Umum Menyerang Anak",
+      excerpt:
+        "Setiap orang tua pasti berharap anaknya tumbuh dan berkembang dengan sempurna secara fisik, mental, dan sosial.",
+      category: { name: "Pentingnya Postur Tubuh" },
+    },
+    {
+      id: "demo-article-5",
+      slug: "radiologi-dan-perannya",
+      title: "Radiologi dan Perannya Bagi Pemeriksaan Kesehatan",
+      excerpt:
+        "Dalam melakukan diagnosis, dokter seringkali membutuhkan berbagai tindakan atau pemeriksaan tambahan.",
+      category: { name: "Tips Keseharian" },
+    },
+  ];
+
   const marqueeFeatures = [...features, ...features, ...features];
 
   useEffect(() => {
@@ -133,27 +201,10 @@ export default function LandingPage() {
     setMobileMenuOpen(false);
   };
 
-  const openInGoogleMaps = (latitude, longitude, clinicName) => {
-    if (!latitude || !longitude) {
-      alert("Koordinat klinik tidak tersedia");
-      return;
-    }
+  const physioSource = physios.length > 0 ? physios : fallbackPhysios;
+  const articleSource = articles.length > 0 ? articles.slice(0, 6) : fallbackArticles;
 
-    const lat = Number(latitude);
-    const lng = Number(longitude);
-
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      alert("Koordinat klinik tidak valid");
-      return;
-    }
-
-    const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
-    const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
-
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const filteredPhysios = physios.filter((p) => {
+  const filteredPhysios = physioSource.filter((p) => {
     const matchName = p.name?.toLowerCase().includes(searchPhysio.toLowerCase());
 
     const matchCity = filterCity
@@ -167,12 +218,11 @@ export default function LandingPage() {
     return matchName && matchCity && matchSpec;
   });
 
-  const cities = [...new Set(physios.map((p) => p.city).filter(Boolean))];
-  const specialties = [
-    ...new Set(physios.map((p) => p.specialty).filter(Boolean)),
-  ];
+  const cities = [...new Set(physioSource.map((p) => p.city).filter(Boolean))];
 
-  const articleList = articles.slice(0, 6);
+  const specialties = [
+    ...new Set(physioSource.map((p) => p.specialty).filter(Boolean)),
+  ];
 
   const fadeClass = (inView) =>
     `transition-all duration-1000 ease-out transform ${
@@ -196,22 +246,14 @@ export default function LandingPage() {
           animation-play-state: paused;
         }
 
-        .team-dropdown-menu {
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(8px);
-          transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
-        }
-
-        .team-dropdown:hover .team-dropdown-menu,
-        .team-dropdown:focus-within .team-dropdown-menu {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
+        .bg-clip-text::selection {
+          background-color: rgba(59, 130, 246, 0.3);
+          text-fill-color: #1e3a8a;
+          -webkit-text-fill-color: #1e3a8a;
+          color: #1e3a8a;
         }
       `}</style>
 
-      {/* NAVIGASI */}
       <header className="fixed top-0 inset-x-0 z-50 bg-slate-50/80 backdrop-blur-md border-b border-slate-200 transition-all">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
           <div
@@ -257,17 +299,19 @@ export default function LandingPage() {
               Edukasi
             </button>
 
-            <div className="relative team-dropdown">
+            <div className="relative group">
               <button
                 type="button"
                 onClick={() => navigate("/team")}
                 className="inline-flex items-center gap-1 hover:text-blue-800 transition-colors"
               >
                 Tim Kami
-                <span className="text-xs">▾</span>
+                <span className="text-xs transition-transform group-hover:rotate-180">
+                  ▾
+                </span>
               </button>
 
-              <div className="team-dropdown-menu absolute top-[calc(100%+16px)] left-1/2 -translate-x-1/2 min-w-[210px] rounded-2xl border border-blue-100 bg-white p-2 shadow-xl shadow-blue-900/10">
+              <div className="invisible absolute left-1/2 top-[calc(100%+16px)] min-w-[210px] -translate-x-1/2 translate-y-2 rounded-2xl border border-blue-100 bg-white p-2 opacity-0 shadow-xl shadow-blue-900/10 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                 <button
                   type="button"
                   onClick={() => navigate("/team")}
@@ -320,7 +364,7 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl flex flex-col p-6">
+          <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl flex flex-col p-6 animate-in slide-in-from-top-2">
             <div className="flex flex-col gap-6 text-xl font-bold tracking-tight mb-8">
               <button
                 onClick={() => scrollToSection("features")}
@@ -400,7 +444,6 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* HERO SECTION */}
       <section className="pt-32 pb-20 lg:pt-40 lg:pb-24 px-6 text-center overflow-hidden">
         <div className={`max-w-4xl mx-auto ${fadeClass(true)}`}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 mb-8 shadow-sm tracking-wide uppercase">
@@ -427,22 +470,19 @@ export default function LandingPage() {
               onClick={() => navigate("/login")}
               className="w-full sm:w-auto bg-blue-800 text-white px-8 py-3.5 rounded-xl font-bold text-[15px] hover:bg-blue-900 transition-colors active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
             >
-              Mulai Screening
-              <ArrowRight size={18} />
+              Mulai Screening <ArrowRight size={18} />
             </button>
 
             <button
               onClick={() => navigate("/physiotherapists/map")}
               className="w-full sm:w-auto bg-white border border-slate-200 text-slate-700 px-8 py-3.5 rounded-xl font-bold text-[15px] hover:bg-slate-100 transition-colors active:scale-95 flex items-center justify-center gap-2 shadow-sm"
             >
-              <Map size={18} />
-              Cari Fisioterapis
+              <Map size={18} /> Cari Fisioterapis
             </button>
           </div>
         </div>
       </section>
 
-      {/* FITUR HIGHLIGHT */}
       <section
         ref={featureRef}
         id="features"
@@ -474,7 +514,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CARA KERJA */}
       <section
         ref={howRef}
         id="how-it-works"
@@ -520,235 +559,210 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FISIOTERAPIS DIRECTORY */}
-      {physios.length > 0 && (
-        <section
-          ref={physioRef}
-          id="physiotherapists"
-          className={`py-24 lg:py-32 px-6 border-b border-slate-200 bg-slate-50 ${fadeClass(
-            physioInView
-          )}`}
-        >
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
-                  Direktori
-                </span>
+      <section
+        ref={physioRef}
+        id="physiotherapists"
+        className={`py-24 lg:py-32 px-6 border-b border-slate-200 bg-slate-50 ${fadeClass(
+          physioInView
+        )}`}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
+                Direktori
+              </span>
 
-                <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
-                  Fisioterapis{" "}
-                  <em className="italic text-blue-800">terpercaya.</em>
-                </h2>
+              <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
+                Fisioterapis{" "}
+                <em className="italic text-blue-800">terpercaya.</em>
+              </h2>
 
-                <p className="text-[17px] text-slate-500 font-medium">
-                  Spesialis yang siap membantu screening postur anak Anda.
-                </p>
-              </div>
-
-              <button
-                onClick={() => navigate("/physiotherapists/map")}
-                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 px-5 py-3 rounded-xl text-[14px] font-bold hover:bg-slate-100 transition-colors active:scale-95 shrink-0 shadow-sm"
-              >
-                <Map size={16} />
-                Lihat di Peta
-              </button>
+              <p className="text-[17px] text-slate-500 font-medium">
+                Spesialis yang siap membantu screening postur anak Anda.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                />
+            <button
+              onClick={() => navigate("/physiotherapists/map")}
+              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 px-5 py-3 rounded-xl text-[14px] font-bold hover:bg-slate-100 transition-colors active:scale-95 shrink-0 shadow-sm"
+            >
+              <Map size={16} /> Lihat di Peta
+            </button>
+          </div>
 
-                <input
-                  type="text"
-                  placeholder="Cari nama klinik/fisio..."
-                  value={searchPhysio}
-                  onChange={(e) => setSearchPhysio(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium transition-colors shadow-sm"
-                />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
 
-              <select
-                value={filterCity}
-                onChange={(e) => setFilterCity(e.target.value)}
-                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
-              >
-                <option value="">Semua Kota</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filterSpecialty}
-                onChange={(e) => setFilterSpecialty(e.target.value)}
-                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
-              >
-                <option value="">Semua Spesialisasi</option>
-                {specialties.map((spec) => (
-                  <option key={spec} value={spec}>
-                    {spec}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                placeholder="Cari nama klinik/fisio..."
+                value={searchPhysio}
+                onChange={(e) => setSearchPhysio(e.target.value)}
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium transition-colors shadow-sm"
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPhysios.slice(0, 6).map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col hover:border-blue-800/40 transition-colors cursor-pointer group shadow-sm"
-                  onClick={() => navigate(`/physiotherapists/${p.id}`)}
-                >
-                  <div className="flex gap-4 mb-6 items-start">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-2xl font-bold text-slate-300">
-                      {p.photo_url || p.photo ? (
-                        <img
-                          src={p.photo_url || p.photo}
-                          alt={p.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        p.name?.charAt(0) || "F"
-                      )}
-                    </div>
+            <select
+              value={filterCity}
+              onChange={(e) => setFilterCity(e.target.value)}
+              className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
+            >
+              <option value="">Semua Kota</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
 
-                    <div className="min-w-0 pt-1">
-                      <h3 className="font-bold text-slate-900 text-lg truncate group-hover:text-blue-800 transition-colors">
-                        {p.name}
-                      </h3>
+            <select
+              value={filterSpecialty}
+              onChange={(e) => setFilterSpecialty(e.target.value)}
+              className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
+            >
+              <option value="">Semua Spesialisasi</option>
+              {specialties.map((spec) => (
+                <option key={spec} value={spec}>
+                  {spec}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                      {p.is_verified && (
-                        <div className="flex items-center gap-1.5 text-emerald-700 mt-1.5 mb-2.5">
-                          <CheckCircle2 size={14} strokeWidth={2.5} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">
-                            Terverifikasi
-                          </span>
-                        </div>
-                      )}
-
-                      {p.specialty && (
-                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 rounded-lg text-[10px] font-bold uppercase tracking-wider truncate max-w-full">
-                          {p.specialty}
-                        </span>
-                      )}
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPhysios.slice(0, 6).map((p) => (
+              <div
+                key={p.id}
+                className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col hover:border-blue-800/40 transition-colors cursor-pointer group shadow-sm"
+                onClick={() =>
+                  String(p.id).startsWith("demo")
+                    ? null
+                    : navigate(`/physiotherapists/${p.id}`)
+                }
+              >
+                <div className="flex gap-4 mb-6 items-start">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-2xl font-bold text-slate-300">
+                    {p.photo_url || p.photo ? (
+                      <img
+                        src={p.photo_url || p.photo}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      p.name?.charAt(0) || "F"
+                    )}
                   </div>
 
-                  <div className="flex flex-col gap-3 mt-auto">
-                    <div className="flex items-center gap-2.5 text-[14px] font-medium text-slate-500">
-                      <MapPin size={16} className="text-slate-400" />
-                      <span className="truncate">
-                        {p.city || "Lokasi tidak tersedia"}
-                      </span>
-                    </div>
+                  <div className="min-w-0 pt-1">
+                    <h3 className="font-bold text-slate-900 text-lg truncate group-hover:text-blue-800 transition-colors">
+                      {p.name}
+                    </h3>
 
-                    {p.consultation_fee && (
-                      <div className="flex justify-between items-center pt-4 border-t border-slate-100 text-[14px]">
-                        <span className="text-slate-500 font-medium">
-                          Tarif Konsultasi
+                    {p.is_verified && (
+                      <div className="flex items-center gap-1.5 text-emerald-700 mt-1.5 mb-2.5">
+                        <CheckCircle2 size={14} strokeWidth={2.5} />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          Terverifikasi
                         </span>
-
-                        <strong className="text-slate-900 font-extrabold">
-                          Rp{" "}
-                          {Number(p.consultation_fee).toLocaleString("id-ID")}
-                        </strong>
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openInGoogleMaps(
-                          p.latitude,
-                          p.longitude,
-                          p.clinic_name || p.name
-                        );
-                      }}
-                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 hover:bg-blue-100 transition-colors"
-                    >
-                      <MapPin size={16} />
-                      Buka Maps
-                      <ExternalLink size={14} />
-                    </button>
+                    {p.specialty && (
+                      <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 rounded-lg text-[10px] font-bold uppercase tracking-wider truncate max-w-full">
+                        {p.specialty}
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
+
+                <div className="flex flex-col gap-3 mt-auto">
+                  <div className="flex items-center gap-2.5 text-[14px] font-medium text-slate-500">
+                    <MapPin size={16} className="text-slate-400" />
+                    <span className="truncate">
+                      {p.city || "Lokasi tidak tersedia"}
+                    </span>
+                  </div>
+
+                  {p.consultation_fee && (
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100 text-[14px]">
+                      <span className="text-slate-500 font-medium">
+                        Tarif Konsultasi
+                      </span>
+
+                      <strong className="text-slate-900 font-extrabold">
+                        Rp {Number(p.consultation_fee).toLocaleString("id-ID")}
+                      </strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="education"
+        ref={articleRef}
+        className={`py-24 lg:py-32 px-6 bg-white ${fadeClass(articleInView)}`}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
+                Edukasi
+              </span>
+
+              <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
+                Artikel postur{" "}
+                <em className="italic text-blue-800">untuk orang tua.</em>
+              </h2>
             </div>
 
-            {filteredPhysios.length === 0 && (
-              <p className="mt-10 text-center text-slate-500 font-semibold">
-                Tidak ada fisioterapis yang cocok dengan filter Anda.
-              </p>
-            )}
+            <button
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-1.5 text-[15px] font-bold text-slate-700 hover:text-blue-800 transition-colors"
+            >
+              Baca semua <ChevronRight size={18} />
+            </button>
           </div>
-        </section>
-      )}
 
-      {/* ARTIKEL EDUKASI */}
-      {articleList.length > 0 && (
-        <section
-          id="education"
-          ref={articleRef}
-          className={`py-24 lg:py-32 px-6 bg-white ${fadeClass(articleInView)}`}
-        >
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
-                  Edukasi
+          <div className="grid md:grid-cols-3 gap-6">
+            {articleSource.map((article) => (
+              <article
+                key={article.id}
+                onClick={() =>
+                  String(article.id).startsWith("demo")
+                    ? null
+                    : navigate(`/education/${article.slug}`)
+                }
+                className="bg-slate-50 p-8 rounded-3xl border border-slate-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
+              >
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 border border-blue-200 uppercase tracking-widest mb-5 w-max px-3 py-1.5 rounded-lg">
+                  {article.category?.name || "Edukasi"}
                 </span>
 
-                <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
-                  Artikel postur{" "}
-                  <em className="italic text-blue-800">untuk orang tua.</em>
-                </h2>
-              </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug line-clamp-2 group-hover:text-blue-800 transition-colors">
+                  {article.title}
+                </h3>
 
-              <button
-                onClick={() => navigate("/login")}
-                className="flex items-center gap-1.5 text-[15px] font-bold text-slate-700 hover:text-blue-800 transition-colors"
-              >
-                Baca semua
-                <ChevronRight size={18} />
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {articleList.map((article) => (
-                <article
-                  key={article.id}
-                  onClick={() => navigate(`/education/${article.slug}`)}
-                  className="bg-slate-50 p-8 rounded-3xl border border-slate-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
-                >
-                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 border border-blue-200 uppercase tracking-widest mb-5 w-max px-3 py-1.5 rounded-lg">
-                    {article.category?.name || "Edukasi"}
-                  </span>
-
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug line-clamp-2 hover:text-blue-800 transition-colors">
-                    {article.title}
-                  </h3>
-
-                  <p className="text-[15px] text-slate-500 font-medium leading-relaxed line-clamp-3 mb-2">
-                    {article.excerpt ||
-                      (article.content
-                        ? `${article.content.substring(0, 130)}…`
-                        : "")}
-                  </p>
-                </article>
-              ))}
-            </div>
+                <p className="text-[15px] text-slate-500 font-medium leading-relaxed line-clamp-3 mb-2">
+                  {article.excerpt ||
+                    (article.content
+                      ? `${article.content.substring(0, 130)}…`
+                      : "")}
+                </p>
+              </article>
+            ))}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* CTA BOTTOM */}
       <section
         ref={ctaRef}
         className={`py-24 lg:py-32 px-6 bg-blue-900 text-white text-center ${fadeClass(
@@ -761,8 +775,7 @@ export default function LandingPage() {
           </span>
 
           <h2 className="text-5xl md:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight mb-6 leading-[1.05]">
-            Beri ruang pada anak untuk{" "}
-            <br className="hidden md:block" />
+            Beri ruang pada anak untuk <br className="hidden md:block" />{" "}
             <em className="italic text-blue-300">tumbuh dengan sehat.</em>
           </h2>
 
@@ -789,7 +802,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="bg-slate-950 text-slate-400 py-16 px-6 font-medium">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8">
           <div className="md:col-span-6">
