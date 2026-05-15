@@ -50,11 +50,14 @@ function MessageBubble({ msg, isMe }) {
     // Wrapper w-full memastikan bubble memiliki ruang gerak horizontal yang cukup [cite: 437, 445]
     <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"} mb-1`}>
       <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[85%] sm:max-w-[75%]`}>
-        <div className={`px-4 py-2.5 text-[15px] leading-relaxed w-fit max-w-full rounded-2xl ${
-          isMe
-            ? "bg-blue-600 text-white rounded-tr-sm"
-            : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm"
-        }`}>
+        <div
+          className={`px-4 py-2.5 text-[15px] leading-relaxed w-fit max-w-full overflow-hidden rounded-2xl ${
+            isMe
+              ? "bg-blue-600 text-white rounded-tr-sm"
+              : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm"
+          }`}
+          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+        >
           {type === "image" && fileUrl && (
             <img
               src={fileUrl}
@@ -84,7 +87,7 @@ function MessageBubble({ msg, isMe }) {
           )}
 
           {/* Whitespace-pre-wrap menjaga spasi/enter, break-words mencegah overflow [cite: 430, 448] */}
-          {text && <span className="whitespace-pre-wrap break-words">{text}</span>}
+          {text && <span className="block whitespace-pre-wrap" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{text}</span>}
         </div>
         
         {/* Info waktu diletakkan di luar bubble agar desain lebih bersih [cite: 441, 449] */}
@@ -204,15 +207,27 @@ export default function PhysioChatPage() {
       if (activeConvIdRef.current !== conv.id) return;
 
       setMessages((prev) => {
-        const isDuplicate = prev.some((m) => !m._optimistic && m.id === newMsg.id);
-        if (isDuplicate) return prev;
+        // Kumpulkan semua ID nyata yang sudah ada
+        const existingIds = new Set(
+          prev.filter((m) => !m._optimistic).map((m) => String(m.id))
+        );
 
+        // Skip jika ID sudah ada (duplikat dari Pusher)
+        if (existingIds.has(String(newMsg.id))) return prev;
+
+        // Pesan dari diri sendiri → cari optimistic untuk di-replace
         if (String(newMsg.sender_id) === String(currentUser.id)) {
-          const hasOptimistic = prev.some((m) => m._optimistic);
-          if (hasOptimistic) return prev;
+          const optIdx = prev.findIndex((m) => m._optimistic);
+          if (optIdx !== -1) {
+            const next = [...prev];
+            next[optIdx] = { ...newMsg, _optimistic: false };
+            return next;
+          }
+          return [...prev, { ...newMsg, _optimistic: false }];
         }
 
-        return [...prev, newMsg];
+        // Pesan dari pasien → langsung tambahkan
+        return [...prev, { ...newMsg, _optimistic: false }];
       });
 
       setConversations((prevConvs) =>
@@ -544,8 +559,8 @@ export default function PhysioChatPage() {
                               <div className="h-px bg-slate-200 flex-1" />
                             </div>
                           )}
-                          <div className={`w-full mt-2 ${msg._optimistic ? "opacity-60" : "opacity-100"}`}>
-                            <MessageBubble msg={msg} isMe={isMe} />
+                          <div className={`flex w-full mt-2 ${isMe ? "justify-end" : "justify-start"} ${msg._optimistic ? "opacity-60" : "opacity-100"}`}>
+                             <MessageBubble msg={msg} isMe={isMe} />
                           </div>
                         </div>
                       );

@@ -261,13 +261,13 @@ export default function ChatPage() {
   }, []);
 
   /**
-   * openConversation — FIX REALTIME:
-   * 1. Unsubscribe channel lama SEBELUM subscribe yang baru
-   * 2. Subscribe Pusher dilakukan segera (tidak perlu tunggu getMessages selesai)
-   * 3. Pesan baru dari Pusher hanya diterima jika cocok dengan activeConvId (via ref)
+   * openConversation — REALTIME FIX:
+   * - Subscribe Pusher SEBELUM load history agar tidak ada gap pesan
+   * - Gunakan Set untuk track ID yg sudah ada (termasuk setelah optimistic di-replace)
+   * - Pesan dari fisio (lawan bicara) selalu masuk langsung
+   * - Pesan dari diri sendiri di-skip oleh Pusher karena sudah ada via optimistic+replace
    */
   const openConversation = useCallback(async (conv) => {
-    // Unsubscribe channel lama
     unsubscribeRef.current?.();
     unsubscribeRef.current = null;
 
@@ -276,28 +276,36 @@ export default function ChatPage() {
     setLoadingMsgs(true);
     setMessages([]);
 
-    // Subscribe Pusher dulu — agar tidak ada gap antara getMessages & subscribe
     const unsub = subscribeToConversation(conv.id, (newMsg) => {
-      // Hanya proses jika masih di conversation yang sama
       if (activeConvIdRef.current !== conv.id) return;
 
       setMessages((prev) => {
-        // Hindari duplikat: cek ID atau ganti optimistic message yang cocok
-        const isDuplicate = prev.some((m) => !m._optimistic && m.id === newMsg.id);
-        if (isDuplicate) return prev;
+        // Kumpulkan semua ID nyata (bukan optimistic) yang sudah ada
+        const existingIds = new Set(
+          prev.filter((m) => !m._optimistic).map((m) => String(m.id))
+        );
 
-        // Ganti optimistic message milik sender yang sama jika ada
-        // (pesan yang dikirim sendiri sudah ada sebagai optimistic)
-        const hasOptimistic = prev.some((m) => m._optimistic && String(m.sender_id) === String(newMsg.sender_id));
-        if (hasOptimistic && String(newMsg.sender_id) === String(currentUser.id)) {
-          // Biarkan handleSend yang replace optimistic — jangan tambahkan duplikat
-          return prev;
+        // Jika ID sudah ada → skip (duplikat dari Pusher)
+        if (existingIds.has(String(newMsg.id))) return prev;
+
+        // Jika pesan dari diri sendiri → cari optimistic yang matching untuk di-replace
+        if (String(newMsg.sender_id) === String(currentUser.id)) {
+          const optIdx = prev.findIndex((m) => m._optimistic);
+          if (optIdx !== -1) {
+            // Replace optimistic dengan data server dari Pusher
+            const next = [...prev];
+            next[optIdx] = { ...newMsg, _optimistic: false };
+            return next;
+          }
+          // Tidak ada optimistic → pesan baru (misal dari tab lain), tambahkan
+          return [...prev, { ...newMsg, _optimistic: false }];
         }
 
-        return [...prev, newMsg];
+        // Pesan dari lawan bicara (fisio) → langsung tambahkan
+        return [...prev, { ...newMsg, _optimistic: false }];
       });
 
-      // Update preview pesan terakhir di list conversation
+      // Update preview sidebar
       setConversations((prevConvs) =>
         prevConvs.map((c) =>
           c.id === conv.id
@@ -308,10 +316,8 @@ export default function ChatPage() {
     });
     unsubscribeRef.current = unsub;
 
-    // Load riwayat pesan
     try {
       const res = await getMessages(conv.id);
-      // Hanya set jika masih di conversation yang sama
       if (activeConvIdRef.current === conv.id) {
         setMessages(res?.data || res || []);
       }
@@ -357,9 +363,10 @@ export default function ChatPage() {
   };
 
   /**
-   * handleSend — FIX OPTIMISTIC:
-   * Menyimpan optimisticId unik dan menggantinya dengan pesan server yang benar,
-   * bukan mengganti SEMUA pesan optimistic.
+   * handleSend — OPTIMISTIC UI:
+   * 1. Tampilkan pesan langsung (optimistic) sebelum API selesai
+   * 2. Setelah API sukses, replace optimistic dengan data server
+   * 3. Pusher event untuk pesan sendiri akan di-skip karena ID sudah ada di state
    */
   const handleSend = async () => {
     const text = inputText.trim();
@@ -376,7 +383,6 @@ export default function ChatPage() {
         : "file"
       : "text";
 
-    // ID unik untuk pesan optimistic ini
     const optimisticId = `opt-${Date.now()}-${Math.random()}`;
 
     const optimistic = {
@@ -402,12 +408,12 @@ export default function ChatPage() {
       }
       const sent = res?.data || res;
 
-      // FIX: ganti hanya pesan dengan optimisticId yang cocok, bukan semua _optimistic
+      // Replace optimistic dengan data server — ID nyata sekarang ada di state
+      // sehingga Pusher event dengan ID yang sama akan di-skip (lihat openConversation)
       setMessages((prev) =>
         prev.map((m) => (m.id === optimisticId ? { ...sent, _optimistic: false } : m))
       );
 
-      // Update preview conversation di sidebar
       setConversations((prevConvs) =>
         prevConvs.map((c) =>
           c.id === activeConv.id

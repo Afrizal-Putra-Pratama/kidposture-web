@@ -21,33 +21,6 @@ export const getOrCreateConversation = (physioUserId) =>
 export const getMessages = (conversationId) =>
   api.get(`/conversations/${conversationId}/messages`).then((r) => r.data);
 
-export const sendMessage = (conversationId, content) =>
-  api.post(`/conversations/${conversationId}/messages`, { body: content }).then((r) => r.data);
-
-// Upload file/gambar dalam conversation
-export const sendFile = async (conversationId, file, caption = '') => {
-  const token   = localStorage.getItem('token');
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
-  const formData = new FormData();
-  formData.append('file', file);
-  if (caption) formData.append('body', caption);
-
-  const res = await fetch(`${baseUrl}/conversations/${conversationId}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'ngrok-skip-browser-warning': 'true',
-      // Jangan set Content-Type — biar browser set boundary multipart otomatis
-    },
-    body: formData,
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw data;
-  return data;
-};
-
 // ─── Pusher Singleton ─────────────────────────────────────────
 // Satu instance Pusher dipakai seluruh app agar tidak ada koneksi duplikat.
 // Instance di-reset jika token berubah (logout/login).
@@ -72,23 +45,72 @@ export function getPusherInstance() {
   pusherInstance = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
     cluster:      import.meta.env.VITE_PUSHER_APP_CLUSTER,
     forceTLS:     true,
-    authEndpoint: `${appUrl}/broadcasting/auth`,
+    authEndpoint: `${baseUrl}/broadcasting/auth`, // pakai /api prefix agar Sanctum token dipakai
     auth: {
       headers: {
-        Authorization:             `Bearer ${token}`,
-        Accept:                    'application/json',
+        Authorization:                `Bearer ${token}`,
+        Accept:                       'application/json',
         'ngrok-skip-browser-warning': 'true',
       },
     },
   });
 
-  // Log koneksi untuk debugging — aman dihapus di production
-  pusherInstance.connection.bind('connected',    () => console.log('[Pusher] Connected'));
+  pusherInstance.connection.bind('connected',    () => console.log('[Pusher] Connected, socket_id:', pusherInstance.connection.socket_id));
   pusherInstance.connection.bind('disconnected', () => console.log('[Pusher] Disconnected'));
   pusherInstance.connection.bind('error',        (err) => console.error('[Pusher] Error:', err));
 
   return pusherInstance;
 }
+
+// ─── Ambil socket_id dari Pusher ──────────────────────────────
+// WAJIB dikirim sebagai header X-Socket-ID ke backend.
+// Tanpa ini, toOthers() di Laravel tidak tahu siapa pengirimnya
+// dan bisa skip SEMUA penerima termasuk lawan bicara.
+function getSocketId() {
+  try {
+    return getPusherInstance()?.connection?.socket_id || null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Kirim pesan teks ─────────────────────────────────────────
+export const sendMessage = (conversationId, content) => {
+  const socketId = getSocketId();
+  return api.post(
+    `/conversations/${conversationId}/messages`,
+    { body: content },
+    { headers: socketId ? { 'X-Socket-ID': socketId } : {} }
+  ).then((r) => r.data);
+};
+
+// ─── Upload file/gambar dalam conversation ────────────────────
+export const sendFile = async (conversationId, file, caption = '') => {
+  const token    = localStorage.getItem('token');
+  const baseUrl  = import.meta.env.VITE_API_BASE_URL || '';
+  const socketId = getSocketId();
+
+  const formData = new FormData();
+  formData.append('file', file);
+  if (caption) formData.append('body', caption);
+
+  const headers = {
+    Authorization:                `Bearer ${token}`,
+    'ngrok-skip-browser-warning': 'true',
+    // Jangan set Content-Type — biar browser set boundary multipart otomatis
+  };
+  if (socketId) headers['X-Socket-ID'] = socketId;
+
+  const res = await fetch(`${baseUrl}/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+};
 
 /**
  * Subscribe ke channel conversation private.
@@ -111,14 +133,21 @@ export function subscribeToConversation(conversationId, onMessage) {
 
   const channel = pusher.subscribe(channelName);
 
-  // Tangani dua kemungkinan nama event (MessageSent atau message.sent)
+  // Laravel default broadcast as "App\Events\MessageSent" tapi broadcastAs() bisa override.
+  // Kita listen semua kemungkinan nama event.
   const handler = (data) => {
+    console.log('[Pusher] Event diterima:', data);
     const msg = data?.message ?? data;
     if (msg && (msg.id || msg.body)) onMessage(msg);
   };
 
-  channel.bind('MessageSent',  handler);
-  channel.bind('message.sent', handler);
+  channel.bind('MessageSent',              handler); // jika pakai broadcastAs('MessageSent')
+  channel.bind('message.sent',             handler); // alternatif snake_case
+  channel.bind('App\\Events\\MessageSent', handler); // Laravel default tanpa broadcastAs
+
+  channel.bind('pusher:subscription_succeeded', () => {
+    console.log('[Pusher] Subscribed ke channel:', channelName);
+  });
 
   channel.bind('pusher:subscription_error', (status) => {
     console.error(`[Pusher] Gagal subscribe channel ${channelName}:`, status);
