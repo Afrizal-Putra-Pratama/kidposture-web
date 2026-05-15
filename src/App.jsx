@@ -11,12 +11,13 @@ import ParentDashboard from "./pages/ParentDashboard.jsx";
 import LoginPage from "./pages/auth/LoginPage.jsx";
 import NewChildPage from "./pages/NewChildPage.jsx";
 import ParentProfilePage from "./pages/ParentProfilePage.jsx";
-import TeamDetailPage from "./pages/TeamDetailPage.jsx";
+
 // Landing pages
 import LandingPage from "./pages/LandingPage.jsx";
 import TeamPage from "./pages/TeamPage.jsx";
 import TeamExpertPage from "./pages/TeamExpertPage.jsx";
 import TeamStaffPage from "./pages/TeamStaffPage.jsx";
+import TeamDetailPage from "./pages/TeamDetailPage.jsx";
 
 // Physio lama
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
@@ -76,13 +77,16 @@ function App() {
       <Routes>
         {/* Public Landing Routes */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* Team Routes */}
         <Route path="/team" element={<TeamPage />} />
         <Route path="/team/expert" element={<TeamExpertPage />} />
         <Route path="/team/staff" element={<TeamStaffPage />} />
         <Route path="/team/:slug" element={<TeamDetailPage />} />
 
         {/* Halaman Peta Fisioterapis Public */}
-        <Route path="/map" element={<PhysioMapPage />} />
+        <Route path="/physiotherapists/map" element={<PhysioMapPage />} />
+        <Route path="/map" element={<Navigate to="/physiotherapists/map" replace />} />
 
         {/* Public Auth Routes */}
         <Route path="/login" element={<LoginPage />} />

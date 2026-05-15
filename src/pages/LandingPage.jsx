@@ -1,26 +1,22 @@
 ﻿import { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Activity,
-  Users,
   BookOpen,
   ArrowRight,
   MapPin,
   ChevronRight,
   HeartHandshake,
-  Brain,
-  ShieldCheck,
   CheckCircle2,
-  Zap,
-  UserCheck,
-  ChevronLeft,
+  Menu,
+  X,
   Search,
   Map,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 
 import api from "../utils/axios";
-import PublicNavbar from "../components/PublicNavbar";
 import "../styles/landing.css";
 
 function useInView(options = {}) {
@@ -38,7 +34,7 @@ function useInView(options = {}) {
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.15, ...options }
+      { threshold: 0.12, ...options }
     );
 
     observer.observe(node);
@@ -49,110 +45,70 @@ function useInView(options = {}) {
   return [ref, inView];
 }
 
-function LandingPage() {
+export default function LandingPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [physios, setPhysios] = useState([]);
   const [articles, setArticles] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const sliderIntervalRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [searchPhysio, setSearchPhysio] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterSpecialty, setFilterSpecialty] = useState("");
 
-  const features = [
-    {
-      icon: Activity,
-      title: "Deteksi Postur AI",
-      description:
-        "Analisis postur anak dengan kecerdasan buatan, hasil screening dalam hitungan detik.",
-    },
-    {
-      icon: Users,
-      title: "Konsultasi Fisioterapis",
-      description:
-        "Terhubung dengan fisioterapis anak terverifikasi untuk rekomendasi yang lebih personal.",
-    },
-    {
-      icon: BookOpen,
-      title: "Edukasi Terpercaya",
-      description:
-        "Konten edukasi yang disusun bersama fisioterapis, mudah dipahami orang tua.",
-    },
-  ];
-
-  const whyCards = [
-    {
-      icon: Brain,
-      title: "Pengaruh ke tumbuh kembang",
-      text: "Postur yang kurang baik dapat memengaruhi perkembangan tulang, otot, dan kepercayaan diri anak.",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Deteksi lebih dini",
-      text: "Semakin dini terdeteksi, semakin mudah dicegah sebelum menimbulkan keluhan nyeri atau kelainan bentuk.",
-    },
-    {
-      icon: HeartHandshake,
-      title: "Peran orang tua & fisio",
-      text: "Kolaborasi orang tua dan fisioterapis membantu anak membangun kebiasaan postur yang sehat.",
-    },
-  ];
+  const [featureRef, featureInView] = useInView();
+  const [howRef, howInView] = useInView();
+  const [physioRef, physioInView] = useInView();
+  const [articleRef, articleInView] = useInView();
+  const [ctaRef, ctaInView] = useInView();
 
   const howSteps = [
     {
       title: "Foto postur anak",
-      text: "Orang tua mengambil foto postur anak sesuai panduan aplikasi dari berbagai sudut.",
+      text: "Ambil foto postur anak dari berbagai sudut sesuai dengan panduan visual di aplikasi.",
     },
     {
       title: "Analisis oleh AI",
-      text: "Sistem AI Posturely menganalisis sudut dan simetri tubuh anak secara otomatis.",
+      text: "Kecerdasan buatan kami akan langsung memetakan sudut dan mendeteksi asimetri tubuh.",
     },
     {
-      title: "Hasil & ringkasan",
-      text: "Orang tua melihat skor postur, kategori risiko, dan ringkasan mudah dibaca dalam dashboard.",
+      title: "Hasil & Ringkasan",
+      text: "Dapatkan skor postur, kategori risiko, dan ringkasan kondisi yang mudah dipahami.",
     },
     {
-      title: "Rekomendasi & rujukan",
-      text: "Jika perlu, orang tua dapat merujuk ke fisioterapis untuk penilaian lebih lanjut dan program latihan.",
+      title: "Tindakan Lanjutan",
+      text: "Gunakan hasil tersebut untuk berlatih di rumah atau rujukan ke fisioterapis ahli.",
     },
   ];
 
-  const parentsItems = [
-    { icon: CheckCircle2, text: "Screening postur anak berkala dengan AI" },
-    { icon: CheckCircle2, text: "Pantau riwayat hasil screening setiap anak" },
+  const features = [
     {
-      icon: CheckCircle2,
-      text: "Dapatkan rekomendasi aktivitas dari fisioterapis",
+      icon: <Activity size={24} strokeWidth={1.5} />,
+      color: "text-blue-800",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      title: "Deteksi AI Instan",
+      desc: "Unggah foto anak dan biarkan AI menganalisis sudut simetri tubuh dalam hitungan detik. Mudah dan akurat.",
     },
     {
-      icon: CheckCircle2,
-      text: "Rujuk langsung ke fisioterapis anak terdekat",
+      icon: <HeartHandshake size={24} strokeWidth={1.5} />,
+      color: "text-emerald-700",
+      bg: "bg-emerald-50",
+      border: "border-emerald-200",
+      title: "Terhubung Ahli",
+      desc: "Kirim hasil screening langsung ke fisioterapis anak terverifikasi di kota Anda untuk penanganan lebih lanjut.",
+    },
+    {
+      icon: <BookOpen size={24} strokeWidth={1.5} />,
+      color: "text-amber-700",
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+      title: "Edukasi Terpandu",
+      desc: "Dapatkan artikel dan panduan latihan fisik yang aman untuk mengoreksi postur anak sedini mungkin.",
     },
   ];
 
-  const physioItems = [
-    { icon: CheckCircle2, text: "Menerima rujukan screening dari orang tua" },
-    { icon: CheckCircle2, text: "Melihat hasil analisis AI dan foto postur" },
-    {
-      icon: CheckCircle2,
-      text: "Memberikan rekomendasi latihan dan edukasi",
-    },
-    {
-      icon: CheckCircle2,
-      text: "Membangun profil praktik dan jangkauan pasien",
-    },
-  ];
-
-  const [whyRef, whyInView] = useInView();
-  const [howRef, howInView] = useInView();
-  const [featureRef, featureInView] = useInView();
-  const [roleRef, roleInView] = useInView();
-  const [articleRef, articleInView] = useInView();
-  const [physioRef, physioInView] = useInView();
-  const [ctaRef, ctaInView] = useInView();
+  const marqueeFeatures = [...features, ...features, ...features];
 
   useEffect(() => {
     const loadPreviewData = async () => {
@@ -172,46 +128,29 @@ function LandingPage() {
     loadPreviewData();
   }, []);
 
-  useEffect(() => {
-    if (sliderIntervalRef.current) {
-      clearInterval(sliderIntervalRef.current);
-    }
-
-    sliderIntervalRef.current = setInterval(() => {
-      setCurrentStep((prev) => (prev + 1) % howSteps.length);
-    }, 6000);
-
-    return () => {
-      if (sliderIntervalRef.current) {
-        clearInterval(sliderIntervalRef.current);
-      }
-    };
-  }, [howSteps.length]);
-
-  useEffect(() => {
-    if (!location.hash) return;
-
-    const sectionId = location.hash.replace("#", "");
-
-    const timeout = setTimeout(() => {
-      document.getElementById(sectionId)?.scrollIntoView({
-        behavior: "smooth",
-      });
-    }, 120);
-
-    return () => clearTimeout(timeout);
-  }, [location.hash]);
-
   const scrollToSection = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setMobileMenuOpen(false);
   };
 
-  const nextStep = () => {
-    setCurrentStep((prev) => (prev + 1) % howSteps.length);
-  };
+  const openInGoogleMaps = (latitude, longitude, clinicName) => {
+    if (!latitude || !longitude) {
+      alert("Koordinat klinik tidak tersedia");
+      return;
+    }
 
-  const prevStep = () => {
-    setCurrentStep((prev) => (prev - 1 + howSteps.length) % howSteps.length);
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      alert("Koordinat klinik tidak valid");
+      return;
+    }
+
+    const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
+    const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
+
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const filteredPhysios = physios.filter((p) => {
@@ -229,523 +168,522 @@ function LandingPage() {
   });
 
   const cities = [...new Set(physios.map((p) => p.city).filter(Boolean))];
-
   const specialties = [
     ...new Set(physios.map((p) => p.specialty).filter(Boolean)),
   ];
 
   const articleList = articles.slice(0, 6);
 
-  const openInGoogleMaps = (latitude, longitude, clinicName) => {
-    if (!latitude || !longitude) {
-      alert("Koordinat klinik tidak tersedia");
-      return;
-    }
-
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      alert("Koordinat klinik tidak valid");
-      return;
-    }
-
-    const label = encodeURIComponent(clinicName || "Klinik Fisioterapi");
-    const url = `https://www.google.com/maps?q=${lat},${lng}&label=${label}`;
-
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const fadeClass = (inView) =>
+    `transition-all duration-1000 ease-out transform ${
+      inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+    }`;
 
   return (
-    <div className="landing-page">
-      <PublicNavbar />
+    <div className="min-h-screen bg-slate-50 font-['DM_Sans',sans-serif] text-slate-900 selection:bg-blue-200 overflow-x-hidden">
+      <style>{`
+        @keyframes infinite-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
 
-      <section className="hero">
-        <div className="hero-accent hero-accent--top-left" />
+        .animate-marquee {
+          animation: infinite-scroll 35s linear infinite;
+          width: max-content;
+        }
 
-        <div className="hero__inner">
-          <div className="hero__content">
-            <p className="hero__eyebrow">Screening postur anak yang praktis</p>
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
 
-            <h1 className="hero__title">
-              Deteksi Postur Anak dengan Bantuan AI
-            </h1>
+        .team-dropdown-menu {
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(8px);
+          transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        }
 
-            <p className="hero__subtitle">
-              Posturely membantu orang tua memantau kesehatan muskuloskeletal
-              anak sejak dini, dan terhubung dengan fisioterapis anak saat
-              dibutuhkan.
-            </p>
+        .team-dropdown:hover .team-dropdown-menu,
+        .team-dropdown:focus-within .team-dropdown-menu {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+      `}</style>
 
-            <div className="hero__actions hero__actions--stack">
-              <button
-                onClick={() => navigate("/login")}
-                className="hero__btn hero__btn--primary hero__btn--full"
-              >
-                Mulai Screening
-                <ArrowRight size={18} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={() => navigate("/map")}
-                className="hero__btn hero__btn--secondary hero__btn--full"
-              >
-                <Map size={18} strokeWidth={2} />
-                Cari Fisioterapis di Peta
-              </button>
-            </div>
-
-            <div className="hero__meta">
-              <span>
-                <Zap size={16} strokeWidth={2} />
-                Screening bisa dilakukan di rumah
-              </span>
-
-              <span>
-                <UserCheck size={16} strokeWidth={2} />
-                Fisioterapis anak terverifikasi
-              </span>
-            </div>
-
-            <div className="hero__visual hero__visual--mobile">
-              <div className="hero-card hero-card--soft">
-                <div className="hero-card__icon hero-card__icon--soft">
-                  <Activity size={32} strokeWidth={1.4} />
-                </div>
-
-                <div className="hero-card__content">
-                  <p className="hero-card__label">Contoh Hasil Screening</p>
-                  <p className="hero-card__score">Skor Postur: 82</p>
-                  <p className="hero-card__status hero-card__status--fair">
-                    Kategori: Perlu dipantau
-                  </p>
-
-                  <ul className="hero-card__list hero-card__list--clean">
-                    <li>Ringkasan singkat untuk orang tua</li>
-                    <li>Area tubuh yang perlu diperhatikan</li>
-                    <li>Rekomendasi langkah selanjutnya</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+      {/* NAVIGASI */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-slate-50/80 backdrop-blur-md border-b border-slate-200 transition-all">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
+          <div
+            className="flex items-center gap-2.5 cursor-pointer active:scale-95 transition-transform"
+            onClick={() => navigate("/")}
+          >
+            <img
+              src="/logo-favicon-posturely.svg"
+              alt="Logo"
+              className="w-8 h-8 object-contain"
+            />
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              Posturely
+            </span>
           </div>
 
-          <div className="hero__visual hero__visual--desktop">
-            <div className="hero-card">
-              <div className="hero-card__icon">
-                <Activity size={40} strokeWidth={1.4} />
-              </div>
+          <nav className="hidden lg:flex items-center gap-8 font-semibold text-sm text-slate-500">
+            <button
+              onClick={() => scrollToSection("features")}
+              className="hover:text-blue-800 transition-colors"
+            >
+              Fitur
+            </button>
 
-              <div className="hero-card__content">
-                <p className="hero-card__label">Contoh Hasil Screening</p>
-                <p className="hero-card__score">Skor Postur: 82</p>
+            <button
+              onClick={() => scrollToSection("how-it-works")}
+              className="hover:text-blue-800 transition-colors"
+            >
+              Cara Kerja
+            </button>
 
-                <p className="hero-card__status hero-card__status--fair">
-                  Kategori: Perlu dipantau
-                </p>
+            <button
+              onClick={() => scrollToSection("physiotherapists")}
+              className="hover:text-blue-800 transition-colors"
+            >
+              Fisioterapis
+            </button>
 
-                <ul className="hero-card__list hero-card__list--clean">
-                  <li>Ringkasan singkat untuk orang tua</li>
-                  <li>Area tubuh yang perlu diperhatikan</li>
-                  <li>Rekomendasi langkah selanjutnya</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            <button
+              onClick={() => scrollToSection("education")}
+              className="hover:text-blue-800 transition-colors"
+            >
+              Edukasi
+            </button>
 
-      <section
-        id="why-posture"
-        ref={whyRef}
-        className={`section section--alt section--accent-left fade-up ${
-          whyInView ? "is-visible" : ""
-        }`}
-      >
-        <div className="section__inner">
-          <div className="section__header section__header--center" id="about">
-            <h2>Kenapa Postur Anak Itu Penting?</h2>
-
-            <p>
-              Postur yang baik bukan hanya soal berdiri tegak, tapi juga
-              berpengaruh pada tumbuh kembang, kenyamanan, dan rasa percaya diri
-              anak di masa depan.
-            </p>
-          </div>
-
-          <div className="grid grid--3">
-            {whyCards.map((item, idx) => (
-              <div key={idx} className="card card--shadow card--hover">
-                <div className="card__icon">
-                  <item.icon size={28} strokeWidth={1.5} />
-                </div>
-
-                <h3 className="card__title">{item.title}</h3>
-                <p className="card__text">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="how-it-works"
-        ref={howRef}
-        className={`section section--accent-right fade-up ${
-          howInView ? "is-visible" : ""
-        }`}
-      >
-        <div className="section__inner">
-          <div className="section__header section__header--center">
-            <h2>Cara Kerja Posturely</h2>
-
-            <p>
-              Alur yang sama dapat diakses dari rumah, dengan dukungan AI dan
-              fisioterapis anak ketika dibutuhkan.
-            </p>
-          </div>
-
-          <div className="how-layout">
-            <ol className="how-timeline">
-              {howSteps.map((step, idx) => (
-                <li key={idx} className="how-timeline__item">
-                  <div className="how-timeline__circle">{idx + 1}</div>
-                  <div className="how-timeline__line" />
-
-                  <div className="how-timeline__body">
-                    <h3>{step.title}</h3>
-                    <p>{step.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-
-            <div className="steps-slider">
-              <div className="steps-slider__card">
-                <div className="steps-slider__badge">
-                  Step {currentStep + 1} dari 4
-                </div>
-
-                <h3>{howSteps[currentStep].title}</h3>
-                <p>{howSteps[currentStep].text}</p>
-
-                <div className="steps-slider__controls">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="steps-slider__btn"
-                  >
-                    <ChevronLeft size={20} strokeWidth={2} />
-                    Sebelumnya
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="steps-slider__btn steps-slider__btn--primary"
-                  >
-                    Selanjutnya
-                    <ChevronRight size={20} strokeWidth={2} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="steps-slider__dots">
-                {howSteps.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setCurrentStep(idx)}
-                    className={`steps-slider__dot ${
-                      currentStep === idx ? "steps-slider__dot--active" : ""
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="features"
-        ref={featureRef}
-        className={`section section--alt fade-up ${
-          featureInView ? "is-visible" : ""
-        }`}
-      >
-        <div className="section__inner">
-          <div className="section__header section__header--center">
-            <h2>Fitur Unggulan Posturely</h2>
-
-            <p>
-              Satu platform yang menghubungkan orang tua, anak, dan fisioterapis
-              melalui screening postur yang mudah dan terstruktur.
-            </p>
-          </div>
-
-          <div className="grid grid--3">
-            {features.map((feature, idx) => (
-              <div key={idx} className="card card--border card--hover">
-                <div className="card__icon card__icon--soft">
-                  <feature.icon size={32} strokeWidth={1.5} />
-                </div>
-
-                <h3 className="card__title">{feature.title}</h3>
-                <p className="card__text">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="for-whom"
-        ref={roleRef}
-        className={`section fade-up ${roleInView ? "is-visible" : ""}`}
-      >
-        <div className="section__inner">
-          <div className="section__header section__header--center">
-            <h2>Untuk Orang Tua & Fisioterapis</h2>
-            <p>
-              Posturely membantu dua pihak penting ini berkolaborasi untuk anak.
-            </p>
-          </div>
-
-          <div className="grid grid--2 role-grid">
-            <div className="role-card role-card--hover">
-              <div className="role-card__icon">
-                <Users size={40} strokeWidth={1.5} />
-              </div>
-
-              <h3>Untuk Orang Tua</h3>
-
-              <ul className="role-card__list">
-                {parentsItems.map((item, idx) => (
-                  <li key={idx}>
-                    <item.icon size={18} strokeWidth={2} />
-                    <span>{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-
+            <div className="relative team-dropdown">
               <button
                 type="button"
-                onClick={() => navigate("/login")}
-                className="role-card__btn role-card__btn--tall"
+                onClick={() => navigate("/team")}
+                className="inline-flex items-center gap-1 hover:text-blue-800 transition-colors"
               >
-                Masuk sebagai Orang Tua
+                Tim Kami
+                <span className="text-xs">▾</span>
+              </button>
+
+              <div className="team-dropdown-menu absolute top-[calc(100%+16px)] left-1/2 -translate-x-1/2 min-w-[210px] rounded-2xl border border-blue-100 bg-white p-2 shadow-xl shadow-blue-900/10">
+                <button
+                  type="button"
+                  onClick={() => navigate("/team")}
+                  className="block w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-800"
+                >
+                  Semua Tim
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/team/expert")}
+                  className="block w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-800"
+                >
+                  Expert Team
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/team/staff")}
+                  className="block w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-800"
+                >
+                  Staff Mahasiswa
+                </button>
+              </div>
+            </div>
+          </nav>
+
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-200 rounded-xl transition-all active:scale-95"
+            >
+              Masuk
+            </button>
+
+            <button
+              onClick={() => navigate("/register/physio")}
+              className="bg-blue-800 hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm shadow-blue-900/20"
+            >
+              Daftar Fisio
+            </button>
+          </div>
+
+          <button
+            className="lg:hidden p-2 text-slate-600 rounded-md active:scale-95 hover:bg-slate-100"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl flex flex-col p-6">
+            <div className="flex flex-col gap-6 text-xl font-bold tracking-tight mb-8">
+              <button
+                onClick={() => scrollToSection("features")}
+                className="text-left text-slate-700"
+              >
+                Fitur
+              </button>
+
+              <button
+                onClick={() => scrollToSection("how-it-works")}
+                className="text-left text-slate-700"
+              >
+                Cara Kerja
+              </button>
+
+              <button
+                onClick={() => scrollToSection("physiotherapists")}
+                className="text-left text-slate-700"
+              >
+                Fisioterapis
+              </button>
+
+              <button
+                onClick={() => scrollToSection("education")}
+                className="text-left text-slate-700"
+              >
+                Edukasi
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/team");
+                  setMobileMenuOpen(false);
+                }}
+                className="text-left text-slate-700"
+              >
+                Tim Kami
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/team/expert");
+                  setMobileMenuOpen(false);
+                }}
+                className="text-left text-base text-slate-500 pl-4"
+              >
+                Expert Team
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate("/team/staff");
+                  setMobileMenuOpen(false);
+                }}
+                className="text-left text-base text-slate-500 pl-4"
+              >
+                Staff Mahasiswa
               </button>
             </div>
 
-            <div className="role-card role-card--accent role-card--hover">
-              <div className="role-card__icon role-card__icon--light">
-                <HeartHandshake size={40} strokeWidth={1.5} />
-              </div>
-
-              <h3>Untuk Fisioterapis</h3>
-
-              <ul className="role-card__list">
-                {physioItems.map((item, idx) => (
-                  <li key={idx}>
-                    <item.icon size={18} strokeWidth={2} />
-                    <span>{item.text}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="flex flex-col gap-3 mt-auto">
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full py-4 bg-slate-100 text-slate-800 font-bold rounded-xl active:scale-95"
+              >
+                Masuk
+              </button>
 
               <button
-                type="button"
                 onClick={() => navigate("/register/physio")}
-                className="role-card__btn role-card__btn--light role-card__btn--tall"
+                className="w-full py-4 bg-blue-800 text-white font-bold rounded-xl active:scale-95 shadow-sm"
               >
-                Daftar sebagai Fisioterapis
+                Daftar Fisioterapis
               </button>
             </div>
+          </div>
+        )}
+      </header>
+
+      {/* HERO SECTION */}
+      <section className="pt-32 pb-20 lg:pt-40 lg:pb-24 px-6 text-center overflow-hidden">
+        <div className={`max-w-4xl mx-auto ${fadeClass(true)}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 mb-8 shadow-sm tracking-wide uppercase">
+            <Sparkles size={14} className="text-blue-800" />
+            Screening postur cerdas berbasis AI
+          </div>
+
+          <h1 className="text-6xl md:text-7xl lg:text-[80px] font-['Instrument_Serif',serif] font-normal leading-[1.05] text-slate-900 tracking-tight mb-8">
+            Deteksi Postur Anak <br className="hidden md:block" />
+            dengan{" "}
+            <em className="italic bg-clip-text text-transparent bg-gradient-to-br from-blue-800 to-slate-600 font-bold">
+              Bantuan AI.
+            </em>
+          </h1>
+
+          <p className="text-lg text-slate-500 font-medium leading-relaxed max-w-2xl mx-auto mb-10">
+            Posturely membantu orang tua memantau kesehatan muskuloskeletal anak
+            sejak dini, dan terhubung dengan fisioterapis profesional saat
+            dibutuhkan.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="w-full sm:w-auto bg-blue-800 text-white px-8 py-3.5 rounded-xl font-bold text-[15px] hover:bg-blue-900 transition-colors active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+            >
+              Mulai Screening
+              <ArrowRight size={18} />
+            </button>
+
+            <button
+              onClick={() => navigate("/physiotherapists/map")}
+              className="w-full sm:w-auto bg-white border border-slate-200 text-slate-700 px-8 py-3.5 rounded-xl font-bold text-[15px] hover:bg-slate-100 transition-colors active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+            >
+              <Map size={18} />
+              Cari Fisioterapis
+            </button>
           </div>
         </div>
       </section>
 
+      {/* FITUR HIGHLIGHT */}
+      <section
+        ref={featureRef}
+        id="features"
+        className={`py-12 bg-white border-y border-slate-200 overflow-hidden ${fadeClass(
+          featureInView
+        )}`}
+      >
+        <div className="flex animate-marquee gap-6 px-6">
+          {marqueeFeatures.map((feat, idx) => (
+            <div
+              key={idx}
+              className="w-[320px] sm:w-[360px] shrink-0 bg-white border border-slate-200 p-8 rounded-3xl hover:border-slate-300 transition-colors shadow-sm flex flex-col cursor-default"
+            >
+              <div
+                className={`w-12 h-12 ${feat.bg} border ${feat.border} ${feat.color} rounded-2xl flex items-center justify-center mb-6`}
+              >
+                {feat.icon}
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900 mb-3">
+                {feat.title}
+              </h3>
+
+              <p className="text-slate-500 font-medium leading-relaxed text-[15px]">
+                {feat.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CARA KERJA */}
+      <section
+        ref={howRef}
+        id="how-it-works"
+        className={`py-24 lg:py-32 px-6 bg-slate-900 text-white ${fadeClass(
+          howInView
+        )}`}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-16 lg:mb-24 text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 block">
+              Langkah-langkah
+            </span>
+
+            <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight mb-6">
+              Cara kerja <em className="italic text-blue-400">Posturely</em>
+            </h2>
+
+            <p className="text-[17px] text-slate-400 font-medium leading-relaxed">
+              Sederhana, bisa dilakukan di rumah. Didukung teknologi AI yang
+              dirancang bersama para ahli fisioterapi.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 relative">
+            <div className="hidden lg:block absolute top-6 left-12 right-12 h-px bg-slate-800 -z-10" />
+
+            {howSteps.map((step, idx) => (
+              <div key={idx} className="flex flex-col gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg font-bold text-blue-400 shadow-xl shadow-slate-900">
+                  {idx + 1}
+                </div>
+
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  {step.title}
+                </h3>
+
+                <p className="text-slate-400 leading-relaxed text-[15px] font-medium">
+                  {step.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FISIOTERAPIS DIRECTORY */}
       {physios.length > 0 && (
         <section
           ref={physioRef}
-          className={`section section--alt section--accent-left fade-up ${
-            physioInView ? "is-visible" : ""
-          }`}
+          id="physiotherapists"
+          className={`py-24 lg:py-32 px-6 border-b border-slate-200 bg-slate-50 ${fadeClass(
+            physioInView
+          )}`}
         >
-          <div className="section__inner">
-            <div className="section__header section__header--with-link">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
               <div>
-                <h2>Fisioterapis Terpercaya</h2>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
+                  Direktori
+                </span>
 
-                <p>
-                  Profil fisioterapis yang telah diverifikasi dan aktif
-                  menerima konsultasi.
+                <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
+                  Fisioterapis{" "}
+                  <em className="italic text-blue-800">terpercaya.</em>
+                </h2>
+
+                <p className="text-[17px] text-slate-500 font-medium">
+                  Spesialis yang siap membantu screening postur anak Anda.
                 </p>
               </div>
 
-              <button onClick={() => navigate("/map")} className="section-link">
-                <Map size={18} strokeWidth={2} />
-                Lihat di peta
-                <ChevronRight size={18} strokeWidth={2} />
+              <button
+                onClick={() => navigate("/physiotherapists/map")}
+                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-800 px-5 py-3 rounded-xl text-[14px] font-bold hover:bg-slate-100 transition-colors active:scale-95 shrink-0 shadow-sm"
+              >
+                <Map size={16} />
+                Lihat di Peta
               </button>
             </div>
 
-            <div className="physio-filters">
-              <div className="physio-filters__search">
-                <Search size={18} strokeWidth={2} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
 
                 <input
                   type="text"
-                  placeholder="Cari nama fisioterapis..."
+                  placeholder="Cari nama klinik/fisio..."
                   value={searchPhysio}
                   onChange={(e) => setSearchPhysio(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium transition-colors shadow-sm"
                 />
               </div>
 
-              <div className="physio-filters__group">
-                <div className="physio-select">
-                  <span className="physio-select__label">Kota</span>
+              <select
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
+              >
+                <option value="">Semua Kota</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
 
-                  <div className="physio-select__control">
-                    <select
-                      value={filterCity}
-                      onChange={(e) => setFilterCity(e.target.value)}
-                    >
-                      <option value="">Semua</option>
-
-                      {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="physio-select">
-                  <span className="physio-select__label">Spesialisasi</span>
-
-                  <div className="physio-select__control">
-                    <select
-                      value={filterSpecialty}
-                      onChange={(e) => setFilterSpecialty(e.target.value)}
-                    >
-                      <option value="">Semua</option>
-
-                      {specialties.map((spec) => (
-                        <option key={spec} value={spec}>
-                          {spec}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
+              <select
+                value={filterSpecialty}
+                onChange={(e) => setFilterSpecialty(e.target.value)}
+                className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-800 text-[15px] font-medium cursor-pointer transition-colors shadow-sm"
+              >
+                <option value="">Semua Spesialisasi</option>
+                {specialties.map((spec) => (
+                  <option key={spec} value={spec}>
+                    {spec}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="grid grid--3 physio-grid">
-              {filteredPhysios.slice(0, 6).map((physio) => {
-                const isVerified =
-                  physio.is_verified === true && physio.is_active === true;
-
-                return (
-                  <div
-                    key={physio.id}
-                    className="card physio-card physio-card--hover"
-                    onClick={() => navigate(`/physiotherapists/${physio.id}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="physio-card__header">
-                      {physio.photo_url ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPhysios.slice(0, 6).map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col hover:border-blue-800/40 transition-colors cursor-pointer group shadow-sm"
+                  onClick={() => navigate(`/physiotherapists/${p.id}`)}
+                >
+                  <div className="flex gap-4 mb-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden text-2xl font-bold text-slate-300">
+                      {p.photo_url || p.photo ? (
                         <img
-                          src={physio.photo_url}
-                          alt={physio.name}
-                          className="physio-card__avatar"
+                          src={p.photo_url || p.photo}
+                          alt={p.name}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="physio-card__avatar physio-card__avatar--placeholder">
-                          {physio.name?.charAt(0)?.toUpperCase() || "F"}
+                        p.name?.charAt(0) || "F"
+                      )}
+                    </div>
+
+                    <div className="min-w-0 pt-1">
+                      <h3 className="font-bold text-slate-900 text-lg truncate group-hover:text-blue-800 transition-colors">
+                        {p.name}
+                      </h3>
+
+                      {p.is_verified && (
+                        <div className="flex items-center gap-1.5 text-emerald-700 mt-1.5 mb-2.5">
+                          <CheckCircle2 size={14} strokeWidth={2.5} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">
+                            Terverifikasi
+                          </span>
                         </div>
                       )}
 
-                      <div className="physio-card__header-text">
-                        <h3 className="physio-card__name">{physio.name}</h3>
-
-                        <p className="physio-card__clinic">
-                          {physio.clinic_name || "Praktik fisioterapi"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {isVerified && (
-                      <span className="physio-card__badge-verified">
-                        <ShieldCheck size={14} strokeWidth={1.8} />
-                        <span>Fisioterapis terverifikasi</span>
-                      </span>
-                    )}
-
-                    {physio.specialty && (
-                      <span className="physio-card__tag">
-                        {physio.specialty}
-                      </span>
-                    )}
-
-                    {(physio.bio_short || physio.bio) && (
-                      <p className="physio-card__bio">
-                        {(() => {
-                          const text = physio.bio_short || physio.bio;
-
-                          return text.length > 110
-                            ? `${text.slice(0, 110)}…`
-                            : text;
-                        })()}
-                      </p>
-                    )}
-
-                    <div className="physio-card__meta">
-                      <div className="physio-card__meta-item">
-                        <MapPin size={14} strokeWidth={1.5} />
-                        <span>{physio.city || "Lokasi tidak tersedia"}</span>
-                      </div>
-
-                      {physio.consultation_fee && (
-                        <div className="physio-card__meta-item physio-card__meta-item--fee">
-                          <span>Tarif konsultasi</span>
-
-                          <strong>
-                            Rp{" "}
-                            {Number(physio.consultation_fee).toLocaleString(
-                              "id-ID"
-                            )}
-                          </strong>
-                        </div>
+                      {p.specialty && (
+                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 rounded-lg text-[10px] font-bold uppercase tracking-wider truncate max-w-full">
+                          {p.specialty}
+                        </span>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 mt-auto">
+                    <div className="flex items-center gap-2.5 text-[14px] font-medium text-slate-500">
+                      <MapPin size={16} className="text-slate-400" />
+                      <span className="truncate">
+                        {p.city || "Lokasi tidak tersedia"}
+                      </span>
+                    </div>
+
+                    {p.consultation_fee && (
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100 text-[14px]">
+                        <span className="text-slate-500 font-medium">
+                          Tarif Konsultasi
+                        </span>
+
+                        <strong className="text-slate-900 font-extrabold">
+                          Rp{" "}
+                          {Number(p.consultation_fee).toLocaleString("id-ID")}
+                        </strong>
+                      </div>
+                    )}
 
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         openInGoogleMaps(
-                          physio.latitude,
-                          physio.longitude,
-                          physio.clinic_name
+                          p.latitude,
+                          p.longitude,
+                          p.clinic_name || p.name
                         );
                       }}
-                      className="physio-card__btn-maps"
+                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 hover:bg-blue-100 transition-colors"
                     >
-                      <MapPin size={16} strokeWidth={2} />
-                      Buka Lokasi di Google Maps
-                      <ExternalLink size={14} strokeWidth={2} />
+                      <MapPin size={16} />
+                      Buka Maps
+                      <ExternalLink size={14} />
                     </button>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             {filteredPhysios.length === 0 && (
-              <p className="no-results">
+              <p className="mt-10 text-center text-slate-500 font-semibold">
                 Tidak ada fisioterapis yang cocok dengan filter Anda.
               </p>
             )}
@@ -753,52 +691,56 @@ function LandingPage() {
         </section>
       )}
 
+      {/* ARTIKEL EDUKASI */}
       {articleList.length > 0 && (
         <section
           id="education"
           ref={articleRef}
-          className={`section section--accent-right fade-up ${
-            articleInView ? "is-visible" : ""
-          }`}
+          className={`py-24 lg:py-32 px-6 bg-white ${fadeClass(articleInView)}`}
         >
-          <div className="section__inner">
-            <div className="section__header section__header--with-link">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
               <div>
-                <h2>Edukasi Postur Anak</h2>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">
+                  Edukasi
+                </span>
 
-                <p>
-                  Artikel yang dapat diakses publik. Untuk konten lebih lengkap
-                  dan personal, gunakan dashboard setelah masuk.
-                </p>
+                <h2 className="text-5xl md:text-6xl font-['Instrument_Serif',serif] font-normal tracking-tight text-slate-900 mb-3">
+                  Artikel postur{" "}
+                  <em className="italic text-blue-800">untuk orang tua.</em>
+                </h2>
               </div>
 
-              <button onClick={() => navigate("/login")} className="section-link">
-                Lihat edukasi lainnya di dashboard
-                <ChevronRight size={18} strokeWidth={2} />
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-1.5 text-[15px] font-bold text-slate-700 hover:text-blue-800 transition-colors"
+              >
+                Baca semua
+                <ChevronRight size={18} />
               </button>
             </div>
 
-            <div className="grid grid--3 article-grid article-grid--text">
+            <div className="grid md:grid-cols-3 gap-6">
               {articleList.map((article) => (
                 <article
                   key={article.id}
-                  className="article-card article-card--hover article-card--text"
                   onClick={() => navigate(`/education/${article.slug}`)}
+                  className="bg-slate-50 p-8 rounded-3xl border border-slate-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
                 >
-                  <div className="article-card__body">
-                    <span className="article-card__badge">
-                      {article.category?.name || "Artikel"}
-                    </span>
+                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 border border-blue-200 uppercase tracking-widest mb-5 w-max px-3 py-1.5 rounded-lg">
+                    {article.category?.name || "Edukasi"}
+                  </span>
 
-                    <h3>{article.title}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug line-clamp-2 hover:text-blue-800 transition-colors">
+                    {article.title}
+                  </h3>
 
-                    <p>
-                      {article.excerpt ||
-                        (article.content
-                          ? `${article.content.substring(0, 130)}…`
-                          : "")}
-                    </p>
-                  </div>
+                  <p className="text-[15px] text-slate-500 font-medium leading-relaxed line-clamp-3 mb-2">
+                    {article.excerpt ||
+                      (article.content
+                        ? `${article.content.substring(0, 130)}…`
+                        : "")}
+                  </p>
                 </article>
               ))}
             </div>
@@ -806,108 +748,136 @@ function LandingPage() {
         </section>
       )}
 
+      {/* CTA BOTTOM */}
       <section
         ref={ctaRef}
-        className={`section section-cta section--accent-left fade-up ${
-          ctaInView ? "is-visible" : ""
-        }`}
+        className={`py-24 lg:py-32 px-6 bg-blue-900 text-white text-center ${fadeClass(
+          ctaInView
+        )}`}
       >
-        <div className="section__inner section-cta__inner">
-          <div>
-            <h2>Mulai Screening Postur Anak Secara Gratis</h2>
+        <div className="max-w-3xl mx-auto">
+          <span className="text-xs font-bold uppercase tracking-widest text-blue-300 mb-6 block">
+            Mulai Sekarang
+          </span>
 
-            <p>
-              Buat akun orang tua, lakukan screening pertama, dan lihat
-              bagaimana Posturely membantu Anda memahami postur anak dengan
-              lebih sederhana.
-            </p>
-          </div>
+          <h2 className="text-5xl md:text-7xl font-['Instrument_Serif',serif] font-normal tracking-tight mb-6 leading-[1.05]">
+            Beri ruang pada anak untuk{" "}
+            <br className="hidden md:block" />
+            <em className="italic text-blue-300">tumbuh dengan sehat.</em>
+          </h2>
 
-          <div className="section-cta__actions">
+          <p className="text-blue-100 text-lg font-medium mb-12 max-w-xl mx-auto leading-relaxed">
+            Bergabung dan lihat bagaimana Posturely membantu Anda memahami
+            postur anak dengan lebih mudah.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button
               onClick={() => navigate("/login")}
-              className="hero__btn hero__btn--white"
+              className="bg-white text-blue-900 px-8 py-4 rounded-2xl font-bold text-[16px] hover:bg-slate-50 transition-colors active:scale-95 shadow-xl"
             >
               Daftar sebagai Orang Tua
             </button>
 
             <button
               onClick={() => navigate("/register/physio")}
-              className="hero__btn hero__btn--outline"
+              className="bg-transparent border border-white/30 text-white px-8 py-4 rounded-2xl font-bold text-[16px] hover:bg-white/10 transition-colors active:scale-95"
             >
-              Daftar sebagai Fisioterapis
+              Daftar Fisioterapis
             </button>
           </div>
         </div>
       </section>
 
-      <footer className="landing-footer">
-        <div className="landing-footer__inner">
-          <div className="landing-footer__brand">
-            <div className="landing-logo landing-logo--light">
+      {/* FOOTER */}
+      <footer className="bg-slate-950 text-slate-400 py-16 px-6 font-medium">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8">
+          <div className="md:col-span-6">
+            <div
+              className="flex items-center gap-2.5 text-white mb-6 cursor-pointer"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            >
               <img
-                src="/logo-posturely.svg"
+                src="/logo-favicon-posturely.svg"
                 alt="Posturely Logo"
-                className="brand-logo-img"
+                className="w-8 h-8 brightness-0 invert"
               />
+
+              <span className="text-2xl font-bold tracking-tight">
+                Posturely
+              </span>
             </div>
 
-            <p>
-              Posturely adalah platform screening postur anak berbasis AI yang
-              membantu orang tua berkolaborasi dengan fisioterapis untuk tumbuh
-              kembang yang lebih sehat.
+            <p className="text-[15px] leading-relaxed max-w-sm text-slate-500">
+              Platform screening postur anak berbasis AI yang membantu orang tua
+              berkolaborasi dengan fisioterapis untuk tumbuh kembang yang
+              optimal.
             </p>
           </div>
 
-          <div className="landing-footer__cols">
-            <div className="landing-footer__col">
-              <h4>Tentang</h4>
+          <div className="md:col-span-3">
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-6">
+              Tentang
+            </h4>
 
-              <button onClick={() => scrollToSection("about")}>
-                Tentang Posturely
+            <div className="flex flex-col gap-4 text-[15px]">
+              <button
+                onClick={() => scrollToSection("features")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
+                Fitur Platform
               </button>
 
-              <button onClick={() => scrollToSection("how-it-works")}>
-                Cara Kerja
+              <button
+                onClick={() => scrollToSection("how-it-works")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
+                Cara Kerja AI
+              </button>
+
+              <button
+                onClick={() => navigate("/team")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
+                Tim Kami
               </button>
             </div>
+          </div>
 
-            <div className="landing-footer__col">
-              <h4>Layanan</h4>
+          <div className="md:col-span-3">
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-6">
+              Layanan
+            </h4>
 
-              <button onClick={() => scrollToSection("why-posture")}>
-                Screening Postur Anak
+            <div className="flex flex-col gap-4 text-[15px]">
+              <button
+                onClick={() => navigate("/login")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
+                Screening Postur
               </button>
 
-              <button onClick={() => scrollToSection("education")}>
+              <button
+                onClick={() => scrollToSection("education")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
                 Edukasi Postur
               </button>
 
-              <button onClick={() => scrollToSection("for-whom")}>
-                Konsultasi Fisioterapis
-              </button>
-            </div>
-
-            <div className="landing-footer__col">
-              <h4>Kontak</h4>
-
-              <button onClick={() => navigate("/login")}>
-                Masuk ke aplikasi
-              </button>
-
-              <button onClick={() => navigate("/register/physio")}>
-                Bergabung sebagai Fisioterapis
+              <button
+                onClick={() => scrollToSection("physiotherapists")}
+                className="text-left hover:text-white transition-colors w-max"
+              >
+                Direktori Fisioterapis
               </button>
             </div>
           </div>
         </div>
 
-        <div className="landing-footer__bottom">
+        <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-slate-800 flex justify-center text-[13px] text-slate-500">
           <p>© 2026 Posturely. Semua hak cipta dilindungi.</p>
         </div>
       </footer>
     </div>
   );
 }
-
-export default LandingPage;

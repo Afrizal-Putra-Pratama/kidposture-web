@@ -54,6 +54,7 @@ export default function MapPicker({ value, onChange, label }) {
   // Initialize position from value prop
   useEffect(() => {
     if (!value) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition((prev) => prev === null ? prev : null);
       return;
     }
@@ -108,7 +109,7 @@ export default function MapPicker({ value, onChange, label }) {
 
   const formatCoordinates = () => {
     if (!position || !Array.isArray(position)) {
-      return 'Belum ada lokasi dipilih';
+      return 'Belum ada lokasi yang dipilih';
     }
     
     const lat = parseFloat(position[0]);
@@ -118,85 +119,89 @@ export default function MapPicker({ value, onChange, label }) {
       return 'Koordinat tidak valid';
     }
     
-    return `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
   };
 
   return (
-    <div className="map-picker">
-      {/* HEADER */}
-      <div className="map-picker-header">
-        <div className="map-picker-label-group">
-          {label && <label className="map-picker-label">{label}</label>}
-          
-          {/* Tooltip */}
-          <div className="map-picker-tooltip-wrapper">
-            <button
-              type="button"
-              className="map-picker-tooltip-trigger"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              onClick={(e) => {
-                e.preventDefault();
-                setShowTooltip(!showTooltip);
-              }}
-            >
-              <Info size={16} strokeWidth={2} />
-              <span>Lihat Panduan</span>
-            </button>
+    <div className="flex flex-col gap-3 w-full">
+      {/* HEADER & LABEL */}
+      <div className="flex items-center justify-between relative">
+        {label && (
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            {label}
+          </label>
+        )}
+        
+        {/* Tooltip Wrapper */}
+        <div className="relative">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors active:scale-95"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              setShowTooltip(!showTooltip);
+            }}
+          >
+            <Info size={14} strokeWidth={2.5} />
+            <span>Panduan Peta</span>
+          </button>
 
-            {showTooltip && (
-              <div className="map-picker-tooltip">
-                <div className="map-picker-tooltip-content">
-                  <h4>Cara Menentukan Lokasi Klinik</h4>
-                  <ol>
-                    <li>Klik tombol &quot;Buka Peta&quot; di bawah untuk membuka tampilan peta</li>
-                    <li>Gunakan scroll mouse untuk zoom in/out peta</li>
-                    <li>Drag peta untuk navigasi ke area klinik Anda</li>
-                    <li>Klik langsung pada titik lokasi klinik di peta</li>
-                  </ol>
-                  <p className="map-picker-tooltip-note">
-                    <strong>Tips:</strong> Zoom hingga level jalan untuk akurasi maksimal. Koordinat akan otomatis tersimpan setelah diklik.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          {showTooltip && (
+            <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-slate-900 text-white p-4 rounded-xl shadow-xl z-[60] animate-in fade-in zoom-in-95 pointer-events-none">
+              <h4 className="font-bold text-sm mb-2 text-blue-300">Cara Memilih Lokasi</h4>
+              <ol className="list-decimal pl-4 space-y-1.5 text-xs text-slate-300 mb-3 leading-relaxed">
+                <li>Klik tombol <strong>Buka Peta</strong> di bawah.</li>
+                <li>Gunakan <em>scroll</em> atau cubit layar untuk <em>zoom in/out</em> peta.</li>
+                <li>Geser peta untuk mencari area tempat praktik Anda.</li>
+                <li>Klik tepat pada titik lokasi klinik untuk memasang Pin.</li>
+              </ol>
+              <p className="text-[10px] text-slate-400 bg-slate-800 p-2 rounded-lg leading-relaxed">
+                <strong className="text-amber-400">Tips:</strong> Lakukan zoom hingga nama jalan terlihat untuk mendapatkan akurasi maksimal.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* COORDINATE DISPLAY */}
-      <div className="map-picker-coordinates-box">
-        <MapPin size={16} strokeWidth={2} />
-        <span>{formatCoordinates()}</span>
+      <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700">
+        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200">
+          <MapPin size={16} strokeWidth={2.5} />
+        </div>
+        <span className="truncate">{formatCoordinates()}</span>
       </div>
 
       {/* TOGGLE BUTTON */}
       <button
         type="button"
         onClick={handleToggleMap}
-        className="map-picker-toggle-btn"
+        className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 hover:border-blue-300 rounded-xl text-sm font-bold text-slate-700 transition-all active:scale-[0.98] shadow-sm"
       >
-        <MapPin size={18} strokeWidth={2} />
-        <span>{isMapExpanded ? 'Tutup Peta' : 'Buka Peta untuk Memilih Lokasi'}</span>
+        <div className="flex items-center gap-2">
+          <MapPin size={18} className={isMapExpanded ? "text-blue-600" : "text-slate-400"} />
+          <span>{isMapExpanded ? 'Tutup Peta' : 'Buka Peta untuk Memilih Lokasi'}</span>
+        </div>
         {isMapExpanded ? (
-          <ChevronUp size={18} strokeWidth={2} />
+          <ChevronUp size={18} className="text-slate-400" />
         ) : (
-          <ChevronDown size={18} strokeWidth={2} />
+          <ChevronDown size={18} className="text-slate-400" />
         )}
       </button>
 
       {/* MAP CONTAINER */}
       {isMapExpanded && (
-        <div className="map-picker-container">
+        <div className="relative w-full h-[300px] sm:h-[400px] rounded-xl overflow-hidden border border-slate-200 shadow-sm z-0 animate-in slide-in-from-top-2">
           <MapContainer
             center={mapCenter}
             zoom={position ? 15 : 12}
-            style={{ height: '100%', width: '100%' }}
+            style={{ height: '100%', width: '100%', zIndex: 0 }}
             scrollWheelZoom={true}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
+              attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
             />
             <LocationMarker
               position={position}
@@ -206,9 +211,12 @@ export default function MapPicker({ value, onChange, label }) {
           </MapContainer>
           
           {/* Instruction Overlay */}
-          <div className="map-picker-instruction">
-            <MapPin size={14} strokeWidth={2} />
-            <span>Klik pada peta untuk menentukan lokasi klinik</span>
+          <div 
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg pointer-events-none" 
+            style={{ zIndex: 400 }}
+          >
+            <MapPin size={14} className="text-blue-400" />
+            <span>Klik pada peta untuk pasang pin lokasi</span>
           </div>
         </div>
       )}
