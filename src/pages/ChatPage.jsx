@@ -73,13 +73,14 @@ function MessageBubble({ msg, isMe, onImageClick }) {
   const text    = msg.body || msg.content || "";
 
   return (
-    <div className={`flex flex-col gap-1.5 max-w-[85%] md:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+    <div className={`flex flex-col gap-1.5 min-w-0 max-w-[85%] md:max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
       <div
-        className={`px-4 py-2.5 text-[15px] leading-relaxed break-words rounded-2xl ${
+        className={`px-4 py-2.5 text-[15px] leading-relaxed w-fit max-w-full overflow-hidden rounded-2xl ${
           isMe
             ? 'bg-blue-600 text-white rounded-br-sm'
             : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
         }`}
+        style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
       >
         {type === "image" && fileUrl && (
           <div className="cursor-zoom-in overflow-hidden rounded-xl bg-black/5" onClick={() => onImageClick(fileUrl)}>
@@ -106,7 +107,11 @@ function MessageBubble({ msg, isMe, onImageClick }) {
             <Download size={16} className={`shrink-0 ml-1 ${isMe ? 'text-blue-200' : 'text-slate-400'}`} />
           </a>
         )}
-        {text && <span className="block">{text}</span>}
+        {text && (
+          <span className="block whitespace-pre-wrap" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+            {text}
+          </span>
+        )}
       </div>
       <div className={`flex items-center gap-1.5 text-[11px] font-medium text-slate-400 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
         <span>{formatTime(msg.created_at)}</span>
@@ -124,7 +129,6 @@ function FilePreview({ file, onRemove }) {
   useEffect(() => {
     if (isImage || isVideo) {
       const url = URL.createObjectURL(file);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreview(url);
       return () => URL.revokeObjectURL(url);
     }
@@ -152,9 +156,6 @@ function FilePreview({ file, onRemove }) {
   );
 }
 
-// =====================================
-// NOTIFICATION HELPERS
-// =====================================
 function getNotifIcon(type) {
   if (type === "referral_accepted") return <CheckCircle size={16} />;
   if (type === "referral_completed") return <Activity size={16} />;
@@ -170,16 +171,14 @@ export default function ChatPage() {
   const location       = useLocation();
   const [searchParams] = useSearchParams();
 
-  // --- Dashboard Structure States ---
   const [user, setUser] = useState(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
-  // --- Chat Specific States ---
   const physioIdParam = searchParams.get("physio_id") || location.state?.physiotherapistId || null;
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser   = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [isPremium,        setIsPremium]        = useState(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -194,11 +193,13 @@ export default function ChatPage() {
   const [uploadProgress,   setUploadProgress]   = useState(0);
   const [selectedImage,    setSelectedImage]    = useState(null);
 
-  const messagesEndRef = useRef(null);
-  const unsubscribeRef = useRef(null);
-  const textareaRef    = useRef(null);
-  const fileInputRef   = useRef(null);
-  const cameraInputRef = useRef(null);
+  const messagesEndRef  = useRef(null);
+  const unsubscribeRef  = useRef(null);
+  const textareaRef     = useRef(null);
+  const fileInputRef    = useRef(null);
+  const cameraInputRef  = useRef(null);
+  // FIX: simpan activeConvId di ref agar handler Pusher selalu baca nilai terbaru
+  const activeConvIdRef = useRef(null);
 
   useEffect(() => {
     const currUser = getCurrentUser();
@@ -211,7 +212,10 @@ export default function ChatPage() {
           setIsPremium(res?.has_access === true || res?.is_premium === true);
         } else {
           const res = await getSubscriptionStatus();
-          const anyActive = res?.is_premium === true || (res?.subscription?.status === "active" && res?.subscription?.expired_at && new Date(res.subscription.expired_at) > new Date());
+          const anyActive = res?.is_premium === true ||
+            (res?.subscription?.status === "active" &&
+              res?.subscription?.expired_at &&
+              new Date(res.subscription.expired_at) > new Date());
           setIsPremium(anyActive);
         }
       } catch {
@@ -229,7 +233,12 @@ export default function ChatPage() {
         const list = res?.data || res || [];
         setConversations(list);
         if (physioIdParam) {
-          const existing = list.find((c) => String(c.physio?.physiotherapist?.id || "") === String(physioIdParam) || String(c.physio_id || "") === String(physioIdParam) || String(c.physiotherapist_id || "") === String(physioIdParam));
+          const existing = list.find(
+            (c) =>
+              String(c.physio?.physiotherapist?.id || "") === String(physioIdParam) ||
+              String(c.physio_id || "") === String(physioIdParam) ||
+              String(c.physiotherapist_id || "") === String(physioIdParam)
+          );
           if (existing) openConversation(existing);
           else await createNewConv(physioIdParam);
         }
@@ -242,31 +251,88 @@ export default function ChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium, physioIdParam]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-  useEffect(() => { return () => { unsubscribeRef.current?.(); }; }, []);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const openConversation = useCallback(async (conv) => {
-    setActiveConv(conv);
-    setLoadingMsgs(true);
-    unsubscribeRef.current?.();
-    try {
-      const res = await getMessages(conv.id);
-      setMessages(res?.data || res || []);
-    } catch (err) {
-      console.error("error:", err);
-    } finally {
-      setLoadingMsgs(false);
-    }
-    const unsub = subscribeToConversation(conv.id, (newMsg) => {
-      setMessages((prev) => {
-        if (prev.find((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
-    });
-    unsubscribeRef.current = unsub;
+  // Cleanup saat komponen unmount
+  useEffect(() => {
+    return () => { unsubscribeRef.current?.(); };
   }, []);
 
-  const handleCloseConversation = () => setActiveConv(null);
+  /**
+   * openConversation — FIX REALTIME:
+   * 1. Unsubscribe channel lama SEBELUM subscribe yang baru
+   * 2. Subscribe Pusher dilakukan segera (tidak perlu tunggu getMessages selesai)
+   * 3. Pesan baru dari Pusher hanya diterima jika cocok dengan activeConvId (via ref)
+   */
+  const openConversation = useCallback(async (conv) => {
+    // Unsubscribe channel lama
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+
+    setActiveConv(conv);
+    activeConvIdRef.current = conv.id;
+    setLoadingMsgs(true);
+    setMessages([]);
+
+    // Subscribe Pusher dulu — agar tidak ada gap antara getMessages & subscribe
+    const unsub = subscribeToConversation(conv.id, (newMsg) => {
+      // Hanya proses jika masih di conversation yang sama
+      if (activeConvIdRef.current !== conv.id) return;
+
+      setMessages((prev) => {
+        // Hindari duplikat: cek ID atau ganti optimistic message yang cocok
+        const isDuplicate = prev.some((m) => !m._optimistic && m.id === newMsg.id);
+        if (isDuplicate) return prev;
+
+        // Ganti optimistic message milik sender yang sama jika ada
+        // (pesan yang dikirim sendiri sudah ada sebagai optimistic)
+        const hasOptimistic = prev.some((m) => m._optimistic && String(m.sender_id) === String(newMsg.sender_id));
+        if (hasOptimistic && String(newMsg.sender_id) === String(currentUser.id)) {
+          // Biarkan handleSend yang replace optimistic — jangan tambahkan duplikat
+          return prev;
+        }
+
+        return [...prev, newMsg];
+      });
+
+      // Update preview pesan terakhir di list conversation
+      setConversations((prevConvs) =>
+        prevConvs.map((c) =>
+          c.id === conv.id
+            ? { ...c, last_message: newMsg, latest_message: newMsg }
+            : c
+        )
+      );
+    });
+    unsubscribeRef.current = unsub;
+
+    // Load riwayat pesan
+    try {
+      const res = await getMessages(conv.id);
+      // Hanya set jika masih di conversation yang sama
+      if (activeConvIdRef.current === conv.id) {
+        setMessages(res?.data || res || []);
+      }
+    } catch (err) {
+      console.error("error getMessages:", err);
+    } finally {
+      if (activeConvIdRef.current === conv.id) {
+        setLoadingMsgs(false);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCloseConversation = () => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+    activeConvIdRef.current = null;
+    setActiveConv(null);
+    setMessages([]);
+  };
+
   const handleLogout = async () => { await logout(); navigate("/login"); };
 
   const createNewConv = async (physioId) => {
@@ -290,6 +356,11 @@ export default function ChatPage() {
     e.target.value = "";
   };
 
+  /**
+   * handleSend — FIX OPTIMISTIC:
+   * Menyimpan optimisticId unik dan menggantinya dengan pesan server yang benar,
+   * bukan mengganti SEMUA pesan optimistic.
+   */
   const handleSend = async () => {
     const text = inputText.trim();
     if ((!text && !selectedFile) || !activeConv || sending) return;
@@ -299,16 +370,23 @@ export default function ChatPage() {
     setInputText("");
     setSelectedFile(null);
 
-    const guessType = capturedFile ? (capturedFile.type.startsWith("image/") ? "image" : capturedFile.type.startsWith("video/") ? "video" : "file") : "text";
+    const guessType = capturedFile
+      ? capturedFile.type.startsWith("image/") ? "image"
+        : capturedFile.type.startsWith("video/") ? "video"
+        : "file"
+      : "text";
+
+    // ID unik untuk pesan optimistic ini
+    const optimisticId = `opt-${Date.now()}-${Math.random()}`;
 
     const optimistic = {
-      id: `opt-${Date.now()}`,
-      body: text || capturedFile?.name || "File",
-      type: guessType,
-      file_url: capturedFile ? URL.createObjectURL(capturedFile) : null,
-      file_name: capturedFile?.name || null,
-      sender_id: currentUser.id,
-      created_at: new Date().toISOString(),
+      id:          optimisticId,
+      body:        text || capturedFile?.name || "File",
+      type:        guessType,
+      file_url:    capturedFile ? URL.createObjectURL(capturedFile) : null,
+      file_name:   capturedFile?.name || null,
+      sender_id:   currentUser.id,
+      created_at:  new Date().toISOString(),
       _optimistic: true,
     };
     setMessages((prev) => [...prev, optimistic]);
@@ -323,9 +401,22 @@ export default function ChatPage() {
         res = await sendMessage(activeConv.id, text);
       }
       const sent = res?.data || res;
-      setMessages((prev) => prev.map((m) => (m._optimistic ? sent : m)));
+
+      // FIX: ganti hanya pesan dengan optimisticId yang cocok, bukan semua _optimistic
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimisticId ? { ...sent, _optimistic: false } : m))
+      );
+
+      // Update preview conversation di sidebar
+      setConversations((prevConvs) =>
+        prevConvs.map((c) =>
+          c.id === activeConv.id
+            ? { ...c, last_message: sent, latest_message: sent }
+            : c
+        )
+      );
     } catch (err) {
-      setMessages((prev) => prev.filter((m) => !m._optimistic));
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setInputText(text);
       setSelectedFile(capturedFile);
       alert("Gagal mengirim pesan. Silakan coba lagi.");
@@ -347,13 +438,10 @@ export default function ChatPage() {
     ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
   };
 
-  // FIX: Notifikasi sekarang menggunakan navigate + close panel, tidak menyebabkan blank putih
   const handleNotifClick = (notif) => {
     if (!notif.is_read) markAsRead(notif.id);
     setNotifOpen(false);
-    if (notif.screening_id) {
-      navigate(`/screenings/${notif.screening_id}`);
-    }
+    if (notif.screening_id) navigate(`/screenings/${notif.screening_id}`);
   };
 
   // =====================================
@@ -391,23 +479,26 @@ export default function ChatPage() {
           </button>
         </div>
         {showPremiumModal && (
-          <PremiumModal physioId={physioIdParam} onClose={() => setShowPremiumModal(false)} onSuccess={() => { setIsPremium(true); setShowPremiumModal(false); }} />
+          <PremiumModal
+            physioId={physioIdParam}
+            onClose={() => setShowPremiumModal(false)}
+            onSuccess={() => { setIsPremium(true); setShowPremiumModal(false); }}
+          />
         )}
       </div>
     );
   }
 
-  const activePhysio = activeConv?.physio || activeConv?.physiotherapist || null;
+  const activePhysio       = activeConv?.physio || activeConv?.physiotherapist || null;
   const isMobileChatActive = activeConv !== null;
 
   return (
     <div className="flex h-[100dvh] w-full bg-slate-50 font-sans overflow-hidden">
 
-      {/* TRIGGER INPUT TERSEMBUNYI */}
       <input ref={fileInputRef} type="file" className="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileChange} />
       <input ref={cameraInputRef} type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
 
-      {/* === DASHBOARD SIDEBAR (DESKTOP) === */}
+      {/* === SIDEBAR DESKTOP === */}
       <aside
         className={`hidden lg:flex flex-col bg-white border-r border-slate-200 sticky top-0 h-screen shrink-0 transition-all duration-300 z-50 ${isSidebarExpanded ? 'w-64' : 'w-[80px]'}`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
@@ -418,24 +509,21 @@ export default function ChatPage() {
           {isSidebarExpanded && <span className="font-bold text-xl text-slate-800 ml-3 truncate">Posturely</span>}
         </div>
         <nav className="flex-1 px-3 space-y-2 mt-4 hide-scrollbar overflow-y-auto overflow-x-hidden">
-          <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" expanded={isSidebarExpanded} />
-          <SidebarLink to="/chat" icon={MessageCircle} label="Konsultasi" active={true} expanded={isSidebarExpanded} />
-          <SidebarLink to="/education" icon={BookOpen} label="Edukasi" expanded={isSidebarExpanded} />
-          <SidebarLink to="/profile" icon={User} label="Profil Saya" expanded={isSidebarExpanded} />
+          <SidebarLink to="/dashboard"  icon={LayoutDashboard} label="Dashboard"   expanded={isSidebarExpanded} />
+          <SidebarLink to="/chat"       icon={MessageCircle}   label="Konsultasi"  active={true} expanded={isSidebarExpanded} />
+          <SidebarLink to="/education"  icon={BookOpen}        label="Edukasi"     expanded={isSidebarExpanded} />
+          <SidebarLink to="/profile"    icon={User}            label="Profil Saya" expanded={isSidebarExpanded} />
         </nav>
         <div className="p-4 border-t border-slate-100 mt-auto">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={`flex items-center w-full rounded-xl transition-all font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 ${isSidebarExpanded ? 'justify-start px-4 py-3 gap-3' : 'justify-center p-3'}`}
-          >
+          <button type="button" onClick={handleLogout}
+            className={`flex items-center w-full rounded-xl transition-all font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 ${isSidebarExpanded ? 'justify-start px-4 py-3 gap-3' : 'justify-center p-3'}`}>
             <LogOut size={22} className="shrink-0" />
             {isSidebarExpanded && <span className="truncate">Keluar</span>}
           </button>
         </div>
       </aside>
 
-      {/* === DASHBOARD SIDEBAR (MOBILE) === */}
+      {/* === SIDEBAR MOBILE (DRAWER) === */}
       {isSidebarOpenMobile && (
         <div className="fixed inset-0 z-[100] lg:hidden">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsSidebarOpenMobile(false)}></div>
@@ -448,66 +536,53 @@ export default function ChatPage() {
               <button type="button" onClick={() => setIsSidebarOpenMobile(false)} className="text-slate-500 p-1 rounded-md hover:bg-slate-100"><X size={24} /></button>
             </div>
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto hide-scrollbar">
-              <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
-              <SidebarLink to="/chat" icon={MessageCircle} label="Konsultasi" active={true} expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
-              <SidebarLink to="/education" icon={BookOpen} label="Edukasi" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
-              <SidebarLink to="/profile" icon={User} label="Profil Saya" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard"   expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/chat"      icon={MessageCircle}   label="Konsultasi"  active={true} expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/education" icon={BookOpen}        label="Edukasi"     expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
+              <SidebarLink to="/profile"   icon={User}            label="Profil Saya" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
             </nav>
             <div className="p-4 border-t border-slate-100 mt-auto">
-              <button type="button" onClick={handleLogout} className="flex items-center gap-3 w-full p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"><LogOut size={20} /> Keluar</button>
+              <button type="button" onClick={handleLogout} className="flex items-center gap-3 w-full p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium">
+                <LogOut size={20} /> Keluar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* === MAIN COLUMN (Header + Chat Interface) === */}
+      {/* === MAIN COLUMN === */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
 
-        {/* DASHBOARD HEADER — z-index relative agar notif panel tidak tertutup */}
+        {/* HEADER */}
         <header className="h-16 lg:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 relative z-50">
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md"
-              onClick={() => setIsSidebarOpenMobile(true)}
-            >
+            <button type="button" className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md" onClick={() => setIsSidebarOpenMobile(true)}>
               <Menu size={24} />
             </button>
             <h1 className="text-lg lg:text-xl font-bold text-slate-800">Konsultasi Fisioterapi</h1>
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {/* FIX: Notifikasi — wrapper relative, button type=button, panel tidak menyebabkan blank */}
+            {/* Notifikasi */}
             <div className="relative flex items-center">
-              <button
-                type="button"
-                onClick={() => setNotifOpen((v) => !v)}
-                className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-full relative transition-colors flex items-center justify-center"
-              >
+              <button type="button" onClick={() => setNotifOpen((v) => !v)}
+                className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-full relative transition-colors flex items-center justify-center">
                 <Bell size={22} strokeWidth={2} />
                 {unreadCount > 0 && (
                   <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white pointer-events-none"></span>
                 )}
               </button>
-              {/* Desktop: absolute panel */}
+              {/* Desktop panel */}
               {notifOpen && (
-                <div className="hidden lg:block">
-                  <NotificationPanel
-                    notifications={notifications}
-                    close={() => setNotifOpen(false)}
-                    handleNotifClick={handleNotifClick}
-                    markAllAsRead={markAllAsRead}
-                    deleteNotification={deleteNotification}
-                    unreadCount={unreadCount}
-                  />
+                <div className="hidden lg:block absolute top-12 right-0 w-96 bg-white border border-slate-200 rounded-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 shadow-2xl">
+                  <NotifPanelContent notifications={notifications} close={() => setNotifOpen(false)}
+                    handleNotifClick={handleNotifClick} markAllAsRead={markAllAsRead}
+                    deleteNotification={deleteNotification} unreadCount={unreadCount} />
                 </div>
               )}
             </div>
             {/* Profil */}
-            <Link
-              to="/profile"
-              className="flex items-center md:gap-3 hover:bg-slate-50 p-1 md:pr-4 rounded-full border border-transparent md:border-slate-200 transition-colors ml-1 shrink-0"
-            >
+            <Link to="/profile" className="flex items-center md:gap-3 hover:bg-slate-50 p-1 md:pr-4 rounded-full border border-transparent md:border-slate-200 transition-colors ml-1 shrink-0">
               <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
                 <User size={18} />
               </div>
@@ -516,20 +591,17 @@ export default function ChatPage() {
           </div>
         </header>
 
-        {/* === AREA KONSULTASI (List + Ruang Chat) === */}
+        {/* === AREA CHAT === */}
         <div className="flex-1 flex overflow-hidden relative">
 
-          {/* SUB-SIDEBAR: Daftar Percakapan */}
+          {/* Daftar Percakapan */}
           <aside className={`${isMobileChatActive ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shrink-0 h-full z-20`}>
-
-            {/* Search Bar */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input type="text" placeholder="Cari percakapan..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-blue-500 outline-none transition-all" />
               </div>
             </div>
-
             <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-1">
               {loadingConvs ? (
                 Array(5).fill(0).map((_, i) => (
@@ -550,17 +622,18 @@ export default function ChatPage() {
                 </div>
               ) : (
                 conversations.map((conv) => {
-                  const physio   = conv.physio || conv.physiotherapist || null;
-                  const lastMsg  = conv.last_message || conv.latest_message;
+                  const physio  = conv.physio || conv.physiotherapist || null;
+                  const lastMsg = conv.last_message || conv.latest_message;
                   const isActive = activeConv?.id === conv.id;
-                  const preview  = lastMsg?.type === "image" ? "Gambar" : lastMsg?.type === "video" ? "Video" : lastMsg?.type === "file" ? "Dokumen" : (lastMsg?.body || lastMsg?.content || "Mulai obrolan...");
+                  const preview = lastMsg?.type === "image" ? "📷 Gambar"
+                    : lastMsg?.type === "video" ? "🎥 Video"
+                    : lastMsg?.type === "file"  ? "📄 Dokumen"
+                    : (lastMsg?.body || lastMsg?.content || "Mulai obrolan...");
 
                   return (
-                    <div
-                      key={conv.id}
+                    <div key={conv.id}
                       className={`flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all border ${isActive ? "bg-blue-50/80 border-blue-100" : "border-transparent hover:bg-slate-50"}`}
-                      onClick={() => openConversation(conv)}
-                    >
+                      onClick={() => openConversation(conv)}>
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0 ${isActive ? 'bg-blue-600' : 'bg-slate-800'}`}>
                         {getInitials(physio?.name || "?")}
                       </div>
@@ -574,9 +647,7 @@ export default function ChatPage() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className={`text-sm truncate pr-2 ${isActive ? 'text-blue-700 font-medium' : 'text-slate-500'}`}>
-                            {preview}
-                          </span>
+                          <span className={`text-sm truncate pr-2 ${isActive ? 'text-blue-700 font-medium' : 'text-slate-500'}`}>{preview}</span>
                           {conv.unread_count > 0 && (
                             <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0">
                               {conv.unread_count}
@@ -591,8 +662,8 @@ export default function ChatPage() {
             </div>
           </aside>
 
-          {/* RUANG CHAT AKTIF */}
-          <section className={`${!isMobileChatActive ? 'hidden md:flex' : 'flex'} flex-1 flex-col h-full relative min-w-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]`}>
+          {/* Ruang Chat Aktif */}
+          <section className={`${!isMobileChatActive ? 'hidden md:flex' : 'flex'} flex-1 flex-col h-full relative min-w-0 overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]`}>
             {activeConv ? (
               <>
                 {/* Header Ruang Chat */}
@@ -616,9 +687,9 @@ export default function ChatPage() {
                 <div className="flex-1 overflow-y-auto hide-scrollbar p-4 lg:p-6 space-y-6">
                   {loadingMsgs ? (
                     <div className="flex flex-col gap-6 animate-pulse mt-4">
-                      <div className="flex gap-3 justify-start"><div className="w-48 h-12 bg-slate-200 rounded-2xl rounded-bl-sm"></div></div>
-                      <div className="flex gap-3 justify-end"><div className="w-64 h-16 bg-blue-100 rounded-2xl rounded-br-sm"></div></div>
-                      <div className="flex gap-3 justify-start"><div className="w-56 h-10 bg-slate-200 rounded-2xl rounded-bl-sm"></div></div>
+                      <div className="flex justify-start"><div className="w-48 h-12 bg-slate-200 rounded-2xl rounded-bl-sm"></div></div>
+                      <div className="flex justify-end"><div className="w-64 h-16 bg-blue-100 rounded-2xl rounded-br-sm"></div></div>
+                      <div className="flex justify-start"><div className="w-56 h-10 bg-slate-200 rounded-2xl rounded-bl-sm"></div></div>
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -632,7 +703,6 @@ export default function ChatPage() {
                     messages.map((msg, i) => {
                       const isMe = String(msg.sender_id) === String(currentUser.id);
                       const showDateDivider = i === 0 || !isSameDay(messages[i - 1].created_at, msg.created_at);
-
                       return (
                         <div key={msg.id} className="flex flex-col w-full">
                           {showDateDivider && (
@@ -642,7 +712,7 @@ export default function ChatPage() {
                               </span>
                             </div>
                           )}
-                          <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"} ${msg._optimistic ? "opacity-60" : "opacity-100"} transition-opacity`}>
+                          <div className={`flex w-full min-w-0 ${isMe ? "justify-end" : "justify-start"} ${msg._optimistic ? "opacity-60" : "opacity-100"} transition-opacity`}>
                             <MessageBubble msg={msg} isMe={isMe} onImageClick={setSelectedImage} />
                           </div>
                         </div>
@@ -662,43 +732,24 @@ export default function ChatPage() {
                   )}
                   <div className="flex items-end gap-2 max-w-5xl mx-auto">
                     <div className="flex items-center gap-1 shrink-0 pb-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={sending}
-                        className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
-                        title="Lampirkan Dokumen"
-                      >
+                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={sending}
+                        className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50" title="Lampirkan Dokumen">
                         <Paperclip size={22} strokeWidth={2} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => cameraInputRef.current?.click()}
-                        disabled={sending}
-                        className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
-                        title="Kirim Foto"
-                      >
+                      <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={sending}
+                        className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50" title="Kirim Foto">
                         <Camera size={22} strokeWidth={2} />
                       </button>
                     </div>
-                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl flex items-center relative overflow-hidden transition-colors focus-within:border-blue-400 focus-within:bg-white">
-                      <textarea
-                        ref={textareaRef}
-                        rows={1}
-                        value={inputText}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
+                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl flex items-center overflow-hidden transition-colors focus-within:border-blue-400 focus-within:bg-white">
+                      <textarea ref={textareaRef} rows={1} value={inputText} onChange={handleInputChange} onKeyDown={handleKeyDown}
                         placeholder="Tulis keluhan atau pertanyaan..."
                         className="w-full bg-transparent border-none outline-none resize-none px-4 py-3 text-[15px] text-slate-800 placeholder:text-slate-400 hide-scrollbar"
-                        style={{ maxHeight: "120px" }}
-                      />
+                        style={{ maxHeight: "120px" }} />
                     </div>
-                    <button
-                      type="button"
+                    <button type="button"
                       className={`w-12 h-12 flex items-center justify-center rounded-2xl shrink-0 transition-all ${(!inputText.trim() && !selectedFile) || sending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'}`}
-                      onClick={handleSend}
-                      disabled={(!inputText.trim() && !selectedFile) || sending}
-                    >
+                      onClick={handleSend} disabled={(!inputText.trim() && !selectedFile) || sending}>
                       {sending ? <Loader size={20} className="animate-spin" /> : <Send size={18} strokeWidth={2.5} className="-translate-x-[2px] translate-y-[1px]" />}
                     </button>
                   </div>
@@ -717,86 +768,30 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* === MOBILE: Notifikasi — Fixed overlay, tidak out-of-frame === */}
+      {/* Mobile Notifikasi Overlay */}
       {notifOpen && (
         <div className="fixed inset-0 z-[90] lg:hidden" onClick={() => setNotifOpen(false)}>
           <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"></div>
-          <div
-            className="absolute top-16 left-4 right-4 bg-white border border-slate-200 rounded-2xl overflow-hidden animate-in slide-in-from-top-2 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-              <span className="text-sm font-bold text-slate-800">Notifikasi</span>
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={markAllAsRead}
-                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-100/50 px-2 py-1 rounded border border-blue-100"
-                  >
-                    Tandai Dibaca
-                  </button>
-                )}
-                <button type="button" onClick={() => setNotifOpen(false)} className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100">
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <div className="max-h-72 overflow-y-auto hide-scrollbar">
-              {!Array.isArray(notifications) || notifications.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 bg-slate-50/50">
-                  <Bell size={28} className="mx-auto mb-3 opacity-30" />
-                  <p className="text-sm font-medium">Belum ada notifikasi</p>
-                </div>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    onClick={() => handleNotifClick(n)}
-                    className={`p-4 border-b border-slate-50 transition-colors cursor-pointer flex gap-3 group ${!n.is_read ? 'bg-blue-50/30 hover:bg-blue-50' : 'hover:bg-slate-50'}`}
-                  >
-                    <div className={`mt-0.5 shrink-0 ${!n.is_read ? 'text-blue-500' : 'text-slate-400'}`}>
-                      {getNotifIcon(n.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm truncate ${!n.is_read ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{n.title}</p>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 font-semibold mt-2">{formatNotifTime(n.created_at)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
-                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded hover:bg-slate-100 shrink-0"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+          <div className="absolute top-16 left-4 right-4 bg-white border border-slate-200 rounded-2xl overflow-hidden animate-in slide-in-from-top-2 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}>
+            <NotifPanelContent notifications={notifications} close={() => setNotifOpen(false)}
+              handleNotifClick={handleNotifClick} markAllAsRead={markAllAsRead}
+              deleteNotification={deleteNotification} unreadCount={unreadCount} />
           </div>
         </div>
       )}
 
-      {/* MODAL LIGHTBOX GAMBAR */}
+      {/* Lightbox gambar */}
       {selectedImage && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button
-            type="button"
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-red-500 text-white flex items-center justify-center rounded-full transition-colors border border-white/20 z-50 cursor-pointer"
-          >
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}>
+          <button type="button" onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-red-500 text-white flex items-center justify-center rounded-full transition-colors border border-white/20 z-50">
             <X size={24} strokeWidth={2.5} />
           </button>
-          <img
-            src={selectedImage}
-            alt="Preview"
+          <img src={selectedImage} alt="Preview"
             className="max-w-full max-h-[85vh] object-contain rounded-xl animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          />
+            onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
@@ -804,50 +799,37 @@ export default function ChatPage() {
 }
 
 // =====================================
-// HELPER COMPONENTS (DASHBOARD)
+// SHARED COMPONENTS
 // =====================================
-// eslint-disable-next-line no-unused-vars
 function SidebarLink({ to, icon: Icon, label, active, expanded, onClick }) {
   return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className={`flex items-center rounded-xl font-medium transition-all duration-200 ${expanded ? 'px-4 py-3 justify-start gap-3' : 'p-3 justify-center'} ${active ? 'bg-slate-100 text-slate-900 border border-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent'}`}
-    >
+    <Link to={to} onClick={onClick}
+      className={`flex items-center rounded-xl font-medium transition-all duration-200 ${expanded ? 'px-4 py-3 justify-start gap-3' : 'p-3 justify-center'} ${active ? 'bg-slate-100 text-slate-900 border border-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent'}`}>
       <Icon size={22} className={`shrink-0 ${active ? 'text-blue-600' : ''}`} />
       {expanded && <span className="truncate flex-1">{label}</span>}
     </Link>
   );
 }
 
-// FIX: NotificationPanel — menggunakan safeNotifs array check, semua button type="button"
-function NotificationPanel({ notifications, close, unreadCount, markAllAsRead, handleNotifClick, deleteNotification }) {
+function NotifPanelContent({ notifications, close, unreadCount, markAllAsRead, handleNotifClick, deleteNotification }) {
   const safeNotifs = Array.isArray(notifications) ? notifications : [];
-
   return (
-    <div className="absolute top-12 right-0 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 shadow-2xl">
+    <>
       <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
         <span className="text-sm font-bold text-slate-800">Notifikasi</span>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={markAllAsRead}
-              className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-100/50 px-2 py-1 rounded border border-blue-100"
-            >
+            <button type="button" onClick={markAllAsRead}
+              className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-100/50 px-2 py-1 rounded border border-blue-100">
               Tandai Dibaca
             </button>
           )}
-          <button
-            type="button"
-            onClick={close}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100"
-          >
+          <button type="button" onClick={close} className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
       </div>
-      <div className="max-h-80 overflow-y-auto hide-scrollbar">
+      <div className="max-h-72 overflow-y-auto hide-scrollbar">
         {safeNotifs.length === 0 ? (
           <div className="p-10 text-center text-slate-400 bg-slate-50/50">
             <Bell size={28} className="mx-auto mb-3 opacity-30" />
@@ -855,30 +837,22 @@ function NotificationPanel({ notifications, close, unreadCount, markAllAsRead, h
           </div>
         ) : (
           safeNotifs.map((n) => (
-            <div
-              key={n.id}
-              onClick={() => handleNotifClick(n)}
-              className={`p-4 border-b border-slate-50 transition-colors cursor-pointer flex gap-3 group ${!n.is_read ? 'bg-blue-50/30 hover:bg-blue-50' : 'hover:bg-slate-50'}`}
-            >
-              <div className={`mt-0.5 shrink-0 ${!n.is_read ? 'text-blue-500' : 'text-slate-400'}`}>
-                {getNotifIcon(n.type)}
-              </div>
+            <div key={n.id} onClick={() => handleNotifClick(n)}
+              className={`p-4 border-b border-slate-50 transition-colors cursor-pointer flex gap-3 group ${!n.is_read ? 'bg-blue-50/30 hover:bg-blue-50' : 'hover:bg-slate-50'}`}>
+              <div className={`mt-0.5 shrink-0 ${!n.is_read ? 'text-blue-500' : 'text-slate-400'}`}>{getNotifIcon(n.type)}</div>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm truncate ${!n.is_read ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{n.title}</p>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2">{n.message}</p>
                 <p className="text-[10px] text-slate-400 font-semibold mt-2">{formatNotifTime(n.created_at)}</p>
               </div>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
-                className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded hover:bg-slate-100 shrink-0"
-              >
+              <button type="button" onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
+                className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity p-1 rounded hover:bg-slate-100 shrink-0">
                 <Trash2 size={16} />
               </button>
             </div>
           ))
         )}
       </div>
-    </div>
+    </>
   );
 }
