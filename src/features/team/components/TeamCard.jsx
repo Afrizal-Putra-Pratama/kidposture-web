@@ -1,42 +1,42 @@
 ﻿import { useNavigate } from "react-router-dom";
-import "./team-card.css";
+import { ArrowRight } from "lucide-react";
 
-export default function TeamCard({
-  slug,
-  name,
-  role,
-  image,
-  description,
-  variant = "light",
-}) {
+// HAPUS import "./team-card.css" JIKA ADA
+
+export default function TeamCard({ name, role, type, image, slug }) {
   const navigate = useNavigate();
 
   return (
-    <article
-      className={`team-card team-card--${variant}`}
+    <div
       onClick={() => navigate(`/team/${slug}`)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          navigate(`/team/${slug}`);
-        }
-      }}
+      className="group flex flex-col bg-white rounded-3xl border border-slate-200 overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-500/10 hover:border-sky-200 transition-all duration-300"
     >
-      <div className="team-card__image-wrap">
-        <img src={image} alt={name} className="team-card__image" loading="lazy" />
-
-        <div className="team-card__overlay">
-          <p className="team-card__role">{role}</p>
-          <h3 className="team-card__name">{name}</h3>
-
-          {description ? (
-            <p className="team-card__description">{description}</p>
-          ) : null}
-
-          <span className="team-card__detail-link">Lihat Detail</span>
+      {/* PHOTO AREA */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        {/* BADGE TIPE TIM */}
+        <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[0.65rem] font-bold text-sky-700 uppercase tracking-widest shadow-sm">
+          {type}
         </div>
       </div>
-    </article>
+
+      {/* TEXT AREA */}
+      <div className="p-6 flex flex-col flex-1">
+        <h3 className="text-[1.15rem] font-bold text-slate-900 mb-1 group-hover:text-sky-600 transition-colors">
+          {name}
+        </h3>
+        <p className="text-[0.9rem] font-medium text-slate-500 mb-4 flex-1 leading-snug">
+          {role}
+        </p>
+
+        <div className="flex items-center gap-1.5 text-[0.85rem] font-semibold text-sky-500 group-hover:text-sky-600 transition-colors mt-auto">
+          Lihat Profil <ArrowRight size={16} />
+        </div>
+      </div>
+    </div>
   );
 }
