@@ -13,7 +13,7 @@ import {
   FileText,
   Upload
 } from "lucide-react";
-import { login } from "../../services/authService.jsx";
+import { login, logout  } from "../../services/authService.jsx";
 import api from "../../utils/axios";
 
 export default function LoginPage() {
@@ -70,20 +70,29 @@ export default function LoginPage() {
 
   // --- Handlers ---
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setLoginError(null);
-    setIsSubmitting(true);
-    try {
-      const { user } = await login(loginData);
-      const role = user.role?.toLowerCase();
-      if (role === "physio") navigate("/physio/dashboard");
-      else if (role === "admin") navigate("/admin/physiotherapists");
-      else navigate("/dashboard");
-    } catch (err) {
-      setLoginError(err.response?.data?.message || "Email atau password salah.");
+  e.preventDefault();
+  setLoginError(null);
+  setIsSubmitting(true);
+  try {
+    const { user } = await login(loginData);
+    const role = user.role?.toLowerCase();
+
+    // Admin tidak boleh login dari frontend
+    if (role === "admin") {
+      await logout(); // hapus token & user dari localStorage
+      setLoginError("Akses Ditolak.");
       setIsSubmitting(false);
+      return;
     }
-  };
+
+    if (role === "physio") navigate("/physio/dashboard");
+    else navigate("/dashboard");
+
+  } catch (err) {
+    setLoginError(err.response?.data?.message || "Email atau password salah.");
+    setIsSubmitting(false);
+  }
+};
 
   const handleRegisterParentSubmit = async (e) => {
     e.preventDefault();

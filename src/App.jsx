@@ -49,22 +49,21 @@ import PhysioMapPage from "./pages/PhysioMapPage.jsx";
 import PaymentPage from "./pages/parent/PaymentPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles = null }) {
   const token = localStorage.getItem("token");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-}
-
-function RoleRoute({ children, allowedRoles }) {
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
   const role = user?.role?.toLowerCase();
 
-  if (!user || !allowedRoles.includes(role)) {
+  // Tidak ada token atau user → ke login
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Ada role restriction → cek role
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    if (role === "admin") return <Navigate to="/admin/physiotherapists" replace />;
+    if (role === "physio") return <Navigate to="/physio/dashboard" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -103,7 +102,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <ParentDashboard />
             </ProtectedRoute>
           }
@@ -112,7 +111,7 @@ function App() {
         <Route
           path="/payment"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <PaymentPage />
             </ProtectedRoute>
           }
@@ -130,7 +129,7 @@ function App() {
         <Route
           path="/children"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <ChildrenPage />
             </ProtectedRoute>
           }
@@ -139,7 +138,7 @@ function App() {
         <Route
           path="/children/:childId/screenings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <ChildScreeningsPage />
             </ProtectedRoute>
           }
@@ -148,7 +147,7 @@ function App() {
         <Route
           path="/children/:childId/screenings/new"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <NewScreeningPage />
             </ProtectedRoute>
           }
@@ -157,7 +156,7 @@ function App() {
         <Route
           path="/screenings/:screeningId"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <ScreeningDetailPage />
             </ProtectedRoute>
           }
@@ -166,7 +165,7 @@ function App() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <ParentProfilePage />
             </ProtectedRoute>
           }
@@ -176,7 +175,7 @@ function App() {
         <Route
           path="/physiotherapists"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <PhysiotherapistListPage />
             </ProtectedRoute>
           }
@@ -187,7 +186,7 @@ function App() {
         <Route
           path="/physios/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <PhysiotherapistDetail />
             </ProtectedRoute>
           }
@@ -196,7 +195,7 @@ function App() {
         <Route
           path="/physiotherapists/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
               <PhysiotherapistDetail />
             </ProtectedRoute>
           }
@@ -206,10 +205,8 @@ function App() {
         <Route
           path="/physio/dashboard"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioDashboardPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioDashboardPage />
             </ProtectedRoute>
           }
         />
@@ -217,10 +214,8 @@ function App() {
         <Route
           path="/physio/profile"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioProfilePage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioProfilePage />
             </ProtectedRoute>
           }
         />
@@ -228,10 +223,8 @@ function App() {
         <Route
           path="/physio/education"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioEducationPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioEducationPage />
             </ProtectedRoute>
           }
         />
@@ -239,10 +232,8 @@ function App() {
         <Route
           path="/physio/chat"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioChatPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioChatPage />
             </ProtectedRoute>
           }
         />
@@ -250,10 +241,8 @@ function App() {
         <Route
           path="/physio/education/create"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioArticleFormPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioArticleFormPage />
             </ProtectedRoute>
           }
         />
@@ -261,10 +250,8 @@ function App() {
         <Route
           path="/physio/education/:id/edit"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioArticleFormPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioArticleFormPage />
             </ProtectedRoute>
           }
         />
@@ -272,10 +259,8 @@ function App() {
         <Route
           path="/physio/screenings/:screeningId"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["physio"]}>
-                <PhysioScreeningDetailPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["physio"]}>
+              <PhysioScreeningDetailPage />
             </ProtectedRoute>
           }
         />
@@ -284,10 +269,8 @@ function App() {
         <Route
           path="/admin/physiotherapists"
           element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={["admin"]}>
-                <AdminPhysioManagementPage />
-              </RoleRoute>
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminPhysioManagementPage />
             </ProtectedRoute>
           }
         />
