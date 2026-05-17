@@ -4,54 +4,69 @@ import { Link } from "react-router-dom";
 import PublicNavbar from "../../../components/PublicNavbar";
 import TeamCard from "./TeamCard";
 
-// HAPUS PANGGILAN CSS INI:
-// import "./team-page.css";
-
 const tabs = [
   { label: "Semua Tim", href: "/team", value: "all" },
-  { label: "Expert Team", href: "/team/expert", value: "expert" },
-  { label: "Staff Mahasiswa", href: "/team/staff", value: "staff" },
+  { label: "Founding Team", href: "/team/founders", value: "founders" },
+  { label: "Core Development Team", href: "/team/core", value: "core" },
+  { label: "Expert & Advisor Team", href: "/team/experts", value: "experts" },
 ];
 
-export default function TeamSectionPage({ title, subtitle, teams, active = "all" }) {
+const CARDS_PER_ROW = 6;
+
+function chunkArray(items, size) {
+  const chunks = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+export default function TeamSectionPage({
+  title,
+  subtitle,
+  teams = [],
+  active = "all",
+}) {
+  const teamRows = chunkArray(teams, CARDS_PER_ROW);
+
   return (
-    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+    <main className="min-h-screen bg-[#f7f8fb] pb-20 font-sans text-slate-900">
       <PublicNavbar />
 
-      {/* HERO SECTION */}
-      <section className="relative pt-32 pb-16 px-6 bg-white border-b border-slate-200 overflow-hidden text-center">
-        {/* Accent Background */}
-        <div className="absolute w-[300px] h-[300px] rounded-full bg-sky-400/10 blur-3xl -top-32 left-1/2 -translate-x-1/2 pointer-events-none" />
+      <section className="relative overflow-hidden bg-[#f7f8fb] px-6 pb-10 pt-32 text-center">
+        <div className="pointer-events-none absolute left-1/2 top-10 h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-sky-300/10 blur-3xl" />
 
-        <div className="max-w-3xl mx-auto relative z-10">
-          <span className="inline-block px-3.5 py-1 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[0.75rem] font-bold tracking-widest uppercase mb-4 shadow-sm">
+        <div className="relative z-10 mx-auto max-w-4xl">
+          <span className="mb-5 inline-block rounded-full border border-sky-100 bg-white/80 px-4 py-1.5 text-[0.72rem] font-bold uppercase tracking-[0.24em] text-sky-600 shadow-sm backdrop-blur">
             Tim Posturely
           </span>
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight mb-4">
+
+          <h1 className="mb-5 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
             {title}
           </h1>
-          <p className="text-[1rem] md:text-[1.1rem] text-slate-500 leading-relaxed">
+
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-slate-500 md:text-lg">
             {subtitle}
           </p>
         </div>
       </section>
 
-      {/* CONTENT SECTION */}
-      <section className="px-6 pt-12">
-        <div className="max-w-6xl mx-auto">
-          
-          {/* TABS NAVIGATION */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
+      <section className="px-4 pt-6 md:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-wrap justify-center gap-3">
             {tabs.map((tab) => {
               const isActive = tab.value === active;
+
               return (
                 <Link
                   key={tab.value}
                   to={tab.href}
-                  className={`flex items-center gap-1.5 px-5 py-2.5 rounded-full text-[0.9rem] font-medium transition-all ${
-                    isActive 
-                      ? "bg-sky-500 text-white shadow-md shadow-sky-500/20" 
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                  className={`flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[0.9rem] font-semibold transition-all ${
+                    isActive
+                      ? "bg-sky-500 text-white shadow-lg shadow-sky-500/20"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                   }`}
                 >
                   {tab.label}
@@ -61,13 +76,46 @@ export default function TeamSectionPage({ title, subtitle, teams, active = "all"
             })}
           </div>
 
-          {/* GRID KARTU TIM */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {teams.map((member) => (
-              <TeamCard key={`${member.name}-${member.role}`} {...member} />
-            ))}
-          </div>
+          {teams.length > 0 ? (
+            <>
+              {/* DESKTOP: accordion row, card geser bukan menutupi */}
+              <div className="hidden space-y-6 md:block">
+                {teamRows.map((row, rowIndex) => (
+                  <div
+                    key={`team-row-${rowIndex}`}
+                    className="flex flex-nowrap justify-center gap-4 overflow-visible"
+                  >
+                    {row.map((member) => (
+                      <TeamCard
+                        key={`${member.group}-${member.slug}`}
+                        {...member}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
 
+              {/* MOBILE */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:hidden">
+                {teams.map((member) => (
+                  <TeamCard
+                    key={`mobile-${member.group}-${member.slug}`}
+                    {...member}
+                    mobile
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Data tim belum tersedia
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Belum ada anggota yang ditampilkan pada kategori ini.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </main>

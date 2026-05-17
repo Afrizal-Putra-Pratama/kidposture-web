@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
 import AccessibilityWidget from "./components/AccessibilityWidget";
 import ChildrenPage from "./pages/ChildrenPage.jsx";
 import ChildScreeningsPage from "./pages/ChildScreeningsPage.jsx";
@@ -16,10 +15,11 @@ import ParentProfilePage from "./pages/ParentProfilePage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 
 // Team pages
-import TeamPage from "./pages/TeamPage.jsx";
-import TeamExpertPage from "./pages/TeamExpertPage.jsx";
-import TeamStaffPage from "./pages/TeamStaffPage.jsx";
-import TeamDetailPage from "./pages/TeamDetailPage.jsx";
+import TeamPage from "./pages/TeamPage";
+import TeamFoundingPage from "./pages/TeamFoundingPage";
+import TeamCorePage from "./pages/TeamCorePage";
+import TeamExpertPage from "./pages/TeamExpertPage";
+import TeamDetailPage from "./pages/TeamDetailPage";
 
 // Physio lama
 import PhysioDashboardPage from "./pages/PhysioDashboardPage.jsx";
@@ -81,10 +81,13 @@ function App() {
 
         {/* Team Routes */}
         <Route path="/team" element={<TeamPage />} />
-        <Route path="/team/expert" element={<TeamExpertPage />} />
-        <Route path="/team/staff" element={<TeamStaffPage />} />
-        <Route path="/team/:slug" element={<TeamDetailPage />} />
+        <Route path="/team/founders" element={<TeamFoundingPage />} />
+        <Route path="/team/core" element={<TeamCorePage />} />
+        <Route path="/team/experts" element={<TeamExpertPage />} />
+        <Route path="/team/:group/:slug" element={<TeamDetailPage />} />
 
+        <Route path="/team/expert" element={<Navigate to="/team/experts" replace />} />
+        <Route path="/team/staff" element={<Navigate to="/team/core" replace />} />
         {/* Halaman Peta Fisioterapis Public */}
         <Route path="/physiotherapists/map" element={<PhysioMapPage />} />
         <Route path="/map" element={<Navigate to="/physiotherapists/map" replace />} />

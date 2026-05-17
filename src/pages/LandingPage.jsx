@@ -242,8 +242,9 @@ function LandingPage() {
               </button>
               <div className="invisible absolute left-1/2 top-full mt-1 min-w-[180px] -translate-x-1/2 translate-y-2 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-lg shadow-slate-900/10 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                 <button onClick={() => navigate("/team")} className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Semua Tim</button>
-                <button onClick={() => navigate("/team/expert")} className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Expert Team</button>
-                <button onClick={() => navigate("/team/staff")} className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Staff Mahasiswa</button>
+                <button onClick={() => navigate("/team/experts")} className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Expert & Advisor Team</button>
+                <button onClick={() => navigate("/team/core")} className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Core Development Team</button>
+                <button onClick={() => navigate("/team/founders")}className="block w-full rounded-lg px-4 py-2.5 text-left text-[0.85rem] font-medium text-slate-600 hover:bg-sky-50 hover:text-sky-600">Founding Team</button>
               </div>
             </div>
           </nav>
@@ -281,8 +282,9 @@ function LandingPage() {
             {/* ✅ INJEKSI MENU TIM KAMI (Mobile) */}
             <div className="flex flex-col border-l-2 border-slate-200 ml-2 mt-1 mb-2">
                <button onClick={() => { navigate("/team"); setMobileMenuOpen(false); }} className="py-2.5 text-left text-[0.95rem] text-slate-700 hover:text-sky-600 pl-3">Tim Kami</button>
-               <button onClick={() => { navigate("/team/expert"); setMobileMenuOpen(false); }} className="py-2 text-left text-[0.85rem] text-slate-500 hover:text-sky-600 pl-6">Expert Team</button>
-               <button onClick={() => { navigate("/team/staff"); setMobileMenuOpen(false); }} className="py-2 text-left text-[0.85rem] text-slate-500 hover:text-sky-600 pl-6">Staff Mahasiswa</button>
+               <button onClick={() => { navigate("/team/experts"); setMobileMenuOpen(false); }} className="py-2 text-left text-[0.85rem] text-slate-500 hover:text-sky-600 pl-6">Expert & Advisor Team</button>
+               <button onClick={() => { navigate("/team/core"); setMobileMenuOpen(false); }} className="py-2 text-left text-[0.85rem] text-slate-500 hover:text-sky-600 pl-6">Core Development Team</button>
+               <button onClick={() => { navigate("/team/founders"); setMobileMenuOpen(false); }} className="py-2 text-left text-[0.85rem] text-slate-500 hover:text-sky-600 pl-6">Founding Team</button>
             </div>
 
             <hr className="border-t border-slate-200 my-2" />
