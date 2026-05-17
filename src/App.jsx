@@ -71,16 +71,21 @@ function ProtectedRoute({ children, allowedRoles = null }) {
   return children;
 }
 
+// ─── Smart Education Route ───────────────────────────────────────────────────
+// /education wajib login. Redirect sesuai kondisi:
+// - Belum login               → /login
+// - Login sebagai physio      → /physio/education
+// - Login sebagai admin       → /admin/physiotherapists
+// - Login sebagai parent/user → boleh masuk /education
 function SmartEducationRoute({ children }) {
   const token = localStorage.getItem("token");
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
   const role = user?.role?.toLowerCase();
 
-  if (token && user) {
-    if (role === "physio") return <Navigate to="/physio/education" replace />;
-    if (role === "admin") return <Navigate to="/admin/physiotherapists" replace />;
-  }
+  if (!token || !user) return <Navigate to="/login" replace />;
+  if (role === "physio") return <Navigate to="/physio/education" replace />;
+  if (role === "admin") return <Navigate to="/admin/physiotherapists" replace />;
 
   return children;
 }
@@ -113,7 +118,7 @@ function App() {
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
         <Route path="/register/parent" element={<RegisterParentPage />} />
 
-        {/* Education — publik, tapi aware login role */}
+        {/* Education — wajib login, redirect sesuai role */}
         <Route
           path="/education"
           element={
@@ -122,7 +127,14 @@ function App() {
             </SmartEducationRoute>
           }
         />
-        <Route path="/education/:slug" element={<ArticleDetailPage />} />
+        <Route
+          path="/education/:slug"
+          element={
+            <ProtectedRoute allowedRoles={["parent", "user"]}>
+              <ArticleDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Parent Protected Routes */}
         <Route
