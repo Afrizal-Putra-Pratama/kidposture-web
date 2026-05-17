@@ -49,22 +49,37 @@ import PhysioMapPage from "./pages/PhysioMapPage.jsx";
 import PaymentPage from "./pages/parent/PaymentPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 
+// ─── Protected Route ────────────────────────────────────────────────────────
+// Redirect ke login jika belum login, atau ke halaman sesuai role jika akses
+// route yang tidak diizinkan.
 function ProtectedRoute({ children, allowedRoles = null }) {
   const token = localStorage.getItem("token");
   const userRaw = localStorage.getItem("user");
   const user = userRaw ? JSON.parse(userRaw) : null;
   const role = user?.role?.toLowerCase();
 
-  // Tidak ada token atau user → ke login
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Ada role restriction → cek role
   if (allowedRoles && !allowedRoles.includes(role)) {
     if (role === "admin") return <Navigate to="/admin/physiotherapists" replace />;
     if (role === "physio") return <Navigate to="/physio/dashboard" replace />;
     return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function SmartEducationRoute({ children }) {
+  const token = localStorage.getItem("token");
+  const userRaw = localStorage.getItem("user");
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  const role = user?.role?.toLowerCase();
+
+  if (token && user) {
+    if (role === "physio") return <Navigate to="/physio/education" replace />;
+    if (role === "admin") return <Navigate to="/admin/physiotherapists" replace />;
   }
 
   return children;
@@ -88,6 +103,7 @@ function App() {
 
         <Route path="/team/expert" element={<Navigate to="/team/experts" replace />} />
         <Route path="/team/staff" element={<Navigate to="/team/core" replace />} />
+
         {/* Halaman Peta Fisioterapis Public */}
         <Route path="/physiotherapists/map" element={<PhysioMapPage />} />
         <Route path="/map" element={<Navigate to="/physiotherapists/map" replace />} />
@@ -97,8 +113,15 @@ function App() {
         <Route path="/register/physio" element={<RegisterPhysioPage />} />
         <Route path="/register/parent" element={<RegisterParentPage />} />
 
-        {/* Education Public */}
-        <Route path="/education" element={<EducationPage />} />
+        {/* Education — publik, tapi aware login role */}
+        <Route
+          path="/education"
+          element={
+            <SmartEducationRoute>
+              <EducationPage />
+            </SmartEducationRoute>
+          }
+        />
         <Route path="/education/:slug" element={<ArticleDetailPage />} />
 
         {/* Parent Protected Routes */}
