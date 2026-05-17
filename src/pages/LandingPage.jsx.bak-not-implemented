@@ -1,0 +1,5 @@
+import PosturelyLandingPage from "../features/landing/components/PosturelyLandingPage";
+
+export default function HomePage() {
+  return <PosturelyLandingPage />;
+}

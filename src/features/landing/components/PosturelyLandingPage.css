@@ -1,0 +1,1387 @@
+:root {
+  --posturely-navy: #07122b;
+  --posturely-dark: #0b1733;
+  --posturely-blue: #35a8ef;
+  --posturely-blue-2: #2563eb;
+  --posturely-blue-soft: #eaf6ff;
+  --posturely-surface: #ffffff;
+  --posturely-bg: #f5f9ff;
+  --posturely-bg-2: #eef6ff;
+  --posturely-border: #d8e7f7;
+  --posturely-text: #10203d;
+  --posturely-muted: #5d6d83;
+  --posturely-shadow: 0 22px 60px rgba(18, 54, 96, 0.12);
+  --posturely-radius-xl: 28px;
+  --posturely-radius-lg: 22px;
+  --posturely-radius-md: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.posturely-page {
+  min-height: 100vh;
+  color: var(--posturely-text);
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(53, 168, 239, 0.13),
+      transparent 32rem
+    ),
+    linear-gradient(180deg, #f8fbff 0%, #ffffff 44%, #f4f8ff 100%);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.posturely-container {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.posturely-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(216, 231, 247, 0.88);
+  background: rgba(248, 251, 255, 0.84);
+  backdrop-filter: blur(18px);
+}
+
+.posturely-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76px;
+  gap: 24px;
+}
+
+.posturely-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--posturely-blue-2);
+  text-decoration: none;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.posturely-brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--posturely-blue);
+  background: linear-gradient(145deg, #e0f2ff, #ffffff);
+  box-shadow: inset 0 0 0 1px rgba(53, 168, 239, 0.16);
+}
+
+.posturely-brand-text {
+  font-size: 18px;
+}
+
+.posturely-navlinks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(22px, 4vw, 56px);
+  flex: 1;
+}
+
+.posturely-navlinks a,
+.posturely-login-link {
+  color: #35445d;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: color 180ms ease;
+}
+
+.posturely-navlinks a:hover,
+.posturely-login-link:hover {
+  color: var(--posturely-blue-2);
+}
+
+.posturely-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.posturely-navbar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--posturely-blue),
+    var(--posturely-blue-2)
+  );
+  text-decoration: none;
+  font-weight: 800;
+  box-shadow: 0 14px 28px rgba(53, 168, 239, 0.26);
+}
+
+.posturely-mobile-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--posturely-border);
+  border-radius: 14px;
+  color: var(--posturely-navy);
+  background: #ffffff;
+}
+
+.posturely-mobile-menu {
+  display: none;
+}
+
+.posturely-hero {
+  padding: 88px 0 74px;
+}
+
+.posturely-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  align-items: center;
+  gap: 70px;
+}
+
+.posturely-eyebrow {
+  margin: 0 0 15px;
+  color: var(--posturely-blue-2);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.posturely-hero h1 {
+  max-width: 680px;
+  margin: 0;
+  color: var(--posturely-navy);
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+
+.posturely-hero-description {
+  max-width: 640px;
+  margin: 24px 0 0;
+  color: var(--posturely-muted);
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.posturely-hero-actions,
+.posturely-cta-actions,
+.posturely-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 34px;
+}
+
+.posturely-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 850;
+  font-size: 15px;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.posturely-btn:hover {
+  transform: translateY(-2px);
+}
+
+.posturely-btn-primary {
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--posturely-blue),
+    var(--posturely-blue-2)
+  );
+  box-shadow: 0 18px 38px rgba(53, 168, 239, 0.28);
+}
+
+.posturely-btn-secondary {
+  color: var(--posturely-navy);
+  border-color: var(--posturely-border);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 26px rgba(18, 54, 96, 0.08);
+}
+
+.posturely-btn-dark {
+  width: 100%;
+  color: #ffffff;
+  background: var(--posturely-navy);
+}
+
+.posturely-btn-white {
+  color: var(--posturely-blue-2);
+  background: #ffffff;
+}
+
+.posturely-btn-outline-white {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+}
+
+.posturely-hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.posturely-hero-trust span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 231, 247, 0.9);
+  border-radius: 999px;
+  color: #4c5d76;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.posturely-hero-preview {
+  position: relative;
+  min-height: 520px;
+  display: grid;
+  place-items: center;
+}
+
+.posturely-preview-glow {
+  position: absolute;
+  inset: 32px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgba(53, 168, 239, 0.26),
+    transparent 65%
+  );
+  filter: blur(10px);
+}
+
+.posturely-screening-card,
+.posturely-flow-card,
+.posturely-dashboard-mockup,
+.posturely-map-mockup {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 470px);
+  border: 1px solid rgba(216, 231, 247, 0.96);
+  border-radius: 34px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(247, 251, 255, 0.92)
+    ),
+    #ffffff;
+  box-shadow: var(--posturely-shadow);
+}
+
+.posturely-screening-card {
+  padding: 28px;
+}
+
+.posturely-card-topline,
+.posturely-score-row,
+.posturely-dashboard-header,
+.posturely-map-search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.posturely-card-topline {
+  justify-content: flex-start;
+  color: #60718a;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.posturely-icon-badge {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--posturely-blue);
+  background: #dff2ff;
+}
+
+.posturely-score-row {
+  margin-top: 28px;
+}
+
+.posturely-score-row p,
+.posturely-dashboard-score span,
+.posturely-dashboard-list span {
+  margin: 0;
+  color: var(--posturely-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.posturely-score-row strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--posturely-navy);
+  font-size: 58px;
+  line-height: 1;
+  letter-spacing: -0.07em;
+}
+
+.posturely-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: var(--posturely-blue-2);
+  background: var(--posturely-blue-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.posturely-progress {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  margin-top: 18px;
+  border-radius: 999px;
+  background: #e6eef8;
+}
+
+.posturely-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--posturely-blue),
+    var(--posturely-blue-2)
+  );
+}
+
+.posturely-body-analysis {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 24px;
+  align-items: center;
+  margin-top: 28px;
+}
+
+.posturely-body-illustration {
+  position: relative;
+  height: 210px;
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(53, 168, 239, 0.08), rgba(53, 168, 239, 0.02)),
+    #f6fbff;
+}
+
+.posturely-body-illustration .head,
+.posturely-body-illustration .body,
+.posturely-body-illustration .shoulder,
+.posturely-body-illustration .line {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+}
+
+.posturely-body-illustration .head {
+  top: 27px;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 3px solid var(--posturely-blue);
+}
+
+.posturely-body-illustration .body {
+  top: 78px;
+  width: 54px;
+  height: 94px;
+  border-radius: 24px 24px 16px 16px;
+  border: 3px solid var(--posturely-blue);
+}
+
+.posturely-body-illustration .shoulder {
+  top: 86px;
+  width: 92px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--posturely-blue-2);
+}
+
+.posturely-body-illustration .shoulder-right {
+  transform: translateX(-50%) rotate(-7deg);
+}
+
+.posturely-body-illustration .line {
+  width: 2px;
+  height: 160px;
+  top: 26px;
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.posturely-body-illustration .line-a {
+  left: 37%;
+}
+
+.posturely-body-illustration .line-b {
+  left: 63%;
+}
+
+.posturely-analysis-list {
+  display: grid;
+  gap: 13px;
+}
+
+.posturely-analysis-list div,
+.posturely-check-list span {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #43536d;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.posturely-analysis-list svg,
+.posturely-check-list svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--posturely-blue);
+}
+
+.posturely-floating-card {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--posturely-border);
+  border-radius: 999px;
+  color: var(--posturely-navy);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 34px rgba(18, 54, 96, 0.12);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.posturely-floating-card svg {
+  color: var(--posturely-blue);
+}
+
+.posturely-floating-card-a {
+  top: 48px;
+  left: 4px;
+}
+
+.posturely-floating-card-b {
+  right: 0;
+  bottom: 72px;
+}
+
+.posturely-section {
+  padding: 88px 0;
+}
+
+.posturely-problem-section,
+.posturely-how-section,
+.posturely-education-section,
+.posturely-faq-section {
+  background: rgba(238, 246, 255, 0.56);
+}
+
+.posturely-section-header {
+  max-width: 760px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.posturely-section-header.is-left {
+  margin-left: 0;
+  text-align: left;
+}
+
+.posturely-section-header h2,
+.posturely-final-cta h2,
+.posturely-ethical-card h2 {
+  margin: 0;
+  color: var(--posturely-navy);
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+}
+
+.posturely-section-header p:not(.posturely-eyebrow),
+.posturely-final-cta p,
+.posturely-ethical-card p {
+  margin: 16px 0 0;
+  color: var(--posturely-muted);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.posturely-card-grid {
+  display: grid;
+  gap: 22px;
+}
+
+.posturely-card-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.posturely-card-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.posturely-info-card,
+.posturely-feature-card,
+.posturely-education-card,
+.posturely-audience-card {
+  border: 1px solid var(--posturely-border);
+  border-radius: var(--posturely-radius-lg);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 40px rgba(18, 54, 96, 0.07);
+}
+
+.posturely-info-card,
+.posturely-feature-card,
+.posturely-education-card {
+  padding: 28px;
+}
+
+.posturely-info-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.posturely-info-card::after {
+  content: "";
+  position: absolute;
+  right: -26px;
+  top: -26px;
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  background: rgba(53, 168, 239, 0.1);
+}
+
+.posturely-card-number {
+  color: var(--posturely-blue);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+
+.posturely-info-card h3,
+.posturely-feature-card h3,
+.posturely-education-card h3,
+.posturely-audience-card h3 {
+  margin: 16px 0 0;
+  color: var(--posturely-navy);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.posturely-info-card p,
+.posturely-feature-card p,
+.posturely-education-card p {
+  margin: 12px 0 0;
+  color: var(--posturely-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.posturely-how-grid,
+.posturely-product-preview-grid,
+.posturely-map-grid,
+.posturely-expert-grid,
+.posturely-faq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.86fr);
+  align-items: center;
+  gap: 70px;
+}
+
+.posturely-step-list {
+  display: grid;
+  gap: 24px;
+}
+
+.posturely-step-item {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+}
+
+.posturely-step-number {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--posturely-blue);
+  border-radius: 999px;
+  color: var(--posturely-blue-2);
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.posturely-step-item h3 {
+  margin: 0;
+  color: var(--posturely-navy);
+  font-size: 17px;
+}
+
+.posturely-step-item p {
+  margin: 7px 0 0;
+  color: var(--posturely-muted);
+  line-height: 1.65;
+}
+
+.posturely-flow-card {
+  padding: 44px 32px;
+  text-align: center;
+}
+
+.posturely-flow-pill {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: var(--posturely-blue-2);
+  background: var(--posturely-blue-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.posturely-flow-icon {
+  display: block;
+  margin: 26px auto 18px;
+  color: var(--posturely-blue);
+}
+
+.posturely-flow-card h3 {
+  margin: 0;
+  color: var(--posturely-navy);
+  font-size: 24px;
+}
+
+.posturely-flow-card p {
+  margin: 12px auto 0;
+  max-width: 330px;
+  color: var(--posturely-muted);
+  line-height: 1.65;
+}
+
+.posturely-flow-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.posturely-flow-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 17px;
+  border: 1px solid var(--posturely-border);
+  border-radius: 999px;
+  color: var(--posturely-muted);
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.posturely-flow-actions button.active {
+  color: #ffffff;
+  border-color: transparent;
+  background: var(--posturely-blue);
+}
+
+.posturely-flow-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 24px;
+}
+
+.posturely-flow-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #c8d9ea;
+}
+
+.posturely-flow-dots span.active {
+  width: 22px;
+  background: var(--posturely-blue);
+}
+
+.posturely-preview-section {
+  background:
+    radial-gradient(
+      circle at left,
+      rgba(53, 168, 239, 0.12),
+      transparent 30rem
+    ),
+    #ffffff;
+}
+
+.posturely-dashboard-mockup {
+  width: 100%;
+  max-width: 560px;
+  padding: 28px;
+}
+
+.posturely-dashboard-header strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--posturely-navy);
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.posturely-dashboard-header span:first-child,
+.posturely-dashboard-header div span {
+  color: var(--posturely-blue-2);
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.posturely-dashboard-body {
+  display: grid;
+  grid-template-columns: 0.85fr 1fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.posturely-dashboard-score,
+.posturely-dashboard-list div {
+  border-radius: 22px;
+  background: #f4f9ff;
+}
+
+.posturely-dashboard-score {
+  padding: 24px;
+}
+
+.posturely-dashboard-score strong {
+  display: block;
+  margin-top: 12px;
+  color: var(--posturely-navy);
+  font-size: 44px;
+  letter-spacing: -0.06em;
+}
+
+.posturely-dashboard-list {
+  display: grid;
+  gap: 12px;
+}
+
+.posturely-dashboard-list div {
+  padding: 16px;
+}
+
+.posturely-dashboard-list strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--posturely-navy);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.posturely-check-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.posturely-split-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 42px;
+}
+
+.posturely-split-heading .posturely-section-header {
+  margin-bottom: 0;
+}
+
+.posturely-education-card span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: 999px;
+  color: var(--posturely-blue-2);
+  background: var(--posturely-blue-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.posturely-education-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  color: var(--posturely-blue-2);
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.posturely-map-section {
+  background: #ffffff;
+}
+
+.posturely-map-mockup {
+  width: 100%;
+  max-width: 540px;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.posturely-map-search {
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--posturely-border);
+  border-radius: 999px;
+  color: #55667d;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.posturely-map-search svg {
+  color: var(--posturely-blue);
+}
+
+.posturely-map-bg {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  margin-top: 18px;
+  border-radius: 26px;
+  background:
+    linear-gradient(90deg, rgba(53, 168, 239, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(53, 168, 239, 0.08) 1px, transparent 1px),
+    linear-gradient(145deg, #eff8ff, #ffffff);
+  background-size: 38px 38px;
+}
+
+.posturely-map-bg .road {
+  position: absolute;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.13);
+}
+
+.posturely-map-bg .road-a {
+  left: -30px;
+  top: 82px;
+  width: 120%;
+  transform: rotate(-12deg);
+}
+
+.posturely-map-bg .road-b {
+  left: 80px;
+  top: 150px;
+  width: 90%;
+  transform: rotate(18deg);
+}
+
+.posturely-map-bg .road-c {
+  left: 205px;
+  top: -40px;
+  width: 10px;
+  height: 130%;
+  transform: rotate(17deg);
+}
+
+.posturely-map-pin {
+  position: absolute;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 4px solid #ffffff;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--posturely-blue),
+    var(--posturely-blue-2)
+  );
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.24);
+  transform: translate(-50%, -50%);
+}
+
+.posturely-location-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.posturely-location-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  color: var(--posturely-navy);
+  background: #f4f9ff;
+  font-weight: 850;
+}
+
+.posturely-location-list strong {
+  color: var(--posturely-blue-2);
+}
+
+.posturely-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.posturely-audience-card {
+  padding: 32px;
+}
+
+.posturely-audience-card ul {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 22px 0 28px;
+  list-style: none;
+}
+
+.posturely-audience-card li {
+  position: relative;
+  padding-left: 28px;
+  color: #40526e;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.posturely-audience-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--posturely-blue);
+  border: 1px solid var(--posturely-blue);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.posturely-audience-card.is-blue {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, #15365e, #2d84d3);
+}
+
+.posturely-audience-card.is-blue h3,
+.posturely-audience-card.is-blue li {
+  color: #ffffff;
+}
+
+.posturely-audience-card.is-blue li::before {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+.posturely-audience-card.is-blue .posturely-icon-badge {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.posturely-expert-section {
+  background:
+    radial-gradient(
+      circle at right,
+      rgba(53, 168, 239, 0.12),
+      transparent 30rem
+    ),
+    #f7fbff;
+}
+
+.posturely-expert-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.posturely-expert-cards div {
+  display: grid;
+  gap: 9px;
+  padding: 22px;
+  border: 1px solid var(--posturely-border);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(18, 54, 96, 0.07);
+}
+
+.posturely-expert-cards svg {
+  color: var(--posturely-blue);
+}
+
+.posturely-expert-cards strong {
+  color: var(--posturely-navy);
+  font-size: 17px;
+}
+
+.posturely-expert-cards span {
+  color: var(--posturely-muted);
+  line-height: 1.6;
+}
+
+.posturely-ethical-section {
+  padding: 70px 0;
+  background: #ffffff;
+}
+
+.posturely-ethical-card {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 34px;
+  border: 1px solid rgba(53, 168, 239, 0.24);
+  border-radius: 30px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(234, 246, 255, 0.95),
+      rgba(255, 255, 255, 0.96)
+    ),
+    #ffffff;
+  box-shadow: var(--posturely-shadow);
+}
+
+.posturely-faq-grid {
+  align-items: flex-start;
+}
+
+.posturely-faq-list {
+  display: grid;
+  gap: 12px;
+}
+
+.posturely-faq-item {
+  display: grid;
+  grid-template-columns: 1fr 22px;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 22px;
+  border: 1px solid var(--posturely-border);
+  border-radius: 20px;
+  text-align: left;
+  color: var(--posturely-navy);
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.posturely-faq-item strong {
+  display: block;
+  font-size: 16px;
+}
+
+.posturely-faq-item p {
+  margin: 10px 0 0;
+  color: var(--posturely-muted);
+  line-height: 1.65;
+}
+
+.posturely-faq-item svg {
+  margin-top: 2px;
+  color: var(--posturely-blue);
+  transition: transform 180ms ease;
+}
+
+.posturely-faq-item.is-active svg {
+  transform: rotate(90deg);
+}
+
+.posturely-final-cta {
+  padding: 86px 0;
+  text-align: center;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at center top,
+      rgba(53, 168, 239, 0.24),
+      transparent 34rem
+    ),
+    var(--posturely-navy);
+}
+
+.posturely-final-cta .posturely-eyebrow,
+.posturely-final-cta h2,
+.posturely-final-cta p {
+  color: #ffffff;
+}
+
+.posturely-final-cta p {
+  max-width: 660px;
+  margin-left: auto;
+  margin-right: auto;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.posturely-cta-actions {
+  justify-content: center;
+}
+
+.posturely-footer {
+  padding: 54px 0 24px;
+  color: rgba(255, 255, 255, 0.78);
+  background: #101a31;
+}
+
+.posturely-footer-grid {
+  display: grid;
+  grid-template-columns: 1.35fr repeat(3, 1fr);
+  gap: 48px;
+}
+
+.posturely-footer-brand {
+  color: #ffffff;
+}
+
+.posturely-footer p {
+  max-width: 360px;
+  margin: 18px 0 0;
+  line-height: 1.75;
+}
+
+.posturely-footer h3 {
+  margin: 0 0 18px;
+  color: #ffffff;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.posturely-footer a {
+  display: block;
+  margin-top: 11px;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+}
+
+.posturely-footer a:hover {
+  color: #ffffff;
+}
+
+.posturely-footer-bottom {
+  margin-top: 46px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 1024px) {
+  .posturely-navlinks,
+  .posturely-navbar-actions {
+    display: none;
+  }
+
+  .posturely-mobile-toggle {
+    display: grid;
+  }
+
+  .posturely-mobile-menu {
+    display: grid;
+    gap: 6px;
+    width: min(100% - 40px, 1180px);
+    margin: 0 auto 16px;
+    padding: 16px;
+    border: 1px solid var(--posturely-border);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 18px 38px rgba(18, 54, 96, 0.12);
+  }
+
+  .posturely-mobile-menu a {
+    padding: 12px 14px;
+    border-radius: 14px;
+    color: var(--posturely-text);
+    text-decoration: none;
+    font-weight: 800;
+  }
+
+  .posturely-mobile-menu a:hover {
+    background: var(--posturely-blue-soft);
+  }
+
+  .posturely-mobile-cta {
+    color: #ffffff !important;
+    background: var(--posturely-blue);
+  }
+
+  .posturely-hero-grid,
+  .posturely-how-grid,
+  .posturely-product-preview-grid,
+  .posturely-map-grid,
+  .posturely-expert-grid,
+  .posturely-faq-grid {
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+
+  .posturely-hero-preview {
+    min-height: auto;
+  }
+
+  .posturely-card-grid-4,
+  .posturely-card-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .posturely-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .posturely-container {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .posturely-navbar-inner {
+    min-height: 68px;
+  }
+
+  .posturely-hero {
+    padding: 56px 0 52px;
+  }
+
+  .posturely-section {
+    padding: 64px 0;
+  }
+
+  .posturely-hero h1 {
+    font-size: 42px;
+  }
+
+  .posturely-hero-description {
+    font-size: 16px;
+  }
+
+  .posturely-btn {
+    width: 100%;
+  }
+
+  .posturely-hero-actions,
+  .posturely-cta-actions {
+    width: 100%;
+  }
+
+  .posturely-hero-trust span {
+    width: 100%;
+  }
+
+  .posturely-body-analysis,
+  .posturely-dashboard-body,
+  .posturely-audience-grid,
+  .posturely-card-grid-4,
+  .posturely-card-grid-3,
+  .posturely-footer-grid,
+  .posturely-ethical-card {
+    grid-template-columns: 1fr;
+  }
+
+  .posturely-body-illustration {
+    max-width: 220px;
+    margin: 0 auto;
+  }
+
+  .posturely-floating-card {
+    position: static;
+    margin-top: 12px;
+  }
+
+  .posturely-split-heading {
+    display: grid;
+  }
+
+  .posturely-section-header,
+  .posturely-section-header.is-left {
+    text-align: left;
+  }
+
+  .posturely-flow-actions {
+    flex-direction: column;
+  }
+
+  .posturely-flow-actions button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .posturely-screening-card,
+  .posturely-flow-card,
+  .posturely-dashboard-mockup,
+  .posturely-map-mockup {
+    border-radius: 26px;
+  }
+}
