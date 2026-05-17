@@ -13,7 +13,7 @@ export const EXPERT_ADVISOR_TEAM = [
     name: "Arif Kurniawan, SST. FT, Ftr, M.Si",
     role: "Pediatric Physiotherapy Expert",
     type: "Expert & Advisor Team",
-    image: "/images/team/experts/1.jpg",
+    image: "/images/team/experts/1.png",
     description:
       "Expert fisioterapi pediatri yang berfokus pada tumbuh kembang anak, kesehatan muskuloskeletal, dan screening postur anak.",
     bio:
@@ -33,7 +33,7 @@ export const EXPERT_ADVISOR_TEAM = [
     name: "Arif Setiawan, S.Kom., M.Eng.",
     role: "Educational Technology & Informatics Advisor",
     type: "Expert & Advisor Team",
-    image: "/images/team/experts/2.jpg",
+    image: "/images/team/experts/2.png",
     description:
       "Advisor teknologi pendidikan dan informatika yang memberi masukan terkait sistem digital, integrasi informasi, dan pengalaman pengguna.",
     bio:
@@ -53,7 +53,7 @@ export const EXPERT_ADVISOR_TEAM = [
     name: "Arif Pristianto, M.Fis.",
     role: "Clinical Physiotherapy Validator & Pediatric Posture Expert",
     type: "Expert & Advisor Team",
-    image: "/images/team/experts/3.jpg",
+    image: "/images/team/experts/3.png",
     description:
       "Validator klinis fisioterapi yang mengevaluasi kesesuaian indikator screening, interpretasi hasil, keamanan data, dan aksesibilitas sistem.",
     bio:
