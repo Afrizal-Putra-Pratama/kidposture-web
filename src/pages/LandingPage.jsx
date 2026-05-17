@@ -706,7 +706,7 @@ function LandingPage() {
                 <h2 className="text-[1.9rem] font-bold text-slate-900 mb-2">Edukasi Postur Anak</h2>
                 <p className="text-[0.98rem] text-slate-600 m-0">Artikel publik. Untuk konten lengkap, gunakan dashboard setelah masuk.</p>
               </div>
-              <button onClick={() => navigate("/login")} className="inline-flex items-center gap-1.5 text-[0.95rem] font-medium text-sky-600 hover:text-sky-500 transition-colors">
+              <button onClick={() => navigate("/education")} className="inline-flex items-center gap-1.5 text-[0.95rem] font-medium text-sky-600 hover:text-sky-500 transition-colors">
                 Lihat edukasi lainnya <ChevronRight size={18} strokeWidth={2} />
               </button>
             </div>

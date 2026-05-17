@@ -254,7 +254,7 @@ export const CORE_DEVELOPMENT_TEAM = [
     ],
     variant: "blue",
   },
-  {
+ {
     id: 4,
     group: TEAM_GROUPS.CORE,
     slug: "afrizal-putra-pratama",
@@ -264,14 +264,14 @@ export const CORE_DEVELOPMENT_TEAM = [
     type: "Core Development Team",
     image: "/images/team/core/4.jpg",
     description:
-      "Mendukung pengembangan teknis aplikasi, backend system, database, dan stabilitas sistem Posturely.",
+      "Bertanggung jawab atas eksekusi pengembangan aplikasi secara end-to-end (Frontend & Backend) serta integrasi platform utama dengan layanan AI dan Computer Vision.",
     bio:
-      "Dalam Core Development Team, Afrizal berperan sebagai Software Development Lead yang berkontribusi pada pengembangan backend system, database management, dan implementasi teknis aplikasi berbasis web agar sistem Posturely berjalan stabil dan optimal.",
+      "Sebagai Software Development Lead, Afrizal memegang kendali penuh atas eksekusi pembuatan aplikasi. Perannya mencakup pengembangan antarmuka (Frontend), perancangan logika server (Backend), hingga mengintegrasikan sistem dengan microservice AI dan Computer Vision untuk analisis postur, memastikan aplikasi berjalan stabil dan berkinerja tinggi.",
     responsibilities: [
-      "Mengembangkan backend system Posturely.",
-      "Mengelola database dan struktur data aplikasi.",
-      "Mendukung integrasi fitur berbasis web.",
-      "Menjaga stabilitas dan kualitas teknis sistem.",
+      "Mengembangkan fitur aplikasi dari sisi Frontend maupun Backend.",
+      "Merancang struktur database dan arsitektur server aplikasi.",
+      "Mengintegrasikan platform utama dengan API layanan AI dan Computer Vision (MediaPipe).",
+      "Menjaga stabilitas, performa, dan kelancaran komunikasi antar-sistem.",
     ],
   },
   {
