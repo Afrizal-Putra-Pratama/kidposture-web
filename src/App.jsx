@@ -223,20 +223,12 @@ function App() {
 
         <Route
           path="/physios/:id"
-          element={
-            <ProtectedRoute allowedRoles={["parent", "user"]}>
-              <PhysiotherapistDetail />
-            </ProtectedRoute>
-          }
+          element={<PhysiotherapistDetail />}
         />
 
         <Route
           path="/physiotherapists/:id"
-          element={
-            <ProtectedRoute allowedRoles={["parent", "user"]}>
-              <PhysiotherapistDetail />
-            </ProtectedRoute>
-          }
+          element={<PhysiotherapistDetail />}
         />
 
         {/* Physio Routes */}
