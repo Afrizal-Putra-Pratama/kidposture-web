@@ -338,9 +338,9 @@ export const CORE_DEVELOPMENT_TEAM = [
   {
     id: 8,
     group: TEAM_GROUPS.CORE,
-    slug: "octa-nur-cahyani",
-    href: "/team/core/octa-nur-cahyani",
-    name: "Octa Nur Cahyani",
+    slug: "octa-nurcahyani",
+    href: "/team/core/octa-nurcahyani",
+    name: "Octa Nurcahyani",
     role: "Communication & Presentation Specialist",
     type: "Core Development Team",
     image: "/images/team/core/8.jpg",
