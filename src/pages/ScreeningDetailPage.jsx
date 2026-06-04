@@ -295,7 +295,7 @@ export default function ScreeningDetailPage() {
                 <Plus size={14} /> Screening
               </button>
               {/* Tombol PDF di Desktop (Tersembunyi di Mobile) */}
-              <button onClick={() => exportScreeningPDF(data)} className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5">
+              <button onClick={(e) => { e.preventDefault(); exportScreeningPDF(data); }} className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5">
                 <Download size={14} /> Simpan PDF
               </button>
             </div>
@@ -337,7 +337,7 @@ export default function ScreeningDetailPage() {
                 <h3 className="font-bold text-slate-800 text-sm">Indeks Analisis Postur</h3>
                 <div className="flex items-center gap-2">
                   {/* Tombol PDF pindah ke sini untuk tampilan mobile */}
-                  <button onClick={() => exportScreeningPDF(data)} className="lg:hidden text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-1.5 rounded-md transition-colors flex items-center gap-1 active:scale-95 border border-blue-100">
+                  <button onClick={(e) => { e.preventDefault(); exportScreeningPDF(data); }} className="flex lg:hidden bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 p-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center">
                     <Download size={12}/> Simpan PDF
                   </button>
                   {hasAnyDeviation && (
