@@ -71,31 +71,31 @@ export function generateScreeningHTML(data) {
   const metricRows = [
     m.shoulder_tilt_index !== undefined && `
       <tr>
-        <td>${m.shoulder_tilt_index < 2 ? '' : '⚠️ '}Kemiringan Bahu</td>
+        <td>${m.shoulder_tilt_index < 2 ? '' : ''}Kemiringan Bahu</td>
         <td>${Number(m.shoulder_tilt_index).toFixed(2)}%</td>
         <td style="color:${m.shoulder_tilt_index < 2 ? '#16a34a' : '#dc2626'};font-weight:600">${m.shoulder_tilt_index < 2 ? 'Normal' : 'Deviasi'}</td>
       </tr>`,
     m.hip_tilt_index !== undefined && `
       <tr>
-        <td>${m.hip_tilt_index < 2 ? '' : '⚠️ '}Kemiringan Panggul</td>
+        <td>${m.hip_tilt_index < 2 ? '' : ''}Kemiringan Panggul</td>
         <td>${Number(m.hip_tilt_index).toFixed(2)}%</td>
         <td style="color:${m.hip_tilt_index < 2 ? '#16a34a' : '#dc2626'};font-weight:600">${m.hip_tilt_index < 2 ? 'Normal' : 'Deviasi'}</td>
       </tr>`,
     m.forward_head_index !== undefined && `
       <tr>
-        <td>${m.forward_head_index < 0.2 ? '' : '⚠️ '}Forward Head Posture</td>
+        <td>${m.forward_head_index < 0.2 ? '' : ''}Forward Head Posture</td>
         <td>${Number(m.forward_head_index).toFixed(2)}</td>
         <td style="color:${m.forward_head_index < 0.2 ? '#16a34a' : '#dc2626'};font-weight:600">${m.forward_head_index < 0.2 ? 'Normal' : 'Terdeteksi'}</td>
       </tr>`,
     m.neck_inclination_deg !== undefined && `
       <tr>
-        <td>${m.neck_inclination_deg < 15 ? '' : '⚠️ '}Kemiringan Leher</td>
+        <td>${m.neck_inclination_deg < 15 ? '' : ''}Kemiringan Leher</td>
         <td>${Number(m.neck_inclination_deg).toFixed(1)}°</td>
         <td style="color:${m.neck_inclination_deg < 15 ? '#16a34a' : '#dc2626'};font-weight:600">${m.neck_inclination_deg < 15 ? 'Normal' : 'Deviasi'}</td>
       </tr>`,
     m.torso_inclination_deg !== undefined && `
       <tr>
-        <td>${m.torso_inclination_deg < 15 ? '' : '⚠️ '}Kemiringan Punggung</td>
+        <td>${m.torso_inclination_deg < 15 ? '' : ''}Kemiringan Punggung</td>
         <td>${Number(m.torso_inclination_deg).toFixed(1)}°</td>
         <td style="color:${m.torso_inclination_deg < 15 ? '#16a34a' : '#dc2626'};font-weight:600">${m.torso_inclination_deg < 15 ? 'Normal' : 'Deviasi'}</td>
       </tr>`,
