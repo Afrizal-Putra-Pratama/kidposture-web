@@ -10,7 +10,7 @@ import physioService from "../services/physioService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
 import { useNotifications } from "../hooks/useNotification.jsx";
 import ConsultationModal from "../components/ConsultationModal.jsx";
-import { exportScreeningPDF } from "../utils/exportScreeningPDF.js";
+import { generateScreeningHTML } from "../utils/exportScreeningPDF.js";
 
 export default function ScreeningDetailPage() {
   const { screeningId } = useParams();
@@ -42,6 +42,8 @@ export default function ScreeningDetailPage() {
   const [referError, setReferError] = useState(null);
   const [confirmReferModal, setConfirmReferModal] = useState({ show: false, physioId: null, physioName: "" });
   const [consultModal, setConsultModal] = useState({ open: false, physio: null });
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [pdfHtmlContent, setPdfHtmlContent] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,6 +65,21 @@ export default function ScreeningDetailPage() {
       setError(err.message || "Gagal mengambil data screening");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenPDFPreview = () => {
+    const html = generateScreeningHTML(data);
+    setPdfHtmlContent(html);
+    setShowPDFPreview(true);
+  };
+
+  // Trigger print dialog langsung dari iframe — user tinggal pilih "Save as PDF"
+  const handleDownloadPDF = () => {
+    const iframe = document.getElementById("pdf-preview-iframe");
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
     }
   };
 
@@ -294,8 +311,8 @@ export default function ScreeningDetailPage() {
               <button onClick={() => navigate(`/children/${child?.id}/screenings/new`)} className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5">
                 <Plus size={14} /> Screening
               </button>
-              {/* Tombol PDF di Desktop (Tersembunyi di Mobile) */}
-              <button onClick={(e) => { e.preventDefault(); exportScreeningPDF(data); }} className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5">
+              {/* Tombol PDF di Desktop */}
+              <button onClick={handleOpenPDFPreview} className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5">
                 <Download size={14} /> Simpan PDF
               </button>
             </div>
@@ -306,7 +323,6 @@ export default function ScreeningDetailPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
               
               <div className="flex flex-col gap-3">
-                {/* Lencana Mobile Responsive */}
                 <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                   <span className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-md text-[11px]"><User size={12}/> {child?.name} ({child?.age_years ? `${child.age_years}thn` : "-"})</span>
                   <span className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-md text-[11px]"><Activity size={12}/> {child?.weight ? `${child.weight}kg` : "-"} / {child?.height ? `${child.height}cm` : "-"}</span>
@@ -328,7 +344,7 @@ export default function ScreeningDetailPage() {
             </div>
           </div>
 
-          {/* === LAYOUT GRID: KOLOM OTOMATIS BERUBAH URUTAN DI MOBILE === */}
+          {/* === LAYOUT GRID === */}
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-5 lg:items-start">
             
             {/* 1. Indeks Analisis Postur */}
@@ -336,9 +352,9 @@ export default function ScreeningDetailPage() {
               <div className="flex flex-wrap items-center justify-between mb-4 border-b border-slate-50 pb-3 gap-2">
                 <h3 className="font-bold text-slate-800 text-sm">Indeks Analisis Postur</h3>
                 <div className="flex items-center gap-2">
-                  {/* Tombol PDF pindah ke sini untuk tampilan mobile */}
-                  <button onClick={(e) => { e.preventDefault(); exportScreeningPDF(data); }} className="flex lg:hidden bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 p-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center">
-                    <Download size={12}/> Simpan PDF
+                  {/* Tombol PDF Mobile */}
+                  <button onClick={handleOpenPDFPreview} className="flex lg:hidden bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 p-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center">
+                    <Download size={14} />
                   </button>
                   {hasAnyDeviation && (
                     <button onClick={() => setShowDeviationModal(true)} className="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors flex items-center gap-1 active:scale-95 border border-red-100">
@@ -481,6 +497,7 @@ export default function ScreeningDetailPage() {
       </main>
 
       {/* --- MODALS --- */}
+
       {/* Modal AI Rekomendasi */}
       {showAIModal && hasAIRec && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in p-4" onClick={() => setShowAIModal(false)}>
@@ -585,7 +602,7 @@ export default function ScreeningDetailPage() {
         </div>
       )}
 
-      {/* Modal Detail Konsultasi (Tampilan Harga/Rujukan) */}
+      {/* Modal Detail Konsultasi */}
       {consultModal.open && (
         <ConsultationModal
           physio={consultModal.physio}
@@ -615,6 +632,15 @@ export default function ScreeningDetailPage() {
         </div>
       )}
 
+      {/* Modal PDF Preview */}
+      {showPDFPreview && (
+        <PDFPreviewModal
+          htmlContent={pdfHtmlContent}
+          childName={data?.child?.name}
+          onClose={() => setShowPDFPreview(false)}
+          onDownload={handleDownloadPDF}
+        />
+      )}
     </div>
   );
 }
@@ -698,6 +724,39 @@ function NotificationPanel({ notifications, close, unreadCount, markAllAsRead, h
             </div>
           ))
         )}
+      </div>
+    </div>
+  );
+}
+
+function PDFPreviewModal({ htmlContent, childName, onClose, onDownload }) {
+  return (
+    <div className="fixed inset-0 z-[130] flex flex-col bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 transition-colors active:scale-95"
+          >
+            <X size={18} />
+          </button>
+          <div>
+            <p className="text-sm font-bold text-slate-800 leading-none">Preview Laporan PDF</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{childName || 'Anak'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* iframe Preview */}
+      <div className="flex-1 overflow-hidden bg-slate-200 p-3 md:p-6">
+        <iframe
+          id="pdf-preview-iframe"
+          srcDoc={htmlContent}
+          title="Preview Laporan"
+          className="w-full h-full rounded-lg border border-slate-300 shadow-xl bg-white"
+          sandbox="allow-same-origin allow-scripts allow-modals"
+        />
       </div>
     </div>
   );
