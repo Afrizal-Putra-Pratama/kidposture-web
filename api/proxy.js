@@ -1,14 +1,13 @@
 export default async function handler(req, res) {
   const { path } = req.query;
-  const targetUrl = `https://posturely.infinityfree.me/api/${path}`;
   
+  // Support both ngrok dan infinityfree
+  const targetBase = 'https://wheezier-unagreed-kizzie.ngrok-free.dev/api';
+  const targetUrl = `${targetBase}/${Array.isArray(path) ? path.join('/') : path}`;
+
   const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Cookie': '__test=f4f482ff9fdedfd9ac27012a76b0229c',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Referer': 'https://posturely.infinityfree.me/',
-    'Origin': 'https://posturely.infinityfree.me',
+    'ngrok-skip-browser-warning': 'true',  // ← ini kuncinya
+    'Accept': req.headers.accept || 'application/json',
   };
 
   if (req.headers.authorization) {
@@ -22,24 +21,26 @@ export default async function handler(req, res) {
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     fetchOptions.body = JSON.stringify(req.body);
+    headers['Content-Type'] = 'application/json';
   }
 
   try {
     const response = await fetch(targetUrl, fetchOptions);
-    const text = await response.text();
-    
-    // Cek apakah response adalah HTML (anti-bot)
-    if (text.includes('aes.js') || text.includes('slowAES')) {
-      res.status(503).json({ message: 'Blocked by anti-bot protection' });
-      return;
+    const contentType = response.headers.get('content-type') || '';
+
+    // Forward semua response headers penting
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', contentType);
+
+    const disposition = response.headers.get('content-disposition');
+    if (disposition) {
+      res.setHeader('Content-Disposition', disposition);
     }
 
-    try {
-      const data = JSON.parse(text);
-      res.status(response.status).json(data);
-    } catch {
-      res.status(500).json({ message: 'Invalid JSON response', raw: text.substring(0, 200) });
-    }
+    // Handle binary (PDF) maupun JSON
+    const buffer = await response.arrayBuffer();
+    res.status(response.status).send(Buffer.from(buffer));
+
   } catch (error) {
     res.status(500).json({ message: 'Proxy error', error: error.message });
   }
