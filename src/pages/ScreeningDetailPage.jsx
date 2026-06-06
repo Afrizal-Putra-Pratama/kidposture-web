@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Calendar, AlertCircle, User, Camera, FileText, LayoutDashboard, BookOpen,
-  ChevronLeft, ChevronRight, X, Sparkles, Plus, AlertTriangle, 
+  ChevronLeft, ChevronRight, X, Sparkles, Plus, AlertTriangle,
   MessageCircle, Download, Activity, Bell, Menu, LogOut, CheckCircle2
 } from "lucide-react";
 import { fetchScreeningDetail, referScreeningToPhysio } from "../services/screeningService.jsx";
@@ -10,7 +10,10 @@ import physioService from "../services/physioService.jsx";
 import { logout, getCurrentUser } from "../services/authService.jsx";
 import { useNotifications } from "../hooks/useNotification.jsx";
 import ConsultationModal from "../components/ConsultationModal.jsx";
-import { generateScreeningHTML } from "../utils/exportScreeningPDF.js";
+
+// ─── Konfigurasi base URL API ─────────────────────────────────────────────────
+// Sesuaikan dengan URL backend Laravel kamu
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export default function ScreeningDetailPage() {
   const { screeningId } = useParams();
@@ -42,8 +45,10 @@ export default function ScreeningDetailPage() {
   const [referError, setReferError] = useState(null);
   const [confirmReferModal, setConfirmReferModal] = useState({ show: false, physioId: null, physioName: "" });
   const [consultModal, setConsultModal] = useState({ open: false, physio: null });
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const [pdfHtmlContent, setPdfHtmlContent] = useState('');
+
+  // ─── PDF Download State ───────────────────────────────────────────────────
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -68,18 +73,88 @@ export default function ScreeningDetailPage() {
     }
   };
 
-  const handleOpenPDFPreview = () => {
-    const html = generateScreeningHTML(data);
-    setPdfHtmlContent(html);
-    setShowPDFPreview(true);
-  };
+  // ─── PDF: Download langsung dari backend ────────────────────────────────────
+  /**
+   * Cara kerja:
+   * 1. Klik tombol → fetch ke /api/screenings/{id}/download-pdf dengan Bearer token
+   * 2. Backend generate PDF (dompdf) + embed semua gambar sebagai base64
+   * 3. Response = binary PDF dengan header Content-Disposition: attachment
+   * 4. FE terima blob → buat object URL → klik link tersembunyi → browser auto-download
+   * 5. Tidak ada print dialog, tidak ada iframe, tidak ada HTML blob
+   */
+  const handleDownloadPDF = async () => {
+    if (isDownloadingPDF) return;
 
-  // Trigger print dialog langsung dari iframe — user tinggal pilih "Save as PDF"
-  const handleDownloadPDF = () => {
-    const iframe = document.getElementById("pdf-preview-iframe");
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
+    setIsDownloadingPDF(true);
+    setPdfError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Sesi habis, silakan login ulang.");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/screenings/${screeningId}/download-pdf`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        // Coba baca pesan error dari backend
+        let errMsg = `Gagal generate PDF (HTTP ${response.status})`;
+        try {
+          const errData = await response.json();
+          errMsg = errData.message || errMsg;
+        } catch {
+          // response bukan JSON, abaikan
+        }
+        throw new Error(errMsg);
+      }
+
+      // Ambil filename dari header Content-Disposition kalau ada
+      const disposition = response.headers.get("Content-Disposition");
+      let filename = `Laporan-Screening-${data?.child?.name?.replace(/\s+/g, "-") || "Anak"}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (disposition) {
+        const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (match && match[1]) {
+          filename = match[1].replace(/['"]/g, "");
+        }
+      }
+
+      // Konversi response ke blob
+      const blob = await response.blob();
+
+      if (blob.size === 0) {
+        throw new Error("File PDF kosong, coba lagi.");
+      }
+
+      // Buat object URL dan trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup setelah delay singkat
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 1000);
+
+    } catch (err) {
+      console.error("PDF download error:", err);
+      setPdfError(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setIsDownloadingPDF(false);
     }
   };
 
@@ -191,24 +266,24 @@ export default function ScreeningDetailPage() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden relative">
-      
+
       {/* === MODAL LIGHTBOX IMAGE === */}
       {lightboxImage && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setLightboxImage(null)}>
           <button className="absolute top-6 right-6 lg:top-10 lg:right-10 text-white hover:text-slate-300 transition-colors p-2 bg-slate-800/50 rounded-full active:scale-95" onClick={() => setLightboxImage(null)}>
             <X size={28} />
           </button>
-          <img 
-            src={lightboxImage} 
-            alt="Detail Postur" 
-            className="max-w-[95%] max-h-[90vh] object-contain rounded-lg animate-in zoom-in-95 duration-200" 
-            onClick={(e) => e.stopPropagation()} 
+          <img
+            src={lightboxImage}
+            alt="Detail Postur"
+            className="max-w-[95%] max-h-[90vh] object-contain rounded-lg animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
 
       {/* === SIDEBAR (DESKTOP) === */}
-      <aside 
+      <aside
         className={`hidden lg:flex flex-col bg-white border-r border-slate-100 sticky top-0 h-screen shrink-0 transition-all duration-300 z-50 ${isSidebarExpanded ? 'w-64' : 'w-[80px]'}`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
@@ -227,7 +302,7 @@ export default function ScreeningDetailPage() {
 
         <div className="p-3 border-t border-slate-100 mt-auto">
           <button onClick={handleLogout} className={`flex items-center w-full rounded-md transition-all font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 active:scale-95 ${isSidebarExpanded ? 'justify-start px-3 py-2.5 gap-3' : 'justify-center p-2.5'}`}>
-            <LogOut size={18} className="shrink-0" /> 
+            <LogOut size={18} className="shrink-0" />
             {isSidebarExpanded && <span className="text-sm truncate">Keluar</span>}
           </button>
         </div>
@@ -239,11 +314,11 @@ export default function ScreeningDetailPage() {
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsSidebarOpenMobile(false)}></div>
           <div className="absolute inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col animate-in slide-in-from-left duration-300">
             <div className="p-5 flex items-center justify-between border-b border-slate-100 h-16">
-               <div className="flex items-center gap-3">
-                  <img src="/logo-favicon-posturely.svg" alt="Logo" className="w-7 h-7 shrink-0" />
-                  <span className="font-bold text-lg text-slate-800">Posturely</span>
-               </div>
-               <button onClick={() => setIsSidebarOpenMobile(false)} className="text-slate-500 p-1.5 rounded-md hover:bg-slate-100 active:scale-95 transition-all"><X size={18}/></button>
+              <div className="flex items-center gap-3">
+                <img src="/logo-favicon-posturely.svg" alt="Logo" className="w-7 h-7 shrink-0" />
+                <span className="font-bold text-lg text-slate-800">Posturely</span>
+              </div>
+              <button onClick={() => setIsSidebarOpenMobile(false)} className="text-slate-500 p-1.5 rounded-md hover:bg-slate-100 active:scale-95 transition-all"><X size={18}/></button>
             </div>
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto hide-scrollbar">
               <SidebarLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
@@ -252,7 +327,7 @@ export default function ScreeningDetailPage() {
               <SidebarLink to="/profile" icon={User} label="Profil Saya" expanded={true} onClick={() => setIsSidebarOpenMobile(false)} />
             </nav>
             <div className="p-3 border-t border-slate-100 mt-auto">
-               <button onClick={handleLogout} className="flex items-center gap-3 w-full p-2.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-all font-medium active:scale-95"><LogOut size={18}/> Keluar</button>
+              <button onClick={handleLogout} className="flex items-center gap-3 w-full p-2.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-all font-medium active:scale-95"><LogOut size={18}/> Keluar</button>
             </div>
           </div>
         </div>
@@ -260,7 +335,7 @@ export default function ScreeningDetailPage() {
 
       {/* === MAIN CONTENT === */}
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50 relative">
-        
+
         {/* Header Atas */}
         <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 sticky top-0 z-40 shrink-0">
           <div className="flex items-center gap-3">
@@ -295,7 +370,7 @@ export default function ScreeningDetailPage() {
 
         {/* Content Area - Scrollable */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 w-full max-w-6xl mx-auto hide-scrollbar">
-          
+
           {/* Top Bar: Navigasi & Aksi */}
           <div className="flex items-center justify-between gap-4 mb-5">
             <div className="flex items-center gap-2.5">
@@ -308,20 +383,52 @@ export default function ScreeningDetailPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button onClick={() => navigate(`/children/${child?.id}/screenings/new`)} className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5">
+              <button
+                onClick={() => navigate(`/children/${child?.id}/screenings/new`)}
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+              >
                 <Plus size={14} /> Screening
               </button>
-              {/* Tombol PDF di Desktop */}
-              <button onClick={handleOpenPDFPreview} className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5">
-                <Download size={14} /> Simpan PDF
+
+              {/* ─── Tombol Download PDF ─────────────────────────────────────── */}
+              {/* Desktop */}
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isDownloadingPDF}
+                className="hidden lg:flex bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center gap-1.5 disabled:opacity-60 disabled:cursor-wait"
+              >
+                {isDownloadingPDF ? (
+                  <>
+                    {/* Spinner */}
+                    <svg className="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    Menyiapkan...
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} /> Simpan PDF
+                  </>
+                )}
               </button>
             </div>
           </div>
 
+          {/* Error PDF */}
+          {pdfError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-md px-4 py-2.5 flex items-center justify-between gap-3">
+              <p className="text-xs text-red-700 font-medium">{pdfError}</p>
+              <button onClick={() => setPdfError(null)} className="text-red-400 hover:text-red-600 shrink-0">
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Info Card Utama */}
           <div className="bg-white rounded-lg border border-slate-100 p-4 lg:p-5 mb-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-              
+
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                   <span className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-md text-[11px]"><User size={12}/> {child?.name} ({child?.age_years ? `${child.age_years}thn` : "-"})</span>
@@ -346,16 +453,29 @@ export default function ScreeningDetailPage() {
 
           {/* === LAYOUT GRID === */}
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-5 lg:items-start">
-            
+
             {/* 1. Indeks Analisis Postur */}
             <div className="order-1 lg:col-start-1 lg:row-start-1 bg-white rounded-lg border border-slate-100 p-4 lg:p-5">
               <div className="flex flex-wrap items-center justify-between mb-4 border-b border-slate-50 pb-3 gap-2">
                 <h3 className="font-bold text-slate-800 text-sm">Indeks Analisis Postur</h3>
                 <div className="flex items-center gap-2">
                   {/* Tombol PDF Mobile */}
-                  <button onClick={handleOpenPDFPreview} className="flex lg:hidden bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 p-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center">
-                    <Download size={14} />
+                  <button
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloadingPDF}
+                    className="flex lg:hidden bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 p-1.5 rounded-md text-xs font-bold transition-all active:scale-95 items-center disabled:opacity-60 disabled:cursor-wait"
+                    title="Simpan PDF"
+                  >
+                    {isDownloadingPDF ? (
+                      <svg className="animate-spin h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                      </svg>
+                    ) : (
+                      <Download size={14} />
+                    )}
                   </button>
+
                   {hasAnyDeviation && (
                     <button onClick={() => setShowDeviationModal(true)} className="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors flex items-center gap-1 active:scale-95 border border-red-100">
                       <AlertTriangle size={12}/> Cek Deviasi
@@ -363,7 +483,7 @@ export default function ScreeningDetailPage() {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 {metrics?.shoulder_tilt_index !== undefined && <MetricRow label="Kemiringan Bahu" value={metrics.shoulder_tilt_index} unit="%" threshold={2} />}
                 {metrics?.hip_tilt_index !== undefined && <MetricRow label="Kemiringan Panggul" value={metrics.hip_tilt_index} unit="%" threshold={2} />}
@@ -380,8 +500,8 @@ export default function ScreeningDetailPage() {
                 {mainImages.length > 1 && (
                   <div className="flex gap-1.5">
                     {mainImages.map((img, index) => (
-                      <button 
-                        key={img.id} 
+                      <button
+                        key={img.id}
                         onClick={() => setSelectedImageIndex(index)}
                         className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${selectedImageIndex === index ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                       >
@@ -391,19 +511,19 @@ export default function ScreeningDetailPage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="relative w-full h-[300px] lg:h-[350px] flex items-center justify-center p-3 bg-slate-950">
                 {currentImage ? (
-                  <img 
-                    src={currentImage.url_processed || currentImage.url_original} 
-                    alt={currentImage.type} 
+                  <img
+                    src={currentImage.url_processed || currentImage.url_original}
+                    alt={currentImage.type}
                     onClick={() => setLightboxImage(currentImage.url_processed || currentImage.url_original)}
                     className="max-w-full max-h-full object-contain rounded cursor-pointer hover:scale-[1.02] transition-transform duration-300"
                   />
                 ) : (
                   <span className="text-slate-600 text-xs">Belum ada foto</span>
                 )}
-                
+
                 {mainImages.length > 1 && (
                   <>
                     <button onClick={prevImage} className="absolute left-3 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors backdrop-blur-sm"><ChevronLeft size={16}/></button>
@@ -425,7 +545,7 @@ export default function ScreeningDetailPage() {
             {category !== "GOOD" && (
               <div className="order-3 lg:col-start-1 lg:row-start-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100 p-4 lg:p-5">
                 <h3 className="font-bold text-blue-900 mb-3 text-sm flex items-center gap-1.5"><User size={16}/> Penanganan Medis</h3>
-                
+
                 {physiotherapist ? (
                   <div className="bg-white p-3 rounded-md border border-blue-100 mb-3">
                     <div className="flex items-center gap-2.5">
@@ -537,7 +657,7 @@ export default function ScreeningDetailPage() {
                   {headDeviated && <DeviationCard label="Forward Head" val={metrics.forward_head_index.toFixed(2)} note="Kepala condong ke depan." />}
                   {neckDeviated && <DeviationCard label="Leher" val={metrics.neck_inclination_deg.toFixed(1)+"°"} note="Leher terlalu menunduk." />}
                   {torsoDeviated && <DeviationCard label="Punggung" val={metrics.torso_inclination_deg.toFixed(1)+"°"} note="Punggung membungkuk." />}
-                  
+
                   {cropImages.length > 0 && (
                     <div className="mt-4 pt-3 border-t border-slate-50">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Visual AI Crop</p>
@@ -587,7 +707,7 @@ export default function ScreeningDetailPage() {
                           <p className="text-[9px] text-blue-600 font-bold uppercase mt-0.5">{p.specialty || "Umum"}</p>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => { setIsReferModalOpen(false); setConsultModal({ open: true, physio: p }); }}
                         className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[10px] font-bold transition-all active:scale-95 shrink-0"
                       >
@@ -632,15 +752,6 @@ export default function ScreeningDetailPage() {
         </div>
       )}
 
-      {/* Modal PDF Preview */}
-      {showPDFPreview && (
-        <PDFPreviewModal
-          htmlContent={pdfHtmlContent}
-          childName={data?.child?.name}
-          onClose={() => setShowPDFPreview(false)}
-          onDownload={handleDownloadPDF}
-        />
-      )}
     </div>
   );
 }
@@ -724,39 +835,6 @@ function NotificationPanel({ notifications, close, unreadCount, markAllAsRead, h
             </div>
           ))
         )}
-      </div>
-    </div>
-  );
-}
-
-function PDFPreviewModal({ htmlContent, childName, onClose, onDownload }) {
-  return (
-    <div className="fixed inset-0 z-[130] flex flex-col bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100 transition-colors active:scale-95"
-          >
-            <X size={18} />
-          </button>
-          <div>
-            <p className="text-sm font-bold text-slate-800 leading-none">Preview Laporan PDF</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">{childName || 'Anak'}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* iframe Preview */}
-      <div className="flex-1 overflow-hidden bg-slate-200 p-3 md:p-6">
-        <iframe
-          id="pdf-preview-iframe"
-          srcDoc={htmlContent}
-          title="Preview Laporan"
-          className="w-full h-full rounded-lg border border-slate-300 shadow-xl bg-white"
-          sandbox="allow-same-origin allow-scripts allow-modals"
-        />
       </div>
     </div>
   );
