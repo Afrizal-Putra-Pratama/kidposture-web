@@ -113,6 +113,6 @@ D:\projects\posturely\kidposture-web\src\styles\screening.css
 D:\projects\posturely\kidposture-web\src\styles\screeningDetail.css   
 D:\projects\posturely\kidposture-web\src\utils\axios.js               
 D:\projects\posturely\kidposture-web\src\utils\echo.js                
-D:\projects\posturely\kidposture-web\src\utils\exportScreeningPDF.js  
+
 
 
